@@ -57,7 +57,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
 	private void executeMigrations(SQLiteDatabase db, int oldVersion, int newVersion) {
 		try {
 			List<String> files = Arrays.asList(mContext.getAssets().list(MIGRATION_PATH));
-			Collections.sort(files, new AlphanumComparator());
+			Collections.sort(files, new NaturalOrderComparator());
 
 			for (String file : files) {
 				try {
