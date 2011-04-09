@@ -79,6 +79,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
 
 	private void executeSqlScript(SQLiteDatabase db, String file) {
 		Log.d(Params.LOGGING_TAG, file);
+		db.execSQL(file);
 	}
 
 	private static void createTable(SQLiteDatabase db, Class<? extends ActiveRecordBase<?>> table) {
