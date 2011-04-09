@@ -40,6 +40,10 @@ public abstract class ActiveRecordBase<T> {
 	////////////////////////////////////////////////////////////////////////////////
 	// PUBLIC METHODS
 
+	/**
+	 * Gets the current object's record Id.
+	 * @return Long the current object's record Id.
+	 */
 	public Long getId() {
 		return mId;
 	}
