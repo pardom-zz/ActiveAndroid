@@ -502,7 +502,10 @@ public abstract class ActiveRecordBase<T> {
 
 			try {
 
-				if (!fieldType.isPrimitive() && fieldType.getSuperclass() != null
+				if(cursor.isNull(columnIndex)) {
+					field = null;
+				}
+				else if (!fieldType.isPrimitive() && fieldType.getSuperclass() != null
 						&& fieldType.getSuperclass().equals(ActiveRecordBase.class)) {
 
 					long entityId = cursor.getLong(columnIndex);
