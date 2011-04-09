@@ -14,8 +14,6 @@ public class Application extends android.app.Application {
 	private DatabaseManager mDatabaseManager;
 	private Set<ActiveRecordBase<?>> mEntities;
 
-	private boolean mShowTrialToast;
-
 	@Override
 	public void onCreate() {
 		super.onCreate();
@@ -24,7 +22,7 @@ public class Application extends android.app.Application {
 			if (Params.LOGGING_ENABLED) {
 				Log.e(Params.LOGGING_TAG, "ActiveAndroid trial only works on emulator. Shutting down.");
 			}
-			
+
 			System.exit(0);
 		}
 
@@ -37,8 +35,6 @@ public class Application extends android.app.Application {
 		if (mDatabaseManager != null) {
 			mDatabaseManager.closeDB();
 		}
-
-		mShowTrialToast = false;
 
 		super.onTerminate();
 	}
