@@ -88,13 +88,13 @@ public abstract class ActiveRecordBase<T> {
 			field.setAccessible(true);
 
 			try {
-				if (field.get(this) == null)
-					continue;
-
 				Object value = field.get(this);
 
+				if (value == null) {
+					values.putNull(fieldName);
+				}
 				// Boolean
-				if (fieldType.equals(Boolean.class) || fieldType.equals(boolean.class)) {
+				else if (fieldType.equals(Boolean.class) || fieldType.equals(boolean.class)) {
 					values.put(fieldName, (Boolean) value);
 				}
 				// Date
@@ -200,7 +200,7 @@ public abstract class ActiveRecordBase<T> {
 	 * @param type the type of this object
 	 * @return <T> T - ActiveRecordBase
 	 */
-	public static <T> T last(Context context, Class<? extends ActiveRecordBase<?>> type) {		
+	public static <T> T last(Context context, Class<? extends ActiveRecordBase<?>> type) {
 		return querySingle(context, type, null, null, "Id DESC");
 	}
 
@@ -272,7 +272,7 @@ public abstract class ActiveRecordBase<T> {
 	public static <T> ArrayList<T> query(Context context, Class<? extends ActiveRecordBase<?>> type, String[] columns) {
 		return query(context, type, columns, null, null, null, null, null);
 	}
-	
+
 	/**
 	 * Return an ArrayList of all records for the specified type and where clause. Includes only the specified columns
 	 * 
@@ -282,10 +282,11 @@ public abstract class ActiveRecordBase<T> {
 	 * @param where where clause applied to the query.
 	 * @return ArrayList<T> ArrayList of objects returned by the query.
 	 */
-	public static <T> ArrayList<T> query(Context context, Class<? extends ActiveRecordBase<?>> type, String[] columns, String where) {
+	public static <T> ArrayList<T> query(Context context, Class<? extends ActiveRecordBase<?>> type, String[] columns,
+			String where) {
 		return query(context, type, columns, where, null, null, null, null);
 	}
-	
+
 	/**
 	 * Return an ArrayList of all records for the specified type, where, and order by clauses. Includes only the specified columns
 	 * 
@@ -296,10 +297,11 @@ public abstract class ActiveRecordBase<T> {
 	 * @param orderBy order by clause applied to the query, or null for no clause.
 	 * @return ArrayList<T> ArrayList of objects returned by the query.
 	 */
-	public static <T> ArrayList<T> query(Context context, Class<? extends ActiveRecordBase<?>> type, String[] columns, String where, String orderBy) {
+	public static <T> ArrayList<T> query(Context context, Class<? extends ActiveRecordBase<?>> type, String[] columns,
+			String where, String orderBy) {
 		return query(context, type, columns, where, null, null, orderBy, null);
 	}
-	
+
 	/**
 	 * Return an ArrayList of all records for the specified type, where, order by, and limit clauses. Includes only the specified columns
 	 * 
@@ -311,10 +313,11 @@ public abstract class ActiveRecordBase<T> {
 	 * @param limit limit clause applied to the query (including distinct), or null for no clause.
 	 * @return ArrayList<T> ArrayList of objects returned by the query.
 	 */
-	public static <T> ArrayList<T> query(Context context, Class<? extends ActiveRecordBase<?>> type, String[] columns, String where, String orderBy, String limit) {
+	public static <T> ArrayList<T> query(Context context, Class<? extends ActiveRecordBase<?>> type, String[] columns,
+			String where, String orderBy, String limit) {
 		return query(context, type, columns, where, null, null, orderBy, limit);
 	}
-	
+
 	/**
 	 * Return an ArrayList of all records for the specified type, where, order by, group by, having, and limit clauses. Includes only the specified columns
 	 * 
@@ -328,7 +331,8 @@ public abstract class ActiveRecordBase<T> {
 	 * @param limit limit clause applied to the query (including distinct), or null for no clause.
 	 * @return ArrayList<T> ArrayList of objects returned by the query.
 	 */
-	public static <T> ArrayList<T> query(Context context, Class<? extends ActiveRecordBase<?>> type, String[] columns, String where, String groupBy, String having, String orderBy, String limit) {
+	public static <T> ArrayList<T> query(Context context, Class<? extends ActiveRecordBase<?>> type, String[] columns,
+			String where, String groupBy, String having, String orderBy, String limit) {
 		// Open database
 		final DatabaseManager dbManager = ((Application) context.getApplicationContext()).getDatabaseManager();
 		final SQLiteDatabase db = dbManager.openDB();
@@ -358,7 +362,7 @@ public abstract class ActiveRecordBase<T> {
 	public static <T> T querySingle(Context context, Class<? extends ActiveRecordBase<?>> type, String[] columns) {
 		return (T) getFirst(query(context, type, columns, null, null, "1"));
 	}
-	
+
 	/**
 	 * Return a single object for the specified type, and where clauses. Includes only the specified columns
 	 * 
@@ -368,10 +372,11 @@ public abstract class ActiveRecordBase<T> {
 	 * @param where where clause applied to the query, or null for no clause.
 	 * @return T object returned by the query.
 	 */
-	public static <T> T querySingle(Context context, Class<? extends ActiveRecordBase<?>> type, String[] columns, String where) {
+	public static <T> T querySingle(Context context, Class<? extends ActiveRecordBase<?>> type, String[] columns,
+			String where) {
 		return (T) getFirst(query(context, type, columns, where, null, "1"));
 	}
-	
+
 	/**
 	 * Return a single object for the specified type, where, and order by clauses. Includes only the specified columns
 	 * 
@@ -382,7 +387,8 @@ public abstract class ActiveRecordBase<T> {
 	 * @param orderBy order by clause applied to the query, or null for no clause.
 	 * @return T object returned by the query.
 	 */
-	public static <T> T querySingle(Context context, Class<? extends ActiveRecordBase<?>> type, String[] columns, String where, String orderBy) {
+	public static <T> T querySingle(Context context, Class<? extends ActiveRecordBase<?>> type, String[] columns,
+			String where, String orderBy) {
 		return (T) getFirst(query(context, type, columns, where, orderBy, "1"));
 	}
 
@@ -398,7 +404,8 @@ public abstract class ActiveRecordBase<T> {
 	 * @param orderBy order by clause applied to the query, or null for no clause.
 	 * @return T object returned by the query.
 	 */
-	public static <T> T querySingle(Context context, Class<? extends ActiveRecordBase<?>> type, String[] columns, String selection, String groupBy, String having, String orderBy) {
+	public static <T> T querySingle(Context context, Class<? extends ActiveRecordBase<?>> type, String[] columns,
+			String selection, String groupBy, String having, String orderBy) {
 		return (T) getFirst(query(context, type, columns, selection, groupBy, having, orderBy, "1"));
 	}
 
@@ -502,7 +509,7 @@ public abstract class ActiveRecordBase<T> {
 
 			try {
 
-				if(cursor.isNull(columnIndex)) {
+				if (cursor.isNull(columnIndex)) {
 					field = null;
 				}
 				else if (!fieldType.isPrimitive() && fieldType.getSuperclass() != null
