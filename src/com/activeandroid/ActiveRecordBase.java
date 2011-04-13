@@ -4,6 +4,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.Calendar;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -108,6 +109,10 @@ public abstract class ActiveRecordBase<T> {
 				// Date
 				else if (fieldType.equals(java.sql.Date.class)) {
 					values.put(fieldName, ((java.sql.Date) field.get(this)).getTime());
+				}
+				// Calendar
+				else if (fieldType.equals(Calendar.class)) {
+					values.put(fieldName, ((Calendar) field.get(this)).getTimeInMillis());
 				}
 				// Double
 				else if (fieldType.equals(Double.class) || fieldType.equals(double.class)) {
@@ -542,6 +547,11 @@ public abstract class ActiveRecordBase<T> {
 				}
 				else if (fieldType.equals(java.sql.Date.class)) {
 					field.set(this, new java.sql.Date(cursor.getLong(columnIndex)));
+				}
+				else if (fieldType.equals(Calendar.class)) {
+					Calendar calendar = Calendar.getInstance();
+					calendar.setTimeInMillis(cursor.getLong(columnIndex));
+					field.set(this, calendar);
 				}
 				else if (fieldType.equals(Double.class) || fieldType.equals(double.class)) {
 					field.set(this, cursor.getDouble(columnIndex));
