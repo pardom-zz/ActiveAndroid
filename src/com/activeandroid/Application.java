@@ -57,7 +57,7 @@ public class Application extends android.app.Application {
 
 	final ActiveRecordBase<?> getEntity(Class<? extends ActiveRecordBase<?>> entityType, long id) {
 		for (ActiveRecordBase<?> entity : mEntities) {
-			if (entity.getClass() == entityType && entity.getId() == id) {
+			if (entity != null && entity.getClass() == entityType && entity.getId() == id) {
 				return entity;
 			}
 		}

@@ -2,6 +2,7 @@ package com.activeandroid;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Calendar;
 
 import android.util.Log;
 
@@ -79,6 +80,7 @@ final class ReflectionUtils {
 			|| type.equals(boolean.class)
 			|| type.equals(java.util.Date.class)
 			|| type.equals(java.sql.Date.class)
+			|| type.equals(Calendar.class)
 			|| type.equals(Integer.class)
 			|| type.equals(int.class)
 			|| type.equals(Long.class)

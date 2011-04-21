@@ -112,7 +112,7 @@ public abstract class ActiveRecordBase<T> {
 				}
 				// Calendar
 				else if (fieldType.equals(Calendar.class)) {
-					values.put(fieldName, ((Calendar) field.get(this)).getTimeInMillis());
+					values.put(fieldName, ((Calendar) field.get(this)).getTime().getTime());
 				}
 				// Double
 				else if (fieldType.equals(Double.class) || fieldType.equals(double.class)) {
@@ -496,7 +496,7 @@ public abstract class ActiveRecordBase<T> {
 			Log.e(Params.LOGGING_TAG, e.getMessage());
 		}
 		catch (NoSuchMethodException e) {
-			Log.e(Params.LOGGING_TAG, e.getMessage());
+			Log.e(Params.LOGGING_TAG, "Missing required constructor: " + e.getMessage());
 		}
 
 		return entities;
