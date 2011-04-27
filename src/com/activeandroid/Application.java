@@ -3,11 +3,7 @@ package com.activeandroid;
 import java.util.HashSet;
 import java.util.Set;
 
-import android.graphics.Color;
 import android.util.Log;
-import android.view.Gravity;
-import android.widget.TextView;
-import android.widget.Toast;
 
 @SuppressWarnings("unused")
 public class Application extends android.app.Application {
@@ -57,8 +53,12 @@ public class Application extends android.app.Application {
 
 	final ActiveRecordBase<?> getEntity(Class<? extends ActiveRecordBase<?>> entityType, long id) {
 		for (ActiveRecordBase<?> entity : mEntities) {
-			if (entity != null && entity.getClass() == entityType && entity.getId() == id) {
-				return entity;
+			if (entity != null) {
+				if (entity.getClass() != null && entity.getClass() == entityType) {
+					if (entity.getId() != null && entity.getId() == id) {
+						return entity;
+					}
+				}
 			}
 		}
 
