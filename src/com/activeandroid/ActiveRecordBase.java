@@ -223,7 +223,7 @@ public abstract class ActiveRecordBase<T> {
 	 * @return int the number of records affected.
 	 */
 	public static <T> int delete(Context context, Class<? extends ActiveRecordBase<?>> type) {
-		return delete(context, type, "1");
+		return delete(context, type, null);
 	}
 
 	/**
