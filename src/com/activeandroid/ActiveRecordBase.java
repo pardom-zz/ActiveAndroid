@@ -32,7 +32,7 @@ public abstract class ActiveRecordBase<T> {
 
 	public ActiveRecordBase(Context context) {
 		mApplication = ((Application) context.getApplicationContext());
-		mContext = context;
+		mContext = context.getApplicationContext();
 		mDatabaseManager = mApplication.getDatabaseManager();
 
 		mApplication.addEntity(this);
