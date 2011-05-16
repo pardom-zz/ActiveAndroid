@@ -247,7 +247,7 @@ public abstract class ActiveRecordBase<T> {
 	 */
 	public static <T> int delete(Context context, Class<? extends ActiveRecordBase<?>> type, String where) {
 		checkForApplication(context);
-		
+
 		final Application application = (Application) context.getApplicationContext();
 		final SQLiteDatabase db = application.openDatabase();
 		final String table = ReflectionUtils.getTableName(type);
@@ -344,7 +344,7 @@ public abstract class ActiveRecordBase<T> {
 	public static <T> ArrayList<T> query(Context context, Class<? extends ActiveRecordBase<?>> type, String[] columns,
 			String where, String groupBy, String having, String orderBy, String limit) {
 		checkForApplication(context);
-		
+
 		// Open database
 		final Application application = (Application) context.getApplicationContext();
 		final SQLiteDatabase db = application.openDatabase();
@@ -458,7 +458,7 @@ public abstract class ActiveRecordBase<T> {
 	// PRIVATE METHODS
 
 	private static void checkForApplication(Context context) {
-		if (!(context.getApplicationContext() instanceof com.activeandroid.Application)) {
+		if (!(context.getApplicationContext() instanceof Application)) {
 			throw new ClassCastException(
 					"Your application must use com.activeandroid.Application or a subclass. Check <application android:name /> in AndroidManifest.xml");
 		}
