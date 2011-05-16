@@ -24,7 +24,6 @@ public abstract class ActiveRecordBase<T> {
 
 	private Application mApplication;
 	private Context mContext;
-	private DatabaseManager mDatabaseManager;
 	private String mTableName = ReflectionUtils.getTableName(this.getClass());
 
 	////////////////////////////////////////////////////////////////////////////////
@@ -33,7 +32,6 @@ public abstract class ActiveRecordBase<T> {
 	public ActiveRecordBase(Context context) {
 		mApplication = ((Application) context.getApplicationContext());
 		mContext = context.getApplicationContext();
-		mDatabaseManager = mApplication.getDatabaseManager();
 
 		mApplication.addEntity(this);
 	}
@@ -71,10 +69,9 @@ public abstract class ActiveRecordBase<T> {
 	 * Deletes the current object's record from the database. References to this object will be null.
 	 */
 	public void delete() {
-		SQLiteDatabase db = mDatabaseManager.openDB();
+		final SQLiteDatabase db = mApplication.openDatabase();
 		db.delete(mTableName, "Id=?", new String[] { getId().toString() });
-		mDatabaseManager.closeDB();
-
+		mApplication.closeDatabase();
 		mApplication.removeEntity(this);
 	}
 
@@ -83,17 +80,17 @@ public abstract class ActiveRecordBase<T> {
 	 * its current existence. 
 	 */
 	public void save() {
-		SQLiteDatabase db = mDatabaseManager.openDB();
-		ContentValues values = new ContentValues();
+		final SQLiteDatabase db = mApplication.openDatabase();
+		final ContentValues values = new ContentValues();
 
 		for (Field field : ReflectionUtils.getTableFields(this.getClass())) {
-			String fieldName = ReflectionUtils.getColumnName(field);
-			Class<?> fieldType = field.getType();
+			final String fieldName = ReflectionUtils.getColumnName(field);
+			final Class<?> fieldType = field.getType();
 
 			field.setAccessible(true);
 
 			try {
-				Object value = field.get(this);
+				final Object value = field.get(this);
 
 				if (value == null) {
 					values.putNull(fieldName);
@@ -137,7 +134,7 @@ public abstract class ActiveRecordBase<T> {
 				else if (!fieldType.isPrimitive() && fieldType.getSuperclass() != null
 						&& fieldType.getSuperclass().equals(ActiveRecordBase.class)) {
 
-					long entityId = ((ActiveRecordBase<?>) value).getId();
+					final long entityId = ((ActiveRecordBase<?>) value).getId();
 
 					values.put(fieldName, entityId);
 				}
@@ -158,7 +155,7 @@ public abstract class ActiveRecordBase<T> {
 			db.update(mTableName, values, "Id=" + mId, null);
 		}
 
-		mDatabaseManager.closeDB();
+		mApplication.closeDatabase();
 	}
 
 	// ###  RELATIONAL METHODS
@@ -170,8 +167,8 @@ public abstract class ActiveRecordBase<T> {
 	 * @param through the field on the other object through which this object is related.
 	 */
 	protected <E> ArrayList<E> getMany(Class<? extends ActiveRecordBase<E>> type, String through) {
-		String table = ReflectionUtils.getTableName(type);
-		return query(mContext, type, null, StringUtils.format("{0}.{1}={2}", table, through, getId()));
+		final String tableName = ReflectionUtils.getTableName(type);
+		return query(mContext, type, null, StringUtils.format("{0}.{1}={2}", tableName, through, getId()));
 	}
 
 	// ###  QUERY SHORTCUT METHODS
@@ -247,12 +244,12 @@ public abstract class ActiveRecordBase<T> {
 	 * @return int the number of records affected.
 	 */
 	public static <T> int delete(Context context, Class<? extends ActiveRecordBase<?>> type, String where) {
-		DatabaseManager dbManager = ((Application) context.getApplicationContext()).getDatabaseManager();
-		SQLiteDatabase db = dbManager.openDB();
-		String table = ReflectionUtils.getTableName(type);
+		final Application application = (Application) context.getApplicationContext();
+		final SQLiteDatabase db = application.openDatabase();
+		final String table = ReflectionUtils.getTableName(type);
 
-		int count = db.delete(table, where, null);
-		dbManager.closeDB();
+		final int count = db.delete(table, where, null);
+		application.closeDatabase();
 
 		return count;
 	}
@@ -343,19 +340,19 @@ public abstract class ActiveRecordBase<T> {
 	public static <T> ArrayList<T> query(Context context, Class<? extends ActiveRecordBase<?>> type, String[] columns,
 			String where, String groupBy, String having, String orderBy, String limit) {
 		// Open database
-		final DatabaseManager dbManager = ((Application) context.getApplicationContext()).getDatabaseManager();
-		final SQLiteDatabase db = dbManager.openDB();
+		final Application application = (Application) context.getApplicationContext();
+		final SQLiteDatabase db = application.openDatabase();
 		final String table = ReflectionUtils.getTableName(type);
 
 		// Get cursor from query (selectionArgs is always null)
-		Cursor cursor = db.query(table, columns, where, null, groupBy, having, orderBy, limit);
+		final Cursor cursor = db.query(table, columns, where, null, groupBy, having, orderBy, limit);
 
 		// Convert cursor response into list of entities
-		ArrayList<T> entities = processCursor(context, type, cursor);
+		final ArrayList<T> entities = processCursor(context, type, cursor);
 
 		// Clean up
 		cursor.close();
-		dbManager.closeDB();
+		application.closeDatabase();
 
 		return entities;
 	}
@@ -428,14 +425,14 @@ public abstract class ActiveRecordBase<T> {
 	 * @param sql the SQL query string.
 	 */
 	public static final <T> ArrayList<T> rawQuery(Context context, Class<? extends ActiveRecordBase<?>> type, String sql) {
-		DatabaseManager dbManager = ((Application) context.getApplicationContext()).getDatabaseManager();
-		SQLiteDatabase db = dbManager.openDB();
-		Cursor cursor = db.rawQuery(sql, null);
+		final Application application = (Application) context.getApplicationContext();
+		final SQLiteDatabase db = application.openDatabase();
+		final Cursor cursor = db.rawQuery(sql, null);
 
-		ArrayList<T> entities = processCursor(context, type, cursor);
+		final ArrayList<T> entities = processCursor(context, type, cursor);
 
 		cursor.close();
-		dbManager.closeDB();
+		application.closeDatabase();
 
 		return entities;
 	}
@@ -464,7 +461,7 @@ public abstract class ActiveRecordBase<T> {
 
 	private static final <T> ArrayList<T> processCursor(Context context, Class<? extends ActiveRecordBase<?>> type,
 			Cursor cursor) {
-		ArrayList<T> entities = new ArrayList<T>();
+		final ArrayList<T> entities = new ArrayList<T>();
 
 		try {
 
@@ -587,7 +584,7 @@ public abstract class ActiveRecordBase<T> {
 
 	@Override
 	public boolean equals(Object obj) {
-		ActiveRecordBase<?> other = (ActiveRecordBase<?>) obj;
+		final ActiveRecordBase<?> other = (ActiveRecordBase<?>) obj;
 
 		return (this.mTableName == other.mTableName) && (this.mId == other.mId);
 	}

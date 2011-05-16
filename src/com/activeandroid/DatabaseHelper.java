@@ -1,6 +1,9 @@
 package com.activeandroid;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -78,8 +81,24 @@ class DatabaseHelper extends SQLiteOpenHelper {
 	}
 
 	private void executeSqlScript(SQLiteDatabase db, String file) {
-		Log.d(Params.LOGGING_TAG, file);
-		db.execSQL(file);
+		StringBuilder text = new StringBuilder();
+
+		try {
+			InputStream is = mContext.getAssets().open(MIGRATION_PATH + "/" + file);
+			BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+			String line;
+
+			while ((line = reader.readLine()) != null) {
+				text.append(line);
+				text.append("\n");
+			}
+
+		}
+		catch (IOException e) {
+			Log.e(Params.LOGGING_TAG, e.getMessage());
+		}
+
+		db.execSQL(text.toString());
 	}
 
 	private static void createTable(SQLiteDatabase db, Class<? extends ActiveRecordBase<?>> table) {

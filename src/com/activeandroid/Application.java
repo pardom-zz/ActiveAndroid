@@ -3,11 +3,12 @@ package com.activeandroid;
 import java.util.HashSet;
 import java.util.Set;
 
+import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
-@SuppressWarnings("unused")
 public class Application extends android.app.Application {
-	private DatabaseManager mDatabaseManager;
+	private DatabaseHelper mDatabaseHelper;
+	private SQLiteDatabase mDatabase;
 	private Set<ActiveRecordBase<?>> mEntities;
 
 	@Override
@@ -22,21 +23,31 @@ public class Application extends android.app.Application {
 			System.exit(0);
 		}
 
-		mDatabaseManager = new DatabaseManager(this);
 		mEntities = new HashSet<ActiveRecordBase<?>>();
 	}
 
 	@Override
 	public void onTerminate() {
-		if (mDatabaseManager != null) {
-			mDatabaseManager.closeDB();
-		}
+		closeDatabase();
 
 		super.onTerminate();
 	}
 
-	final DatabaseManager getDatabaseManager() {
-		return mDatabaseManager;
+	public SQLiteDatabase openDatabase() {
+		if (mDatabase != null) {
+			return mDatabase;
+		}
+
+		mDatabase = mDatabaseHelper.getWritableDatabase();
+
+		return mDatabase;
+	}
+
+	public void closeDatabase() {
+		if (mDatabase != null) {
+			mDatabase.close();
+			mDatabase = null;
+		}
 	}
 
 	final void addEntity(ActiveRecordBase<?> entity) {
