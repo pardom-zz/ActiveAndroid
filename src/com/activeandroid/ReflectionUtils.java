@@ -13,7 +13,7 @@ final class ReflectionUtils {
 	public static Integer getColumnLength(Field field) {
 		Integer retVal = null;
 
-		Column annotation = field.getAnnotation(Column.class);
+		final Column annotation = field.getAnnotation(Column.class);
 		if (annotation != null) {
 			final int length = annotation.length();
 			if (length > -1) {
@@ -25,7 +25,7 @@ final class ReflectionUtils {
 	}
 
 	public static String getColumnName(Field field) {
-		Column annotation = field.getAnnotation(Column.class);
+		final Column annotation = field.getAnnotation(Column.class);
 		if (annotation != null) {
 			return annotation.name();
 		}
@@ -34,7 +34,7 @@ final class ReflectionUtils {
 	}
 
 	public static ArrayList<Field> getTableFields(Class<?> type) {
-		ArrayList<Field> typeFields = new ArrayList<Field>();
+		final ArrayList<Field> typeFields = new ArrayList<Field>();
 
 		try {
 			typeFields.add(type.getSuperclass().getDeclaredField("mId"));
@@ -58,7 +58,7 @@ final class ReflectionUtils {
 
 	public static String getTableName(Class<?> type) {
 		String tableName = null;
-		Table annotation = type.getAnnotation(Table.class);
+		final Table annotation = type.getAnnotation(Table.class);
 
 		if (annotation != null) {
 			tableName = annotation.name();

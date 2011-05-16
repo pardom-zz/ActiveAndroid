@@ -33,6 +33,11 @@ public abstract class ActiveRecordBase<T> {
 		mApplication = ((Application) context.getApplicationContext());
 		mContext = context.getApplicationContext();
 
+		if (!(mApplication instanceof com.activeandroid.Application)) {
+			throw new ClassCastException(
+					"Your application must use com.activeandroid.Application or a subclass. Check <application android:name /> in AndroidManifest.xml");
+		}
+
 		mApplication.addEntity(this);
 	}
 

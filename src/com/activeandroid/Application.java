@@ -4,8 +4,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 import android.database.sqlite.SQLiteDatabase;
-import android.util.Log;
 
+@SuppressWarnings("unused")
 public class Application extends android.app.Application {
 	private DatabaseHelper mDatabaseHelper;
 	private SQLiteDatabase mDatabase;
@@ -16,16 +16,13 @@ public class Application extends android.app.Application {
 		super.onCreate();
 
 		if (Params.IS_TRIAL && !isEmulator()) {
-			if (Params.LOGGING_ENABLED) {
-				Log.e(Params.LOGGING_TAG, "ActiveAndroid trial only works on emulator. Shutting down.");
-			}
-
-			System.exit(0);
+			throw new TrialVersionException();
 		}
 
+		mDatabaseHelper = new DatabaseHelper(this);
 		mEntities = new HashSet<ActiveRecordBase<?>>();
 	}
-
+	
 	@Override
 	public void onTerminate() {
 		closeDatabase();

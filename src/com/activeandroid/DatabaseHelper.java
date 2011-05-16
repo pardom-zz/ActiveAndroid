@@ -37,7 +37,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
 
 	@Override
 	public void onCreate(SQLiteDatabase db) {
-		ArrayList<Class<? extends ActiveRecordBase<?>>> tables = getEntityClasses(mContext);
+		final ArrayList<Class<? extends ActiveRecordBase<?>>> tables = getEntityClasses(mContext);
 
 		if (Params.LOGGING_ENABLED) {
 			Log.i(Params.LOGGING_TAG, "Creating " + tables.size() + " tables");
@@ -59,12 +59,12 @@ class DatabaseHelper extends SQLiteOpenHelper {
 
 	private void executeMigrations(SQLiteDatabase db, int oldVersion, int newVersion) {
 		try {
-			List<String> files = Arrays.asList(mContext.getAssets().list(MIGRATION_PATH));
+			final List<String> files = Arrays.asList(mContext.getAssets().list(MIGRATION_PATH));
 			Collections.sort(files, new NaturalOrderComparator());
 
 			for (String file : files) {
 				try {
-					int version = Integer.valueOf(file.replace(".sql", ""));
+					final int version = Integer.valueOf(file.replace(".sql", ""));
 
 					if (version > oldVersion && version <= newVersion) {
 						executeSqlScript(db, file);
@@ -81,11 +81,11 @@ class DatabaseHelper extends SQLiteOpenHelper {
 	}
 
 	private void executeSqlScript(SQLiteDatabase db, String file) {
-		StringBuilder text = new StringBuilder();
+		final StringBuilder text = new StringBuilder();
 
 		try {
-			InputStream is = mContext.getAssets().open(MIGRATION_PATH + "/" + file);
-			BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+			final InputStream is = mContext.getAssets().open(MIGRATION_PATH + "/" + file);
+			final BufferedReader reader = new BufferedReader(new InputStreamReader(is));
 			String line;
 
 			while ((line = reader.readLine()) != null) {
@@ -148,15 +148,15 @@ class DatabaseHelper extends SQLiteOpenHelper {
 
 	@SuppressWarnings("unchecked")
 	private static ArrayList<Class<? extends ActiveRecordBase<?>>> getEntityClasses(Context context) {
-		ArrayList<Class<? extends ActiveRecordBase<?>>> entityClasses = new ArrayList<Class<? extends ActiveRecordBase<?>>>();
+		final ArrayList<Class<? extends ActiveRecordBase<?>>> entityClasses = new ArrayList<Class<? extends ActiveRecordBase<?>>>();
 
 		try {
-			String path = context.getPackageManager().getApplicationInfo(context.getPackageName(), 0).sourceDir;
-			DexFile dexfile = new DexFile(path);
-			Enumeration<String> entries = dexfile.entries();
+			final String path = context.getPackageManager().getApplicationInfo(context.getPackageName(), 0).sourceDir;
+			final DexFile dexfile = new DexFile(path);
+			final Enumeration<String> entries = dexfile.entries();
 
 			while (entries.hasMoreElements()) {
-				String name = entries.nextElement();
+				final String name = entries.nextElement();
 				Class<?> discoveredClass = null;
 				Class<?> superClass = null;
 
@@ -208,16 +208,11 @@ class DatabaseHelper extends SQLiteOpenHelper {
 
 	private static String getMetaDataString(Context context, String name) {
 		String value = null;
-		PackageManager pm;
-		ApplicationInfo ai;
-
-		pm = context.getPackageManager();
 
 		try {
-
-			ai = pm.getApplicationInfo(context.getPackageName(), PackageManager.GET_META_DATA);
+			final PackageManager pm = context.getPackageManager();
+			final ApplicationInfo ai = pm.getApplicationInfo(context.getPackageName(), PackageManager.GET_META_DATA);
 			value = ai.metaData.getString(name);
-
 		}
 		catch (Exception e) {
 			Log.w(Params.LOGGING_TAG, "Couldn't find meta data string: " + name);
@@ -228,16 +223,11 @@ class DatabaseHelper extends SQLiteOpenHelper {
 
 	private static Integer getMetaDataInteger(Context context, String name) {
 		Integer value = null;
-		PackageManager pm;
-		ApplicationInfo ai;
-
-		pm = context.getPackageManager();
 
 		try {
-
-			ai = pm.getApplicationInfo(context.getPackageName(), PackageManager.GET_META_DATA);
+			final PackageManager pm = context.getPackageManager();
+			final ApplicationInfo ai = pm.getApplicationInfo(context.getPackageName(), PackageManager.GET_META_DATA);
 			value = ai.metaData.getInt(name);
-
 		}
 		catch (Exception e) {
 			Log.w(Params.LOGGING_TAG, "Couldn't find meta data string: " + name);
