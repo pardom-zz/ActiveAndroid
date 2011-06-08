@@ -161,7 +161,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
 				Class<?> superClass = null;
 
 				try {
-					discoveredClass = Class.forName(name, true, context.getClass().getClassLoader());
+					discoveredClass = Class.forName(name, false, context.getClass().getClassLoader());
 					superClass = discoveredClass.getSuperclass();
 				}
 				catch (ClassNotFoundException e) {
