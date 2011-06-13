@@ -1,6 +1,7 @@
 package com.activeandroid;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import android.database.sqlite.SQLiteDatabase;
@@ -10,6 +11,7 @@ public class Application extends android.app.Application {
 	private DatabaseHelper mDatabaseHelper;
 	private SQLiteDatabase mDatabase;
 	private Set<ActiveRecordBase<?>> mEntities;
+	private Map<Class<?>, TypeParser<?>> mParsers;
 
 	@Override
 	public void onCreate() {
@@ -20,6 +22,7 @@ public class Application extends android.app.Application {
 		}
 
 		mDatabaseHelper = new DatabaseHelper(this);
+		mParsers = ReflectionUtils.getParsers(this);
 		mEntities = new HashSet<ActiveRecordBase<?>>();
 	}
 	

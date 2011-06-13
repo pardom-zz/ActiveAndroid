@@ -8,17 +8,12 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Enumeration;
 import java.util.List;
 
 import android.content.Context;
-import android.content.pm.ApplicationInfo;
-import android.content.pm.PackageManager;
-import android.content.pm.PackageManager.NameNotFoundException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
-import dalvik.system.DexFile;
 
 class DatabaseHelper extends SQLiteOpenHelper {
 	private final static String AA_DB_NAME = "AA_DB_NAME";
@@ -37,7 +32,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
 
 	@Override
 	public void onCreate(SQLiteDatabase db) {
-		final ArrayList<Class<? extends ActiveRecordBase<?>>> tables = getEntityClasses(mContext);
+		final ArrayList<Class<? extends ActiveRecordBase<?>>> tables = ReflectionUtils.getEntityClasses(mContext);
 
 		if (Params.LOGGING_ENABLED) {
 			Log.i(Params.LOGGING_TAG, "Creating " + tables.size() + " tables");
@@ -146,48 +141,8 @@ class DatabaseHelper extends SQLiteOpenHelper {
 		db.execSQL(sql);
 	}
 
-	@SuppressWarnings("unchecked")
-	private static ArrayList<Class<? extends ActiveRecordBase<?>>> getEntityClasses(Context context) {
-		final ArrayList<Class<? extends ActiveRecordBase<?>>> entityClasses = new ArrayList<Class<? extends ActiveRecordBase<?>>>();
-
-		try {
-			final String path = context.getPackageManager().getApplicationInfo(context.getPackageName(), 0).sourceDir;
-			final DexFile dexfile = new DexFile(path);
-			final Enumeration<String> entries = dexfile.entries();
-
-			while (entries.hasMoreElements()) {
-				final String name = entries.nextElement();
-				Class<?> discoveredClass = null;
-				Class<?> superClass = null;
-
-				try {
-					discoveredClass = Class.forName(name, false, context.getClass().getClassLoader());
-					superClass = discoveredClass.getSuperclass();
-				}
-				catch (ClassNotFoundException e) {
-					Log.e(Params.LOGGING_TAG, e.getMessage());
-				}
-
-				if (discoveredClass != null && superClass != null) {
-					if (discoveredClass.getSuperclass().equals(ActiveRecordBase.class)) {
-						entityClasses.add((Class<? extends ActiveRecordBase<?>>) discoveredClass);
-					}
-				}
-			}
-
-		}
-		catch (IOException e) {
-			Log.e(Params.LOGGING_TAG, e.getMessage());
-		}
-		catch (NameNotFoundException e) {
-			Log.e(Params.LOGGING_TAG, e.getMessage());
-		}
-
-		return entityClasses;
-	}
-
 	private static String getDBName(Context context) {
-		String aaName = getMetaDataString(context, AA_DB_NAME);
+		String aaName = ReflectionUtils.getMetaDataString(context, AA_DB_NAME);
 
 		if (aaName == null) {
 			aaName = "Application.db";
@@ -197,42 +152,12 @@ class DatabaseHelper extends SQLiteOpenHelper {
 	}
 
 	private static int getDBVersion(Context context) {
-		Integer aaVersion = getMetaDataInteger(context, AA_DB_VERSION);
+		Integer aaVersion = ReflectionUtils.getMetaDataInteger(context, AA_DB_VERSION);
 
 		if (aaVersion == null || aaVersion == 0) {
 			aaVersion = 1;
 		}
 
 		return aaVersion;
-	}
-
-	private static String getMetaDataString(Context context, String name) {
-		String value = null;
-
-		try {
-			final PackageManager pm = context.getPackageManager();
-			final ApplicationInfo ai = pm.getApplicationInfo(context.getPackageName(), PackageManager.GET_META_DATA);
-			value = ai.metaData.getString(name);
-		}
-		catch (Exception e) {
-			Log.w(Params.LOGGING_TAG, "Couldn't find meta data string: " + name);
-		}
-
-		return value;
-	}
-
-	private static Integer getMetaDataInteger(Context context, String name) {
-		Integer value = null;
-
-		try {
-			final PackageManager pm = context.getPackageManager();
-			final ApplicationInfo ai = pm.getApplicationInfo(context.getPackageName(), PackageManager.GET_META_DATA);
-			value = ai.metaData.getInt(name);
-		}
-		catch (Exception e) {
-			Log.w(Params.LOGGING_TAG, "Couldn't find meta data string: " + name);
-		}
-
-		return value;
 	}
 }
