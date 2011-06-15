@@ -3,7 +3,6 @@ package com.activeandroid;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
@@ -58,7 +57,7 @@ final class ReflectionUtils {
 				Class<?> superClass = null;
 
 				try {
-					discoveredClass = Class.forName(name, true, context.getClass().getClassLoader());
+					discoveredClass = Class.forName(name, false, context.getClass().getClassLoader());
 					superClass = discoveredClass.getSuperclass();
 				}
 				catch (ClassNotFoundException e) {
@@ -66,7 +65,7 @@ final class ReflectionUtils {
 				}
 
 				if (discoveredClass != null && superClass != null) {
-					if (discoveredClass.getSuperclass().equals(ActiveRecordBase.class)) {
+					if (superClass.equals(ActiveRecordBase.class)) {
 						entityClasses.add((Class<? extends ActiveRecordBase<?>>) discoveredClass);
 					}
 				}
@@ -90,6 +89,10 @@ final class ReflectionUtils {
 			final PackageManager pm = context.getPackageManager();
 			final ApplicationInfo ai = pm.getApplicationInfo(context.getPackageName(), PackageManager.GET_META_DATA);
 			value = ai.metaData.getString(name);
+
+			if (Params.LOGGING_ENABLED) {
+				Log.v(Params.LOGGING_TAG, name + ": " + value);
+			}
 		}
 		catch (Exception e) {
 			Log.w(Params.LOGGING_TAG, "Couldn't find meta data string: " + name);
@@ -105,6 +108,10 @@ final class ReflectionUtils {
 			final PackageManager pm = context.getPackageManager();
 			final ApplicationInfo ai = pm.getApplicationInfo(context.getPackageName(), PackageManager.GET_META_DATA);
 			value = ai.metaData.getInt(name);
+
+			if (Params.LOGGING_ENABLED) {
+				Log.v(Params.LOGGING_TAG, name + ": " + value);
+			}
 		}
 		catch (Exception e) {
 			Log.w(Params.LOGGING_TAG, "Couldn't find meta data string: " + name);
@@ -113,8 +120,8 @@ final class ReflectionUtils {
 		return value;
 	}
 
-	public static Map<Class<?>, TypeParser<?>> getParsers(Context context) {
-		Map<Class<?>, TypeParser<?>> parsers = new HashMap<Class<?>, TypeParser<?>>();
+	public static Map<Class<?>, TypeSerializer<?>> getParsers(Context context) {
+		Map<Class<?>, TypeSerializer<?>> parsers = new HashMap<Class<?>, TypeSerializer<?>>();
 
 		try {
 			final String path = context.getPackageManager().getApplicationInfo(context.getPackageName(), 0).sourceDir;
@@ -135,8 +142,8 @@ final class ReflectionUtils {
 				}
 
 				if (discoveredClass != null && superClass != null) {
-					if (discoveredClass.getSuperclass().equals(TypeParser.class)) {
-						TypeParser<?> instance = (TypeParser<?>) discoveredClass.newInstance();
+					if (superClass.equals(TypeSerializer.class)) {
+						TypeSerializer<?> instance = (TypeSerializer<?>) discoveredClass.newInstance();
 						Class<?> cls = instance.getType();
 
 						parsers.put(cls, instance);
@@ -161,7 +168,13 @@ final class ReflectionUtils {
 		return parsers;
 	}
 
-	public static ArrayList<Field> getTableFields(Class<?> type) {
+	public static ArrayList<Field> getTableFields(Context context, Class<?> type) {
+		final Application app = (Application) context.getApplicationContext();
+		final ArrayList<Field> cachedValue = app.getClassFields(type);
+		if(cachedValue != null) {
+			return cachedValue;
+		}
+		
 		final ArrayList<Field> typeFields = new ArrayList<Field>();
 
 		try {
@@ -180,11 +193,19 @@ final class ReflectionUtils {
 				typeFields.add(field);
 			}
 		}
+		
+		app.addClassFields(type, typeFields);
 
 		return typeFields;
 	}
 
-	public static String getTableName(Class<?> type) {
+	public static String getTableName(Context context, Class<?> type) {
+		final Application app = (Application) context.getApplicationContext();
+		final String cachedValue = app.getTableName(type);
+		if(cachedValue != null) {
+			return cachedValue;
+		}
+		
 		String tableName = null;
 		final Table annotation = type.getAnnotation(Table.class);
 
@@ -194,11 +215,13 @@ final class ReflectionUtils {
 		else {
 			tableName = type.getSimpleName();
 		}
+		
+		app.addTableName(type, tableName);
 
 		return tableName;
 	}
 
-	public static boolean typeIsSQLiteFloat(Class<?> type) {
+	public static boolean typeIsSQLiteReal(Class<?> type) {
 		return type.equals(Double.class) || type.equals(double.class) || type.equals(Float.class)
 				|| type.equals(float.class);
 	}
@@ -206,18 +229,17 @@ final class ReflectionUtils {
 	public static boolean typeIsSQLiteInteger(Class<?> type) {
 		return type.equals(Boolean.class)
 				|| type.equals(boolean.class)
-				|| type.equals(java.util.Date.class)
-				|| type.equals(java.sql.Date.class)
-				|| type.equals(Calendar.class)
 				|| type.equals(Integer.class)
 				|| type.equals(int.class)
 				|| type.equals(Long.class)
 				|| type.equals(long.class)
+				|| type.equals(Short.class)
+				|| type.equals(short.class)
 				|| (!type.isPrimitive() && type.getSuperclass() != null && type.getSuperclass().equals(
 						ActiveRecordBase.class));
 	}
 
 	public static boolean typeIsSQLiteString(Class<?> type) {
-		return type.equals(String.class) || type.equals(char.class);
+		return type.equals(String.class) || type.equals(Character.class) || type.equals(char.class);
 	}
 }

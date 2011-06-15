@@ -4,7 +4,6 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
-import java.util.Calendar;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -24,9 +23,9 @@ public abstract class ActiveRecordBase<T> {
 
 	private Application mApplication;
 	private Context mContext;
-	private String mTableName = ReflectionUtils.getTableName(this.getClass());
+	private String mTableName;
 
-	////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////`////////////////////////////////////////////////
 	// CONSTRUCTORS
 
 	public ActiveRecordBase(Context context) {
@@ -34,6 +33,7 @@ public abstract class ActiveRecordBase<T> {
 
 		mApplication = ((Application) context.getApplicationContext());
 		mContext = context.getApplicationContext();
+		mTableName = ReflectionUtils.getTableName(context, getClass());
 
 		mApplication.addEntity(this);
 	}
@@ -85,68 +85,66 @@ public abstract class ActiveRecordBase<T> {
 		final SQLiteDatabase db = mApplication.openDatabase();
 		final ContentValues values = new ContentValues();
 
-		for (Field field : ReflectionUtils.getTableFields(this.getClass())) {
+		for (Field field : ReflectionUtils.getTableFields(mContext, this.getClass())) {
 			final String fieldName = ReflectionUtils.getColumnName(field);
-			final Class<?> fieldType = field.getType();
+			Class<?> fieldType = field.getType();
+			final TypeSerializer<?> typeSerializer = mApplication.getParserForType(fieldType);
 
 			field.setAccessible(true);
 
 			try {
-				final Object value = field.get(this);
+				Object value = field.get(this);
+				if (typeSerializer != null) {
+					// serialize data
+					value = typeSerializer.serialize(value);
+					// set new object type
+					fieldType = value.getClass();
+				}
 
+				// Try to order by highest use
 				if (value == null) {
 					values.putNull(fieldName);
+				}
+				// String
+				else if (fieldType.equals(String.class)) {
+					values.put(fieldName, value.toString());
 				}
 				// Boolean
 				else if (fieldType.equals(Boolean.class) || fieldType.equals(boolean.class)) {
 					values.put(fieldName, (Boolean) value);
 				}
-				// Date
-				else if (fieldType.equals(java.util.Date.class)) {
-					values.put(fieldName, ((java.util.Date) field.get(this)).getTime());
-				}
-				// Date
-				else if (fieldType.equals(java.sql.Date.class)) {
-					values.put(fieldName, ((java.sql.Date) field.get(this)).getTime());
-				}
-				// Calendar
-				else if (fieldType.equals(Calendar.class)) {
-					values.put(fieldName, ((Calendar) field.get(this)).getTime().getTime());
-				}
-				// Double
-				else if (fieldType.equals(Double.class) || fieldType.equals(double.class)) {
-					values.put(fieldName, (Double) value);
-				}
-				// Float
-				else if (fieldType.equals(Float.class) || fieldType.equals(float.class)) {
-					values.put(fieldName, (Float) value);
+				// Long
+				else if (fieldType.equals(Long.class) || fieldType.equals(long.class)) {
+					values.put(fieldName, (Long) value);
 				}
 				// Integer
 				else if (fieldType.equals(Integer.class) || fieldType.equals(int.class)) {
 					values.put(fieldName, (Integer) value);
 				}
-				// Long
-				else if (fieldType.equals(Long.class) || fieldType.equals(long.class)) {
-					values.put(fieldName, (Long) value);
+				// Float
+				else if (fieldType.equals(Float.class) || fieldType.equals(float.class)) {
+					values.put(fieldName, (Float) value);
 				}
-				// String
-				else if (fieldType.equals(String.class) || fieldType.equals(char.class)) {
+				// Double
+				else if (fieldType.equals(Double.class) || fieldType.equals(double.class)) {
+					values.put(fieldName, (Double) value);
+				}
+				// Character
+				else if (fieldType.equals(Character.class) || fieldType.equals(char.class)) {
 					values.put(fieldName, value.toString());
 				}
 				else if (!fieldType.isPrimitive() && fieldType.getSuperclass() != null
 						&& fieldType.getSuperclass().equals(ActiveRecordBase.class)) {
 
 					final long entityId = ((ActiveRecordBase<?>) value).getId();
-
 					values.put(fieldName, entityId);
 				}
-
 			}
 			catch (IllegalArgumentException e) {
-				Log.e(Params.LOGGING_TAG, e.getMessage());
+				Log.e(Params.LOGGING_TAG, e.getClass().getName() + ": " + e.getMessage());
 			}
 			catch (IllegalAccessException e) {
-				Log.e(Params.LOGGING_TAG, e.getMessage());
+				Log.e(Params.LOGGING_TAG, e.getClass().getName() + ": " + e.getMessage());
 			}
 		}
 
@@ -169,7 +167,7 @@ public abstract class ActiveRecordBase<T> {
 	 * @param through the field on the other object through which this object is related.
 	 */
 	protected <E> ArrayList<E> getMany(Class<? extends ActiveRecordBase<E>> type, String through) {
-		final String tableName = ReflectionUtils.getTableName(type);
+		final String tableName = ReflectionUtils.getTableName(mContext, type);
 		return query(mContext, type, null, StringUtils.format("{0}.{1}={2}", tableName, through, getId()));
 	}
 
@@ -184,7 +182,7 @@ public abstract class ActiveRecordBase<T> {
 	 * @return <T> T - ActiveRecordBase
 	 */
 	public static <T> T load(Context context, Class<? extends ActiveRecordBase<?>> type, long id) {
-		final String tableName = ReflectionUtils.getTableName(type);
+		final String tableName = ReflectionUtils.getTableName(context, type);
 		final String selection = StringUtils.format("{0}.Id = {1}", tableName, id);
 
 		return querySingle(context, type, null, selection);
@@ -250,7 +248,7 @@ public abstract class ActiveRecordBase<T> {
 
 		final Application application = (Application) context.getApplicationContext();
 		final SQLiteDatabase db = application.openDatabase();
-		final String table = ReflectionUtils.getTableName(type);
+		final String table = ReflectionUtils.getTableName(context, type);
 
 		final int count = db.delete(table, where, null);
 		application.closeDatabase();
@@ -348,7 +346,7 @@ public abstract class ActiveRecordBase<T> {
 		// Open database
 		final Application application = (Application) context.getApplicationContext();
 		final SQLiteDatabase db = application.openDatabase();
-		final String table = ReflectionUtils.getTableName(type);
+		final String table = ReflectionUtils.getTableName(context, type);
 
 		// Get cursor from query (selectionArgs is always null)
 		final Cursor cursor = db.query(table, columns, where, null, groupBy, having, orderBy, limit);
@@ -513,11 +511,11 @@ public abstract class ActiveRecordBase<T> {
 	}
 
 	private final void loadFromCursor(Context context, Class<? extends ActiveRecordBase<?>> type, Cursor cursor) {
-		final ArrayList<Field> fields = ReflectionUtils.getTableFields(type);
+		final ArrayList<Field> fields = ReflectionUtils.getTableFields(context, type);
 
 		for (Field field : fields) {
 			final String fieldName = ReflectionUtils.getColumnName(field);
-			final Class<?> fieldType = field.getType();
+			Class<?> fieldType = field.getType();
 			final int columnIndex = cursor.getColumnIndex(fieldName);
 
 			if (columnIndex < 0) {
@@ -527,9 +525,40 @@ public abstract class ActiveRecordBase<T> {
 			field.setAccessible(true);
 
 			try {
+				boolean columnIsNull = cursor.isNull(columnIndex);
+				TypeSerializer<?> typeSerializer = mApplication.getParserForType(fieldType);
+				Object value = null;
 
-				if (cursor.isNull(columnIndex)) {
+				if (typeSerializer != null) {
+					fieldType = TypeSerializer.TYPE_MAPPING.get(typeSerializer.getSqlType());
+				}
+
+				if (columnIsNull) {
 					field = null;
+				}
+				else if (fieldType.equals(String.class)) {
+					value = cursor.getString(columnIndex);
+				}
+				else if (fieldType.equals(Boolean.class) || fieldType.equals(boolean.class)) {
+					value = cursor.getInt(columnIndex) != 0;
+				}
+				else if (fieldType.equals(Integer.class) || fieldType.equals(int.class)) {
+					value = cursor.getInt(columnIndex);
+				}
+				else if (fieldType.equals(Long.class) || fieldType.equals(long.class)) {
+					value = cursor.getLong(columnIndex);
+				}
+				else if (fieldType.equals(Float.class) || fieldType.equals(float.class)) {
+					value = cursor.getFloat(columnIndex);
+				}
+				else if (fieldType.equals(Double.class) || fieldType.equals(double.class)) {
+					value = cursor.getDouble(columnIndex);
+				}
+				else if (fieldType.equals(Short.class) || fieldType.equals(short.class)) {
+					value = cursor.getInt(columnIndex);
+				}
+				else if (fieldType.equals(Character.class) || fieldType.equals(char.class)) {
+					value = cursor.getString(columnIndex).charAt(0);
 				}
 				else if (!fieldType.isPrimitive() && fieldType.getSuperclass() != null
 						&& fieldType.getSuperclass().equals(ActiveRecordBase.class)) {
@@ -544,41 +573,18 @@ public abstract class ActiveRecordBase<T> {
 						entity = ActiveRecordBase.load(context, entityType, entityId);
 					}
 
-					field.set(this, entity);
-				}
-				else if (fieldType.equals(Boolean.class) || fieldType.equals(boolean.class)) {
-					field.set(this, cursor.getInt(columnIndex) != 0);
-				}
-				else if (fieldType.equals(char.class)) {
-					field.set(this, cursor.getString(columnIndex).charAt(0));
-				}
-				else if (fieldType.equals(java.util.Date.class)) {
-					field.set(this, new java.util.Date(cursor.getLong(columnIndex)));
-				}
-				else if (fieldType.equals(java.sql.Date.class)) {
-					field.set(this, new java.sql.Date(cursor.getLong(columnIndex)));
-				}
-				else if (fieldType.equals(Calendar.class)) {
-					Calendar calendar = Calendar.getInstance();
-					calendar.setTimeInMillis(cursor.getLong(columnIndex));
-					field.set(this, calendar);
-				}
-				else if (fieldType.equals(Double.class) || fieldType.equals(double.class)) {
-					field.set(this, cursor.getDouble(columnIndex));
-				}
-				else if (fieldType.equals(Float.class) || fieldType.equals(float.class)) {
-					field.set(this, cursor.getFloat(columnIndex));
-				}
-				else if (fieldType.equals(Integer.class) || fieldType.equals(int.class)) {
-					field.set(this, cursor.getInt(columnIndex));
-				}
-				else if (fieldType.equals(Long.class) || fieldType.equals(long.class)) {
-					field.set(this, cursor.getLong(columnIndex));
-				}
-				else if (fieldType.equals(String.class)) {
-					field.set(this, cursor.getString(columnIndex));
+					value = entity;
 				}
 
+				// Use a deserializer if one is available
+				if (typeSerializer != null && !columnIsNull) {
+					value = typeSerializer.deserialize(value);
+				}
+
+				// Set the field value
+				if (value != null) {
+					field.set(this, value);
+				}
 			}
 			catch (IllegalArgumentException e) {
 				Log.e(Params.LOGGING_TAG, e.getMessage());

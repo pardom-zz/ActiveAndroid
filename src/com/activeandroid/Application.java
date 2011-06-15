@@ -1,5 +1,8 @@
 package com.activeandroid;
 
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -11,7 +14,9 @@ public class Application extends android.app.Application {
 	private DatabaseHelper mDatabaseHelper;
 	private SQLiteDatabase mDatabase;
 	private Set<ActiveRecordBase<?>> mEntities;
-	private Map<Class<?>, TypeParser<?>> mParsers;
+	private Map<Class<?>, TypeSerializer<?>> mParsers;
+	private Map<Class<?>, String> mTableNames;
+	private Map<Class<?>, ArrayList<Field>> mClassFields;
 
 	@Override
 	public void onCreate() {
@@ -22,10 +27,12 @@ public class Application extends android.app.Application {
 		}
 
 		mDatabaseHelper = new DatabaseHelper(this);
-		mParsers = ReflectionUtils.getParsers(this);
 		mEntities = new HashSet<ActiveRecordBase<?>>();
+		mParsers = ReflectionUtils.getParsers(this);
+		mTableNames = new HashMap<Class<?>, String>();
+		mClassFields = new HashMap<Class<?>, ArrayList<Field>>();
 	}
-	
+
 	@Override
 	public void onTerminate() {
 		closeDatabase();
@@ -50,6 +57,26 @@ public class Application extends android.app.Application {
 		}
 	}
 
+	final TypeSerializer<?> getParserForType(Class<?> fieldType) {
+		if (mParsers.containsKey(fieldType)) {
+			return mParsers.get(fieldType);
+		}
+
+		return null;
+	}
+	
+	final void addClassFields(Class<?> type, ArrayList<Field> fields) {
+		mClassFields.put(type, fields);
+	}
+	
+	final ArrayList<Field> getClassFields(Class<?> type) {
+		if(mClassFields.containsKey(type)) {
+			return mClassFields.get(type);
+		}
+		
+		return null;
+	}
+
 	final void addEntity(ActiveRecordBase<?> entity) {
 		mEntities.add(entity);
 	}
@@ -60,6 +87,18 @@ public class Application extends android.app.Application {
 
 	final void removeEntity(ActiveRecordBase<?> entity) {
 		mEntities.remove(entity);
+	}
+	
+	final void addTableName(Class<?> type, String tableName) {
+		mTableNames.put(type, tableName);
+	}
+	
+	final String getTableName(Class<?> type) {
+		if(mTableNames.containsKey(type)) {
+			return mTableNames.get(type);
+		}
+		
+		return null;
 	}
 
 	final ActiveRecordBase<?> getEntity(Class<? extends ActiveRecordBase<?>> entityType, long id) {

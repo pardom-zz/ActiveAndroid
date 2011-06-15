@@ -27,7 +27,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
 
 	public DatabaseHelper(Context context) {
 		super(context, getDBName(context), null, getDBVersion(context));
-		mContext = context;
+		mContext = context.getApplicationContext();
 	}
 
 	@Override
@@ -35,7 +35,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
 		final ArrayList<Class<? extends ActiveRecordBase<?>>> tables = ReflectionUtils.getEntityClasses(mContext);
 
 		if (Params.LOGGING_ENABLED) {
-			Log.i(Params.LOGGING_TAG, "Creating " + tables.size() + " tables");
+			Log.v(Params.LOGGING_TAG, "Creating " + tables.size() + " tables");
 		}
 
 		for (Class<? extends ActiveRecordBase<?>> table : tables) {
@@ -45,14 +45,16 @@ class DatabaseHelper extends SQLiteOpenHelper {
 
 	@Override
 	public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-		onCreate(db);
-		executeMigrations(db, oldVersion, newVersion);
+		if (!executeMigrations(db, oldVersion, newVersion)) {
+			onCreate(db);
+		}
 	}
 
 	//////////////////////////////////////////////////////////////////////////////////
 	// PRIVATE METHODS
 
-	private void executeMigrations(SQLiteDatabase db, int oldVersion, int newVersion) {
+	private boolean executeMigrations(SQLiteDatabase db, int oldVersion, int newVersion) {
+		boolean migrationExecuted = false;
 		try {
 			final List<String> files = Arrays.asList(mContext.getAssets().list(MIGRATION_PATH));
 			Collections.sort(files, new NaturalOrderComparator());
@@ -63,6 +65,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
 
 					if (version > oldVersion && version <= newVersion) {
 						executeSqlScript(db, file);
+						migrationExecuted = true;
 					}
 				}
 				catch (NumberFormatException e) {
@@ -73,6 +76,8 @@ class DatabaseHelper extends SQLiteOpenHelper {
 		catch (IOException e) {
 			Log.e(Params.LOGGING_TAG, e.getMessage());
 		}
+
+		return migrationExecuted;
 	}
 
 	private void executeSqlScript(SQLiteDatabase db, String file) {
@@ -96,18 +101,22 @@ class DatabaseHelper extends SQLiteOpenHelper {
 		db.execSQL(text.toString());
 	}
 
-	private static void createTable(SQLiteDatabase db, Class<? extends ActiveRecordBase<?>> table) {
-		ArrayList<Field> fields = ReflectionUtils.getTableFields(table);
+	private void createTable(SQLiteDatabase db, Class<? extends ActiveRecordBase<?>> table) {
+		ArrayList<Field> fields = ReflectionUtils.getTableFields(mContext, table);
 		ArrayList<String> definitions = new ArrayList<String>();
 
 		for (Field field : fields) {
 			Class<?> fieldType = field.getType();
-			String fieldName = ReflectionUtils.getColumnName(field);
-			Integer fieldLength = ReflectionUtils.getColumnLength(field);
+			final String fieldName = ReflectionUtils.getColumnName(field);
+			final Integer fieldLength = ReflectionUtils.getColumnLength(field);
 			String definition = null;
 
-			if (ReflectionUtils.typeIsSQLiteFloat(fieldType)) {
-				definition = fieldName + " FLOAT";
+			TypeSerializer<?> typeSerializer = ((Application) mContext).getParserForType(fieldType);
+			if (typeSerializer != null) {
+				definition = fieldName + " " + typeSerializer.getSqlType().toString();
+			}
+			else if (ReflectionUtils.typeIsSQLiteReal(fieldType)) {
+				definition = fieldName + " REAL";
 
 			}
 			else if (ReflectionUtils.typeIsSQLiteInteger(fieldType)) {
@@ -131,11 +140,11 @@ class DatabaseHelper extends SQLiteOpenHelper {
 			}
 		}
 
-		String sql = StringUtils.format("CREATE TABLE IF NOT EXISTS {0} ({1});", ReflectionUtils.getTableName(table),
-				StringUtils.join(definitions, ", "));
+		String sql = StringUtils.format("CREATE TABLE IF NOT EXISTS {0} ({1});",
+				ReflectionUtils.getTableName(mContext, table), StringUtils.join(definitions, ", "));
 
 		if (Params.LOGGING_ENABLED) {
-			Log.i(Params.LOGGING_TAG, sql);
+			Log.v(Params.LOGGING_TAG, sql);
 		}
 
 		db.execSQL(sql);
