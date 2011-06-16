@@ -25,15 +25,16 @@ public abstract class ActiveRecordBase<T> {
 	private Context mContext;
 	private String mTableName;
 
-	////////////////////////////////`////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////
 	// CONSTRUCTORS
 
 	public ActiveRecordBase(Context context) {
-		checkForApplication(context);
-
-		mApplication = ((Application) context.getApplicationContext());
 		mContext = context.getApplicationContext();
-		mTableName = ReflectionUtils.getTableName(context, getClass());
+
+		checkForApplication(mContext);
+
+		mApplication = (Application) mContext;
+		mTableName = ReflectionUtils.getTableName(mContext, getClass());
 
 		mApplication.addEntity(this);
 	}
@@ -73,7 +74,7 @@ public abstract class ActiveRecordBase<T> {
 	public void delete() {
 		final SQLiteDatabase db = mApplication.openDatabase();
 		db.delete(mTableName, "Id=?", new String[] { getId().toString() });
-		mApplication.closeDatabase();
+		//mApplication.closeDatabase();
 		mApplication.removeEntity(this);
 	}
 
@@ -86,19 +87,24 @@ public abstract class ActiveRecordBase<T> {
 		final ContentValues values = new ContentValues();
 
 		for (Field field : ReflectionUtils.getTableFields(mContext, this.getClass())) {
-			final String fieldName = ReflectionUtils.getColumnName(field);
+			final String fieldName = ReflectionUtils.getColumnName(mContext, field);
 			Class<?> fieldType = field.getType();
-			final TypeSerializer<?> typeSerializer = mApplication.getParserForType(fieldType);
 
 			field.setAccessible(true);
 
 			try {
 				Object value = field.get(this);
-				if (typeSerializer != null) {
-					// serialize data
-					value = typeSerializer.serialize(value);
-					// set new object type
-					fieldType = value.getClass();
+
+				if (value != null) {
+					final TypeSerializer<?> typeSerializer = mApplication.getParserForType(fieldType);
+					if (typeSerializer != null) {
+						// serialize data
+						value = typeSerializer.serialize(value);
+						// set new object type
+						if (value != null) {
+							fieldType = value.getClass();
+						}
+					}
 				}
 
 				// Try to order by highest use
@@ -155,7 +161,7 @@ public abstract class ActiveRecordBase<T> {
 			db.update(mTableName, values, "Id=" + mId, null);
 		}
 
-		mApplication.closeDatabase();
+		//mApplication.closeDatabase();
 	}
 
 	// ###  RELATIONAL METHODS
@@ -244,14 +250,16 @@ public abstract class ActiveRecordBase<T> {
 	 * @return int the number of records affected.
 	 */
 	public static <T> int delete(Context context, Class<? extends ActiveRecordBase<?>> type, String where) {
+		context = context.getApplicationContext();
+
 		checkForApplication(context);
 
-		final Application application = (Application) context.getApplicationContext();
+		final Application application = (Application) context;
 		final SQLiteDatabase db = application.openDatabase();
 		final String table = ReflectionUtils.getTableName(context, type);
 
 		final int count = db.delete(table, where, null);
-		application.closeDatabase();
+		//application.closeDatabase();
 
 		return count;
 	}
@@ -341,6 +349,9 @@ public abstract class ActiveRecordBase<T> {
 	 */
 	public static <T> ArrayList<T> query(Context context, Class<? extends ActiveRecordBase<?>> type, String[] columns,
 			String where, String groupBy, String having, String orderBy, String limit) {
+
+		context = context.getApplicationContext();
+
 		checkForApplication(context);
 
 		// Open database
@@ -356,7 +367,7 @@ public abstract class ActiveRecordBase<T> {
 
 		// Clean up
 		cursor.close();
-		application.closeDatabase();
+		//application.closeDatabase();
 
 		return entities;
 	}
@@ -429,14 +440,16 @@ public abstract class ActiveRecordBase<T> {
 	 * @param sql the SQL query string.
 	 */
 	public static final <T> ArrayList<T> rawQuery(Context context, Class<? extends ActiveRecordBase<?>> type, String sql) {
-		final Application application = (Application) context.getApplicationContext();
+		context = context.getApplicationContext();
+
+		final Application application = (Application) context;
 		final SQLiteDatabase db = application.openDatabase();
 		final Cursor cursor = db.rawQuery(sql, null);
 
 		final ArrayList<T> entities = processCursor(context, type, cursor);
 
 		cursor.close();
-		application.closeDatabase();
+		//application.closeDatabase();
 
 		return entities;
 	}
@@ -456,7 +469,7 @@ public abstract class ActiveRecordBase<T> {
 	// PRIVATE METHODS
 
 	private static void checkForApplication(Context context) {
-		if (!(context.getApplicationContext() instanceof Application)) {
+		if (!(context instanceof Application)) {
 			throw new ClassCastException(
 					"Your application must use com.activeandroid.Application or a subclass. Check <application android:name /> in AndroidManifest.xml");
 		}
@@ -472,6 +485,7 @@ public abstract class ActiveRecordBase<T> {
 
 	private static final <T> ArrayList<T> processCursor(Context context, Class<? extends ActiveRecordBase<?>> type,
 			Cursor cursor) {
+
 		final ArrayList<T> entities = new ArrayList<T>();
 
 		try {
@@ -514,7 +528,7 @@ public abstract class ActiveRecordBase<T> {
 		final ArrayList<Field> fields = ReflectionUtils.getTableFields(context, type);
 
 		for (Field field : fields) {
-			final String fieldName = ReflectionUtils.getColumnName(field);
+			final String fieldName = ReflectionUtils.getColumnName(context, field);
 			Class<?> fieldType = field.getType();
 			final int columnIndex = cursor.getColumnIndex(fieldName);
 

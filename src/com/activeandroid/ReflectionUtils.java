@@ -5,7 +5,6 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.Map;
 
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
@@ -19,27 +18,45 @@ import com.activeandroid.annotation.Table;
 import dalvik.system.DexFile;
 
 final class ReflectionUtils {
-	public static Integer getColumnLength(Field field) {
-		Integer retVal = null;
+	public static Integer getColumnLength(Context context, Field field) {
+		final Application application = (Application) context;
+		final Integer cachedValue = application.getColumnInteger(field);
+		if (cachedValue != null) {
+			return cachedValue;
+		}
+
+		Integer columnLength = null;
 
 		final Column annotation = field.getAnnotation(Column.class);
 		if (annotation != null) {
 			final int length = annotation.length();
 			if (length > -1) {
-				retVal = length;
+				columnLength = length;
 			}
 		}
 
-		return retVal;
+		application.addColumnLength(field, columnLength);
+
+		return columnLength;
 	}
 
-	public static String getColumnName(Field field) {
-		final Column annotation = field.getAnnotation(Column.class);
-		if (annotation != null) {
-			return annotation.name();
+	public static String getColumnName(Context context, Field field) {
+		final Application application = (Application) context;
+		final String cachedValue = application.getColumnName(field);
+		if (cachedValue != null) {
+			return cachedValue;
 		}
 
-		return null;
+		String columnName = null;
+
+		final Column annotation = field.getAnnotation(Column.class);
+		if (annotation != null) {
+			columnName = annotation.name();
+		}
+
+		application.addColumnName(field, columnName);
+
+		return columnName;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -120,8 +137,8 @@ final class ReflectionUtils {
 		return value;
 	}
 
-	public static Map<Class<?>, TypeSerializer<?>> getParsers(Context context) {
-		Map<Class<?>, TypeSerializer<?>> parsers = new HashMap<Class<?>, TypeSerializer<?>>();
+	public static HashMap<Class<?>, TypeSerializer<?>> getParsers(Context context) {
+		HashMap<Class<?>, TypeSerializer<?>> parsers = new HashMap<Class<?>, TypeSerializer<?>>();
 
 		try {
 			final String path = context.getPackageManager().getApplicationInfo(context.getPackageName(), 0).sourceDir;
@@ -169,12 +186,12 @@ final class ReflectionUtils {
 	}
 
 	public static ArrayList<Field> getTableFields(Context context, Class<?> type) {
-		final Application app = (Application) context.getApplicationContext();
-		final ArrayList<Field> cachedValue = app.getClassFields(type);
-		if(cachedValue != null) {
+		final Application application = (Application) context;
+		final ArrayList<Field> cachedValue = application.getClassFields(type);
+		if (cachedValue != null) {
 			return cachedValue;
 		}
-		
+
 		final ArrayList<Field> typeFields = new ArrayList<Field>();
 
 		try {
@@ -193,19 +210,19 @@ final class ReflectionUtils {
 				typeFields.add(field);
 			}
 		}
-		
-		app.addClassFields(type, typeFields);
+
+		application.addClassFields(type, typeFields);
 
 		return typeFields;
 	}
 
 	public static String getTableName(Context context, Class<?> type) {
-		final Application app = (Application) context.getApplicationContext();
-		final String cachedValue = app.getTableName(type);
-		if(cachedValue != null) {
+		final Application application = (Application) context;
+		final String cachedValue = application.getTableName(type);
+		if (cachedValue != null) {
 			return cachedValue;
 		}
-		
+
 		String tableName = null;
 		final Table annotation = type.getAnnotation(Table.class);
 
@@ -215,8 +232,8 @@ final class ReflectionUtils {
 		else {
 			tableName = type.getSimpleName();
 		}
-		
-		app.addTableName(type, tableName);
+
+		application.addTableName(type, tableName);
 
 		return tableName;
 	}

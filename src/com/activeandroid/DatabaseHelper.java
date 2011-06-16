@@ -107,8 +107,8 @@ class DatabaseHelper extends SQLiteOpenHelper {
 
 		for (Field field : fields) {
 			Class<?> fieldType = field.getType();
-			final String fieldName = ReflectionUtils.getColumnName(field);
-			final Integer fieldLength = ReflectionUtils.getColumnLength(field);
+			final String fieldName = ReflectionUtils.getColumnName(mContext, field);
+			final Integer fieldLength = ReflectionUtils.getColumnLength(mContext, field);
 			String definition = null;
 
 			TypeSerializer<?> typeSerializer = ((Application) mContext).getParserForType(fieldType);

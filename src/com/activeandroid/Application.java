@@ -4,7 +4,6 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 import android.database.sqlite.SQLiteDatabase;
@@ -13,10 +12,14 @@ import android.database.sqlite.SQLiteDatabase;
 public class Application extends android.app.Application {
 	private DatabaseHelper mDatabaseHelper;
 	private SQLiteDatabase mDatabase;
+
 	private Set<ActiveRecordBase<?>> mEntities;
-	private Map<Class<?>, TypeSerializer<?>> mParsers;
-	private Map<Class<?>, String> mTableNames;
-	private Map<Class<?>, ArrayList<Field>> mClassFields;
+
+	private HashMap<Class<?>, TypeSerializer<?>> mParsers;
+	private HashMap<Class<?>, String> mTableNames;
+	private HashMap<Class<?>, ArrayList<Field>> mClassFields;
+	private HashMap<Field, String> mColumnNames;
+	private HashMap<Field, Integer> mColumnLengths;
 
 	@Override
 	public void onCreate() {
@@ -31,6 +34,8 @@ public class Application extends android.app.Application {
 		mParsers = ReflectionUtils.getParsers(this);
 		mTableNames = new HashMap<Class<?>, String>();
 		mClassFields = new HashMap<Class<?>, ArrayList<Field>>();
+		mColumnNames = new HashMap<Field, String>();
+		mColumnLengths = new HashMap<Field, Integer>();
 	}
 
 	@Override
@@ -39,6 +44,8 @@ public class Application extends android.app.Application {
 
 		super.onTerminate();
 	}
+
+	// Open/close database
 
 	public SQLiteDatabase openDatabase() {
 		if (mDatabase != null) {
@@ -57,48 +64,76 @@ public class Application extends android.app.Application {
 		}
 	}
 
-	final TypeSerializer<?> getParserForType(Class<?> fieldType) {
-		if (mParsers.containsKey(fieldType)) {
-			return mParsers.get(fieldType);
+	// Transactions (convenience methods)
+
+	public void beginTransaction() {
+		if (mDatabase == null) {
+			openDatabase();
 		}
 
-		return null;
+		mDatabase.beginTransaction();
+	}
+
+	public void endTransaction() {
+		if (mDatabase == null) {
+			openDatabase();
+		}
+
+		mDatabase.endTransaction();
+	}
+
+	public boolean inTransaction() {
+		if (mDatabase == null) {
+			openDatabase();
+		}
+
+		return mDatabase.inTransaction();
 	}
 	
+	public void setTransactionSuccessful() {
+		if (mDatabase == null) {
+			openDatabase();
+		}
+		
+		mDatabase.setTransactionSuccessful();
+	}
+	
+	// Non-public methods
+
 	final void addClassFields(Class<?> type, ArrayList<Field> fields) {
 		mClassFields.put(type, fields);
 	}
-	
-	final ArrayList<Field> getClassFields(Class<?> type) {
-		if(mClassFields.containsKey(type)) {
-			return mClassFields.get(type);
-		}
-		
-		return null;
+
+	final void addColumnName(Field field, String columnName) {
+		mColumnNames.put(field, columnName);
 	}
 
-	final void addEntity(ActiveRecordBase<?> entity) {
-		mEntities.add(entity);
+	final void addColumnLength(Field field, Integer columnLength) {
+		mColumnLengths.put(field, columnLength);
 	}
 
 	final void addEntities(Set<ActiveRecordBase<?>> entities) {
 		mEntities.addAll(entities);
 	}
 
-	final void removeEntity(ActiveRecordBase<?> entity) {
-		mEntities.remove(entity);
+	final void addEntity(ActiveRecordBase<?> entity) {
+		mEntities.add(entity);
 	}
-	
+
 	final void addTableName(Class<?> type, String tableName) {
 		mTableNames.put(type, tableName);
 	}
-	
-	final String getTableName(Class<?> type) {
-		if(mTableNames.containsKey(type)) {
-			return mTableNames.get(type);
-		}
-		
-		return null;
+
+	final ArrayList<Field> getClassFields(Class<?> type) {
+		return mClassFields.get(type);
+	}
+
+	final String getColumnName(Field field) {
+		return mColumnNames.get(field);
+	}
+
+	final Integer getColumnInteger(Field field) {
+		return mColumnLengths.get(field);
 	}
 
 	final ActiveRecordBase<?> getEntity(Class<? extends ActiveRecordBase<?>> entityType, long id) {
@@ -115,7 +150,19 @@ public class Application extends android.app.Application {
 		return null;
 	}
 
+	final TypeSerializer<?> getParserForType(Class<?> fieldType) {
+		return mParsers.get(fieldType);
+	}
+
+	final String getTableName(Class<?> type) {
+		return mTableNames.get(type);
+	}
+
 	private boolean isEmulator() {
 		return android.os.Build.MODEL.equals("sdk") || android.os.Build.MODEL.equals("google_sdk");
+	}
+
+	final void removeEntity(ActiveRecordBase<?> entity) {
+		mEntities.remove(entity);
 	}
 }
