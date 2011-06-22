@@ -30,7 +30,6 @@ public abstract class ActiveRecordBase<T> {
 
 	public ActiveRecordBase(Context context) {
 		mContext = context.getApplicationContext();
-
 		checkForApplication(mContext);
 
 		mApplication = (Application) mContext;
@@ -96,7 +95,7 @@ public abstract class ActiveRecordBase<T> {
 				Object value = field.get(this);
 
 				if (value != null) {
-					final TypeSerializer<?> typeSerializer = mApplication.getParserForType(fieldType);
+					final TypeSerializer typeSerializer = mApplication.getParserForType(fieldType);
 					if (typeSerializer != null) {
 						// serialize data
 						value = typeSerializer.serialize(value);
@@ -188,6 +187,9 @@ public abstract class ActiveRecordBase<T> {
 	 * @return <T> T - ActiveRecordBase
 	 */
 	public static <T> T load(Context context, Class<? extends ActiveRecordBase<?>> type, long id) {
+		context = context.getApplicationContext();
+		checkForApplication(context);
+
 		final String tableName = ReflectionUtils.getTableName(context, type);
 		final String selection = StringUtils.format("{0}.Id = {1}", tableName, id);
 
@@ -251,7 +253,6 @@ public abstract class ActiveRecordBase<T> {
 	 */
 	public static <T> int delete(Context context, Class<? extends ActiveRecordBase<?>> type, String where) {
 		context = context.getApplicationContext();
-
 		checkForApplication(context);
 
 		final Application application = (Application) context;
@@ -351,7 +352,6 @@ public abstract class ActiveRecordBase<T> {
 			String where, String groupBy, String having, String orderBy, String limit) {
 
 		context = context.getApplicationContext();
-
 		checkForApplication(context);
 
 		// Open database
@@ -540,11 +540,11 @@ public abstract class ActiveRecordBase<T> {
 
 			try {
 				boolean columnIsNull = cursor.isNull(columnIndex);
-				TypeSerializer<?> typeSerializer = mApplication.getParserForType(fieldType);
+				TypeSerializer typeSerializer = mApplication.getParserForType(fieldType);
 				Object value = null;
 
 				if (typeSerializer != null) {
-					fieldType = TypeSerializer.TYPE_MAPPING.get(typeSerializer.getSqlType());
+					fieldType = TypeSerializer.TYPE_MAPPING.get(typeSerializer.getSerializedType());
 				}
 
 				if (columnIsNull) {

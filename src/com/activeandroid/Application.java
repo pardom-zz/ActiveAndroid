@@ -6,7 +6,16 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
+import android.R;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.database.sqlite.SQLiteDatabase;
+import android.net.Uri;
 
 @SuppressWarnings("unused")
 public class Application extends android.app.Application {
@@ -15,7 +24,7 @@ public class Application extends android.app.Application {
 
 	private Set<ActiveRecordBase<?>> mEntities;
 
-	private HashMap<Class<?>, TypeSerializer<?>> mParsers;
+	private HashMap<Class<?>, TypeSerializer> mParsers;
 	private HashMap<Class<?>, String> mTableNames;
 	private HashMap<Class<?>, ArrayList<Field>> mClassFields;
 	private HashMap<Field, String> mColumnNames;
@@ -25,8 +34,46 @@ public class Application extends android.app.Application {
 	public void onCreate() {
 		super.onCreate();
 
-		if (Params.IS_TRIAL && !isEmulator()) {
-			throw new TrialVersionException();
+		if (Params.IS_TRIAL) {
+			final boolean isEmulator = isEmulator();
+			final int icon = android.R.drawable.stat_notify_error;
+			String tickerText;
+			String contentTitle;
+			String contentText;
+			String appName;
+
+			try {
+				PackageManager pm = getPackageManager();
+				appName = pm.getApplicationInfo(getPackageName(), 0).loadLabel(pm).toString();
+			}
+			catch (NameNotFoundException e) {
+				appName = "This application";
+			}
+
+			if (isEmulator) {
+				tickerText = appName + " uses ActiveAndroid Trial";
+				contentTitle = appName + " uses ActiveAndroid Trial";
+				contentText = "Purchase ActiveAndroid before use on devices.";
+			}
+			else {
+				tickerText = appName + " has been shut down";
+				contentTitle = appName + " uses ActiveAndroid Trial";
+				contentText = "ActiveAndroid Trial only works on the emulator.";
+			}
+
+			Intent contentIntent = new Intent(Intent.ACTION_VIEW);
+			contentIntent.setData(Uri.parse("https://www.activeandroid.com/"));
+			PendingIntent contentPendingIntent = PendingIntent.getActivity(this, 0, contentIntent, 0);
+
+			Notification notification = new Notification(icon, tickerText, 0);
+			notification.setLatestEventInfo(this, contentTitle, contentText, contentPendingIntent);
+
+			NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+			notificationManager.notify(-6532, notification);
+
+			if (!isEmulator) {
+				System.exit(0);
+			}
 		}
 
 		mDatabaseHelper = new DatabaseHelper(this);
@@ -47,7 +94,7 @@ public class Application extends android.app.Application {
 
 	// Open/close database
 
-	public SQLiteDatabase openDatabase() {
+	SQLiteDatabase openDatabase() {
 		if (mDatabase != null) {
 			return mDatabase;
 		}
@@ -57,47 +104,13 @@ public class Application extends android.app.Application {
 		return mDatabase;
 	}
 
-	public void closeDatabase() {
+	void closeDatabase() {
 		if (mDatabase != null) {
 			mDatabase.close();
 			mDatabase = null;
 		}
 	}
 
-	// Transactions (convenience methods)
-
-	public void beginTransaction() {
-		if (mDatabase == null) {
-			openDatabase();
-		}
-
-		mDatabase.beginTransaction();
-	}
-
-	public void endTransaction() {
-		if (mDatabase == null) {
-			openDatabase();
-		}
-
-		mDatabase.endTransaction();
-	}
-
-	public boolean inTransaction() {
-		if (mDatabase == null) {
-			openDatabase();
-		}
-
-		return mDatabase.inTransaction();
-	}
-	
-	public void setTransactionSuccessful() {
-		if (mDatabase == null) {
-			openDatabase();
-		}
-		
-		mDatabase.setTransactionSuccessful();
-	}
-	
 	// Non-public methods
 
 	final void addClassFields(Class<?> type, ArrayList<Field> fields) {
@@ -150,7 +163,7 @@ public class Application extends android.app.Application {
 		return null;
 	}
 
-	final TypeSerializer<?> getParserForType(Class<?> fieldType) {
+	final TypeSerializer getParserForType(Class<?> fieldType) {
 		return mParsers.get(fieldType);
 	}
 

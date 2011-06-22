@@ -3,28 +3,30 @@ package com.activeandroid;
 import java.util.HashMap;
 import java.util.Map;
 
-public abstract class TypeSerializer<T> {
-	final static Map<SqlType, Class<?>> TYPE_MAPPING = new HashMap<SqlType, Class<?>>() {
+public abstract class TypeSerializer {
+	final static Map<SerializedType, Class<?>> TYPE_MAPPING = new HashMap<SerializedType, Class<?>>() {
 		private static final long serialVersionUID = 2372163661642835762L;
 		{
-			put(SqlType.DOUBLE, Double.class);
-			put(SqlType.FLOAT, Float.class);
-			put(SqlType.INT, Integer.class);
-			put(SqlType.LONG, Long.class);
-			put(SqlType.SHORT, Short.class);
-			put(SqlType.STRING, String.class);
+			put(SerializedType.BOOLEAN, Boolean.class);
+			put(SerializedType.CHARACTER, Character.class);
+			put(SerializedType.DOUBLE, Double.class);
+			put(SerializedType.FLOAT, Float.class);
+			put(SerializedType.INTEGER, Integer.class);
+			put(SerializedType.LONG, Long.class);
+			put(SerializedType.SHORT, Short.class);
+			put(SerializedType.STRING, String.class);
 		}
 	};
 
-	public enum SqlType {
-		DOUBLE, FLOAT, INT, LONG, SHORT, STRING
+	public enum SerializedType {
+		BOOLEAN, CHARACTER, DOUBLE, FLOAT, INTEGER, LONG, SHORT, STRING
 	}
 
-	public abstract Class<?> getType();
+	public abstract Class<?> getDeserializedType();
 
-	public abstract SqlType getSqlType();
+	public abstract SerializedType getSerializedType();
 
 	public abstract Object serialize(Object data);
 
-	public abstract T deserialize(Object data);
+	public abstract Object deserialize(Object data);
 }

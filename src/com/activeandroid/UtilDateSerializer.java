@@ -1,18 +1,16 @@
-package com.activeandroid.parser;
+package com.activeandroid;
 
-import java.sql.Date;
+import java.util.Date;
 
-import com.activeandroid.TypeSerializer;
-
-public class SqlDateSerializer extends TypeSerializer<Date> {
+final class UtilDateSerializer extends TypeSerializer {
 	@Override
-	public Class<?> getType() {
+	public Class<?> getDeserializedType() {
 		return Date.class;
 	}
 
 	@Override
-	public SqlType getSqlType() {
-		return SqlType.LONG;
+	public SerializedType getSerializedType() {
+		return SerializedType.LONG;
 	}
 
 	@Override

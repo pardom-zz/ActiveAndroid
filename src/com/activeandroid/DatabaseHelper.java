@@ -111,9 +111,9 @@ class DatabaseHelper extends SQLiteOpenHelper {
 			final Integer fieldLength = ReflectionUtils.getColumnLength(mContext, field);
 			String definition = null;
 
-			TypeSerializer<?> typeSerializer = ((Application) mContext).getParserForType(fieldType);
+			TypeSerializer typeSerializer = ((Application) mContext).getParserForType(fieldType);
 			if (typeSerializer != null) {
-				definition = fieldName + " " + typeSerializer.getSqlType().toString();
+				definition = fieldName + " " + typeSerializer.getSerializedType().toString();
 			}
 			else if (ReflectionUtils.typeIsSQLiteReal(fieldType)) {
 				definition = fieldName + " REAL";

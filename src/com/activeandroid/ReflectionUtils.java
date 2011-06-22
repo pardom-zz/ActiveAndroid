@@ -137,8 +137,8 @@ final class ReflectionUtils {
 		return value;
 	}
 
-	public static HashMap<Class<?>, TypeSerializer<?>> getParsers(Context context) {
-		HashMap<Class<?>, TypeSerializer<?>> parsers = new HashMap<Class<?>, TypeSerializer<?>>();
+	public static HashMap<Class<?>, TypeSerializer> getParsers(Context context) {
+		HashMap<Class<?>, TypeSerializer> parsers = new HashMap<Class<?>, TypeSerializer>();
 
 		try {
 			final String path = context.getPackageManager().getApplicationInfo(context.getPackageName(), 0).sourceDir;
@@ -153,32 +153,31 @@ final class ReflectionUtils {
 				try {
 					discoveredClass = Class.forName(name, false, context.getClass().getClassLoader());
 					superClass = discoveredClass.getSuperclass();
+
+					if (discoveredClass != null && superClass != null) {
+						if (superClass.equals(TypeSerializer.class)) {
+							TypeSerializer instance = (TypeSerializer) discoveredClass.newInstance();
+							Class<?> cls = instance.getDeserializedType();
+
+							parsers.put(cls, instance);
+						}
+					}
 				}
 				catch (ClassNotFoundException e) {
 					Log.e(Params.LOGGING_TAG, e.getMessage());
 				}
-
-				if (discoveredClass != null && superClass != null) {
-					if (superClass.equals(TypeSerializer.class)) {
-						TypeSerializer<?> instance = (TypeSerializer<?>) discoveredClass.newInstance();
-						Class<?> cls = instance.getType();
-
-						parsers.put(cls, instance);
-					}
+				catch (InstantiationException e) {
+					Log.e(Params.LOGGING_TAG, e.getMessage());
+				}
+				catch (IllegalAccessException e) {
+					Log.e(Params.LOGGING_TAG, e.getMessage());
 				}
 			}
-
 		}
 		catch (IOException e) {
 			Log.e(Params.LOGGING_TAG, e.getMessage());
 		}
 		catch (NameNotFoundException e) {
-			Log.e(Params.LOGGING_TAG, e.getMessage());
-		}
-		catch (InstantiationException e) {
-			Log.e(Params.LOGGING_TAG, e.getMessage());
-		}
-		catch (IllegalAccessException e) {
 			Log.e(Params.LOGGING_TAG, e.getMessage());
 		}
 

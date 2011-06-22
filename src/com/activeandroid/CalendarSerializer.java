@@ -1,18 +1,16 @@
-package com.activeandroid.parser;
+package com.activeandroid;
 
 import java.util.Calendar;
 
-import com.activeandroid.TypeSerializer;
-
-public class CalendarSerializer extends TypeSerializer<Calendar> {
+final class CalendarSerializer extends TypeSerializer {
 	@Override
-	public Class<?> getType() {
+	public Class<?> getDeserializedType() {
 		return Calendar.class;
 	}
 
 	@Override
-	public com.activeandroid.TypeSerializer.SqlType getSqlType() {
-		return SqlType.LONG;
+	public TypeSerializer.SerializedType getSerializedType() {
+		return SerializedType.LONG;
 	}
 
 	@Override
