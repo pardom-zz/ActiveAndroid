@@ -9,7 +9,7 @@ final class StringUtils {
 		for (int i = len - 1; i >= 0; i--) {
 			format = format.replace("{" + i + "}", args[i] != null ? args[i].toString() : "null");
 		}
-		
+
 		return format;
 	}
 
@@ -17,13 +17,13 @@ final class StringUtils {
 		if (value == null || value.isEmpty()) {
 			return "";
 		}
-		
+
 		Iterator<String> iterator = value.iterator();
 		StringBuilder builder = new StringBuilder(iterator.next());
 		while (iterator.hasNext()) {
 			builder.append(separator).append(iterator.next());
 		}
-		
+
 		return builder.toString();
 	}
 
