@@ -12,6 +12,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
 import com.activeandroid.annotation.Column;
+import com.activeandroid.serializer.TypeSerializer;
 
 @SuppressWarnings("unchecked")
 public abstract class ActiveRecordBase<T> {
@@ -21,21 +22,18 @@ public abstract class ActiveRecordBase<T> {
 	@Column(name = "Id")
 	private Long mId = null;
 
-	private Application mApplication;
+	private ApplicationCache mApplicationCache = ApplicationCache.getInstance();
 	private Context mContext;
 	private String mTableName;
 
 	////////////////////////////////////////////////////////////////////////////////
 	// CONSTRUCTORS
 
-	public ActiveRecordBase(Context context) {
-		mContext = context.getApplicationContext();
-		checkForApplication(mContext);
+	public ActiveRecordBase() {
+		mContext = mApplicationCache.getContext();
+		mTableName = ReflectionUtils.getTableName(getClass());
 
-		mApplication = (Application) mContext;
-		mTableName = ReflectionUtils.getTableName(mContext, getClass());
-
-		mApplication.addEntity(this);
+		mApplicationCache.addEntity(this);
 	}
 
 	////////////////////////////////////////////////////////////////////////////////
@@ -71,10 +69,9 @@ public abstract class ActiveRecordBase<T> {
 	 * Deletes the current object's record from the database. References to this object will be null.
 	 */
 	public void delete() {
-		final SQLiteDatabase db = mApplication.openDatabase();
+		final SQLiteDatabase db = mApplicationCache.openDatabase();
 		db.delete(mTableName, "Id=?", new String[] { getId().toString() });
-		//mApplication.closeDatabase();
-		mApplication.removeEntity(this);
+		mApplicationCache.removeEntity(this);
 	}
 
 	/**
@@ -82,11 +79,11 @@ public abstract class ActiveRecordBase<T> {
 	 * its current existence. 
 	 */
 	public void save() {
-		final SQLiteDatabase db = mApplication.openDatabase();
+		final SQLiteDatabase db = mApplicationCache.openDatabase();
 		final ContentValues values = new ContentValues();
 
-		for (Field field : ReflectionUtils.getTableFields(mContext, this.getClass())) {
-			final String fieldName = ReflectionUtils.getColumnName(mContext, field);
+		for (Field field : ReflectionUtils.getTableFields(this.getClass())) {
+			final String fieldName = ReflectionUtils.getColumnName(field);
 			Class<?> fieldType = field.getType();
 
 			field.setAccessible(true);
@@ -95,7 +92,7 @@ public abstract class ActiveRecordBase<T> {
 				Object value = field.get(this);
 
 				if (value != null) {
-					final TypeSerializer typeSerializer = mApplication.getParserForType(fieldType);
+					final TypeSerializer typeSerializer = mApplicationCache.getParserForType(fieldType);
 					if (typeSerializer != null) {
 						// serialize data
 						value = typeSerializer.serialize(value);
@@ -170,247 +167,105 @@ public abstract class ActiveRecordBase<T> {
 	 * 
 	 * @param type the type of this object.
 	 * @param through the field on the other object through which this object is related.
+	 * @return ArrayList<E> ArrayList of objects returned by the query.
 	 */
 	protected <E> ArrayList<E> getMany(Class<? extends ActiveRecordBase<E>> type, String through) {
-		final String tableName = ReflectionUtils.getTableName(mContext, type);
-		return query(mContext, type, null, StringUtils.format("{0}.{1}={2}", tableName, through, getId()));
+		final String tableName = ReflectionUtils.getTableName(type);
+		final String selection = tableName + "." + through + "=" + getId();
+		return query(type, null, selection, null, null, null, null, null);
 	}
 
 	// ###  QUERY SHORTCUT METHODS
 
 	/**
+	 * Delete records in the table specified by the where clause.
+	 * @param type the type of this object.
+	 * @param id the primary key id of the record to be deleted.
+	 * @return boolean returns true if the record was found and deleted.
+	 */
+	public static boolean delete(Class<? extends ActiveRecordBase<?>> type, long id) {
+		return delete(type, "Id=?", new String[] { String.valueOf(id) }) > 0;
+	}
+
+	/**
 	 * Load a single record by primary key.
 	 * 
-	 * @param context the current context.
 	 * @param type the type of this object.
-	 * @param id the primary key id of the record.
-	 * @return <T> T - ActiveRecordBase
+	 * @param id the primary key id of the record to be loaded.
+	 * @return <T> object returned by the query.
 	 */
-	public static <T> T load(Context context, Class<? extends ActiveRecordBase<?>> type, long id) {
-		context = context.getApplicationContext();
-		checkForApplication(context);
+	public static <T> T load(Class<? extends ActiveRecordBase<?>> type, long id) {
+		final String tableName = ReflectionUtils.getTableName(type);
+		final String selection = tableName + ".Id=?";
+		final String[] selectionArgs = new String[] { String.valueOf(id) };
 
-		final String tableName = ReflectionUtils.getTableName(context, type);
-		final String selection = StringUtils.format("{0}.Id = {1}", tableName, id);
-
-		return querySingle(context, type, null, selection);
+		return querySingle(type, null, selection, selectionArgs, null, null, null);
 	}
 
 	/**
 	 * Load the first record in a table.
 	 * 
-	 * @param context the current context.
 	 * @param type the type of this object.
-	 * @return <T> T - ActiveRecordBase
+	 * @return <T> object returned by the query.
 	 */
-	public static <T> T first(Context context, Class<? extends ActiveRecordBase<?>> type) {
-		return querySingle(context, type, null);
+	public static <T> T first(Class<? extends ActiveRecordBase<?>> type) {
+		return querySingle(type, null, null, null, null, null, null);
 	}
 
 	/**
 	 * Load the last record in a table.
 	 * 
-	 * @param context the current context.
 	 * @param type the type of this object
-	 * @return <T> T - ActiveRecordBase
+	 * @return <T> object returned by the query.
 	 */
-	public static <T> T last(Context context, Class<? extends ActiveRecordBase<?>> type) {
-		return querySingle(context, type, null, null, "Id DESC");
+	public static <T> T last(Class<? extends ActiveRecordBase<?>> type) {
+		return querySingle(type, null, null, null, null, null, "Id DESC");
 	}
 
 	// ### STANDARD METHODS
 
 	/**
-	 * Delete all records in the table.
-	 * 
-	 * @param context the current context.
-	 * @param type the type of this object.
-	 * @return int the number of records affected.
-	 */
-	public static <T> int delete(Context context, Class<? extends ActiveRecordBase<?>> type) {
-		return delete(context, type, null);
-	}
-
-	/**
-	 * Delete the record specified by primary key.
-	 * 
-	 * @param context the current context.
-	 * @param type the type of this object.
-	 * @param id the primary key to delete.
-	 * @return boolean returns true if the record existed and was deleted.
-	 */
-	public static <T> boolean delete(Context context, Class<? extends ActiveRecordBase<?>> type, long id) {
-		return delete(context, type, "Id=" + id) > 0;
-	}
-
-	/**
 	 * Delete records in the table specified by the where clause.
 	 * @param <T>
-	 * @param context
-	 * @param type
-	 * @param where
+	 * @param type the type of this object
+	 * @param whereClause the where clause.
+	 * @param whereArgs arguments to be supplied to the where clause.
 	 * @return int the number of records affected.
 	 */
-	public static <T> int delete(Context context, Class<? extends ActiveRecordBase<?>> type, String where) {
-		context = context.getApplicationContext();
-		checkForApplication(context);
+	public static int delete(Class<? extends ActiveRecordBase<?>> type, String whereClause, String[] whereArgs) {
+		final SQLiteDatabase db = ApplicationCache.getInstance().openDatabase();
+		final String table = ReflectionUtils.getTableName(type);
 
-		final Application application = (Application) context;
-		final SQLiteDatabase db = application.openDatabase();
-		final String table = ReflectionUtils.getTableName(context, type);
-
-		final int count = db.delete(table, where, null);
-		//application.closeDatabase();
+		final int count = db.delete(table, whereClause, whereArgs);
 
 		return count;
-	}
-
-	// find & overloads
-
-	/**
-	 * Return an ArrayList of all records for the specified type.
-	 * 
-	 * @param context the current context.
-	 * @param type the type of this object.
-	 * @return ArrayList<T> ArrayList of objects returned by the query
-	 */
-	public static <T> ArrayList<T> query(Context context, Class<? extends ActiveRecordBase<?>> type) {
-		return query(context, type, null, null, null, null, null, null);
-	}
-
-	/**
-	 * Return an ArrayList of all records for the specified type. Includes only the specified columns
-	 * 
-	 * @param context the current context.
-	 * @param type the type of this object.
-	 * @param columns the columns to select, or null for all columns.
-	 * @return ArrayList<T> ArrayList of objects returned by the query.
-	 */
-	public static <T> ArrayList<T> query(Context context, Class<? extends ActiveRecordBase<?>> type, String[] columns) {
-		return query(context, type, columns, null, null, null, null, null);
-	}
-
-	/**
-	 * Return an ArrayList of all records for the specified type and where clause. Includes only the specified columns
-	 * 
-	 * @param context the current context.
-	 * @param type the type of this object.
-	 * @param columns the columns to select, or null for all columns.
-	 * @param where where clause applied to the query.
-	 * @return ArrayList<T> ArrayList of objects returned by the query.
-	 */
-	public static <T> ArrayList<T> query(Context context, Class<? extends ActiveRecordBase<?>> type, String[] columns,
-			String where) {
-		return query(context, type, columns, where, null, null, null, null);
-	}
-
-	/**
-	 * Return an ArrayList of all records for the specified type, where, and order by clauses. Includes only the specified columns
-	 * 
-	 * @param context the current context.
-	 * @param type the type of this object.
-	 * @param columns the columns to select, or null for all columns.
-	 * @param where where clause applied to the query, or null for no clause.
-	 * @param orderBy order by clause applied to the query, or null for no clause.
-	 * @return ArrayList<T> ArrayList of objects returned by the query.
-	 */
-	public static <T> ArrayList<T> query(Context context, Class<? extends ActiveRecordBase<?>> type, String[] columns,
-			String where, String orderBy) {
-		return query(context, type, columns, where, null, null, orderBy, null);
-	}
-
-	/**
-	 * Return an ArrayList of all records for the specified type, where, order by, and limit clauses. Includes only the specified columns
-	 * 
-	 * @param context the current context.
-	 * @param type the type of this object.
-	 * @param columns the columns to select, or null for all columns.
-	 * @param where where clause applied to the query, or null for no clause.
-	 * @param orderBy order by clause applied to the query, or null for no clause.
-	 * @param limit limit clause applied to the query (including distinct), or null for no clause.
-	 * @return ArrayList<T> ArrayList of objects returned by the query.
-	 */
-	public static <T> ArrayList<T> query(Context context, Class<? extends ActiveRecordBase<?>> type, String[] columns,
-			String where, String orderBy, String limit) {
-		return query(context, type, columns, where, null, null, orderBy, limit);
 	}
 
 	/**
 	 * Return an ArrayList of all records for the specified type, where, order by, group by, having, and limit clauses. Includes only the specified columns
 	 * 
-	 * @param context the current context.
 	 * @param type the type of this object.
 	 * @param columns the columns to select, or null for all columns.
-	 * @param where where clause applied to the query, or null for no clause.
+	 * @param selection selection clause applied to the query, or null for no clause.
+	 * @param selectionArgs arguments to be supplied to the selection clause.
 	 * @param groupBy group by clause applied to the query, or null for no clause.
 	 * @param having having clause applied to the query, or null for no clause.
 	 * @param orderBy order by clause applied to the query, or null for no clause.
 	 * @param limit limit clause applied to the query (including distinct), or null for no clause.
 	 * @return ArrayList<T> ArrayList of objects returned by the query.
 	 */
-	public static <T> ArrayList<T> query(Context context, Class<? extends ActiveRecordBase<?>> type, String[] columns,
-			String where, String groupBy, String having, String orderBy, String limit) {
+	public static <T> ArrayList<T> query(Class<? extends ActiveRecordBase<?>> type, String[] columns, String selection,
+			String[] selectionArgs, String groupBy, String having, String orderBy, String limit) {
 
-		context = context.getApplicationContext();
-		checkForApplication(context);
+		final SQLiteDatabase db = ApplicationCache.getInstance().openDatabase();
+		final Cursor cursor = db.query(ReflectionUtils.getTableName(type), columns, selection, selectionArgs, groupBy,
+				having, orderBy, limit);
 
-		// Open database
-		final Application application = (Application) context.getApplicationContext();
-		final SQLiteDatabase db = application.openDatabase();
-		final String table = ReflectionUtils.getTableName(context, type);
+		final ArrayList<T> entities = processCursor(type, cursor);
 
-		// Get cursor from query (selectionArgs is always null)
-		final Cursor cursor = db.query(table, columns, where, null, groupBy, having, orderBy, limit);
-
-		// Convert cursor response into list of entities
-		final ArrayList<T> entities = processCursor(context, type, cursor);
-
-		// Clean up
 		cursor.close();
-		//application.closeDatabase();
 
 		return entities;
-	}
-
-	/**
-	 * Return a single object for the specified type. Includes only the specified columns
-	 * 
-	 * @param context the current context.
-	 * @param type the type of this object.
-	 * @param columns the columns to select, or null for all columns.
-	 * @return T object returned by the query.
-	 */
-	public static <T> T querySingle(Context context, Class<? extends ActiveRecordBase<?>> type, String[] columns) {
-		return (T) getFirst(query(context, type, columns, null, null, "1"));
-	}
-
-	/**
-	 * Return a single object for the specified type, and where clauses. Includes only the specified columns
-	 * 
-	 * @param context the current context.
-	 * @param type the type of this object.
-	 * @param columns the columns to select, or null for all columns.
-	 * @param where where clause applied to the query, or null for no clause.
-	 * @return T object returned by the query.
-	 */
-	public static <T> T querySingle(Context context, Class<? extends ActiveRecordBase<?>> type, String[] columns,
-			String where) {
-		return (T) getFirst(query(context, type, columns, where, null, "1"));
-	}
-
-	/**
-	 * Return a single object for the specified type, where, and order by clauses. Includes only the specified columns
-	 * 
-	 * @param context the current context.
-	 * @param type the type of this object.
-	 * @param columns the columns to select, or null for all columns.
-	 * @param where where clause applied to the query, or null for no clause.
-	 * @param orderBy order by clause applied to the query, or null for no clause.
-	 * @return T object returned by the query.
-	 */
-	public static <T> T querySingle(Context context, Class<? extends ActiveRecordBase<?>> type, String[] columns,
-			String where, String orderBy) {
-		return (T) getFirst(query(context, type, columns, where, orderBy, "1"));
 	}
 
 	/**
@@ -419,15 +274,17 @@ public abstract class ActiveRecordBase<T> {
 	 * @param context the current context.
 	 * @param type the type of this object.
 	 * @param columns the columns to select, or null for all columns.
-	 * @param where where clause applied to the query, or null for no clause.
+	 * @param selection selection clause applied to the query, or null for no clause.
+	 * @param selectionArgs arguments to be supplied to the selection clause.
 	 * @param groupBy group by clause applied to the query, or null for no clause.
 	 * @param having having clause applied to the query, or null for no clause.
 	 * @param orderBy order by clause applied to the query, or null for no clause.
-	 * @return T object returned by the query.
+	 * @return <T> object returned by the query.
 	 */
-	public static <T> T querySingle(Context context, Class<? extends ActiveRecordBase<?>> type, String[] columns,
-			String selection, String groupBy, String having, String orderBy) {
-		return (T) getFirst(query(context, type, columns, selection, groupBy, having, orderBy, "1"));
+	public static <T> T querySingle(Class<? extends ActiveRecordBase<?>> type, String[] columns, String selection,
+			String[] selectionArgs, String groupBy, String having, String orderBy) {
+
+		return (T) getFirst(query(type, columns, selection, selectionArgs, groupBy, having, orderBy, "1"));
 	}
 
 	// raw sql query
@@ -438,18 +295,17 @@ public abstract class ActiveRecordBase<T> {
 	 * @param context the current context.
 	 * @param type the type of this object.
 	 * @param sql the SQL query string.
+	 * @return ArrayList<T> ArrayList of objects returned by the query.
 	 */
-	public static final <T> ArrayList<T> rawQuery(Context context, Class<? extends ActiveRecordBase<?>> type, String sql) {
-		context = context.getApplicationContext();
+	public static final <T> ArrayList<T> rawQuery(Class<? extends ActiveRecordBase<?>> type, String sql,
+			String[] selectionArgs) {
 
-		final Application application = (Application) context;
-		final SQLiteDatabase db = application.openDatabase();
-		final Cursor cursor = db.rawQuery(sql, null);
+		final SQLiteDatabase db = ApplicationCache.getInstance().openDatabase();
+		final Cursor cursor = db.rawQuery(sql, selectionArgs);
 
-		final ArrayList<T> entities = processCursor(context, type, cursor);
+		final ArrayList<T> entities = processCursor(type, cursor);
 
 		cursor.close();
-		//application.closeDatabase();
 
 		return entities;
 	}
@@ -460,20 +316,16 @@ public abstract class ActiveRecordBase<T> {
 	 * @param context the current context.
 	 * @param type the type of this object.
 	 * @param sql the SQL query string.
+	 * @return <T> object returned by the query.
 	 */
-	public static final <T> T rawQuerySingle(Context context, Class<? extends ActiveRecordBase<?>> type, String sql) {
-		return (T) getFirst(rawQuery(context, type, sql));
+	public static final <T> T rawQuerySingle(Class<? extends ActiveRecordBase<?>> type, String sql,
+			String[] selectionArgs) {
+
+		return (T) getFirst(rawQuery(type, sql, selectionArgs));
 	}
 
 	////////////////////////////////////////////////////////////////////////////////
 	// PRIVATE METHODS
-
-	private static void checkForApplication(Context context) {
-		if (!(context instanceof Application)) {
-			throw new ClassCastException(
-					"Your application must use com.activeandroid.Application or a subclass. Check <application android:name /> in AndroidManifest.xml");
-		}
-	}
 
 	private static <T> T getFirst(ArrayList<T> entities) {
 		if (entities.size() > 0) {
@@ -483,19 +335,16 @@ public abstract class ActiveRecordBase<T> {
 		return null;
 	}
 
-	private static final <T> ArrayList<T> processCursor(Context context, Class<? extends ActiveRecordBase<?>> type,
-			Cursor cursor) {
-
+	private static final <T> ArrayList<T> processCursor(Class<? extends ActiveRecordBase<?>> type, Cursor cursor) {
 		final ArrayList<T> entities = new ArrayList<T>();
 
 		try {
-
-			Constructor<?> entityConstructor = type.getConstructor(Context.class);
+			Constructor<?> entityConstructor = type.getConstructor();
 
 			if (cursor.moveToFirst()) {
 				do {
-					T entity = (T) entityConstructor.newInstance(context);
-					((ActiveRecordBase<T>) entity).loadFromCursor(context, type, cursor);
+					T entity = (T) entityConstructor.newInstance();
+					((ActiveRecordBase<T>) entity).loadFromCursor(type, cursor);
 					entities.add(entity);
 				}
 				while (cursor.moveToNext());
@@ -524,11 +373,11 @@ public abstract class ActiveRecordBase<T> {
 		return entities;
 	}
 
-	private final void loadFromCursor(Context context, Class<? extends ActiveRecordBase<?>> type, Cursor cursor) {
-		final ArrayList<Field> fields = ReflectionUtils.getTableFields(context, type);
+	private final void loadFromCursor(Class<? extends ActiveRecordBase<?>> type, Cursor cursor) {
+		final ArrayList<Field> fields = ReflectionUtils.getTableFields(type);
 
 		for (Field field : fields) {
-			final String fieldName = ReflectionUtils.getColumnName(context, field);
+			final String fieldName = ReflectionUtils.getColumnName(field);
 			Class<?> fieldType = field.getType();
 			final int columnIndex = cursor.getColumnIndex(fieldName);
 
@@ -540,7 +389,7 @@ public abstract class ActiveRecordBase<T> {
 
 			try {
 				boolean columnIsNull = cursor.isNull(columnIndex);
-				TypeSerializer typeSerializer = mApplication.getParserForType(fieldType);
+				TypeSerializer typeSerializer = mApplicationCache.getParserForType(fieldType);
 				Object value = null;
 
 				if (typeSerializer != null) {
@@ -580,11 +429,10 @@ public abstract class ActiveRecordBase<T> {
 					long entityId = cursor.getLong(columnIndex);
 					Class<? extends ActiveRecordBase<?>> entityType = (Class<? extends ActiveRecordBase<?>>) fieldType;
 
-					Application application = ((Application) context.getApplicationContext());
-					ActiveRecordBase<?> entity = application.getEntity(entityType, entityId);
+					ActiveRecordBase<?> entity = mApplicationCache.getEntity(entityType, entityId);
 
 					if (entity == null) {
-						entity = ActiveRecordBase.load(context, entityType, entityId);
+						entity = ActiveRecordBase.load(entityType, entityId);
 					}
 
 					value = entity;

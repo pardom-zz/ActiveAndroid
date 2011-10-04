@@ -1,8 +1,9 @@
-package com.activeandroid;
+package com.activeandroid.serializer;
 
 import java.sql.Date;
 
-final class SqlDateSerializer extends TypeSerializer {
+
+final public class SqlDateSerializer extends TypeSerializer {
 	@Override
 	public Class<?> getDeserializedType() {
 		return Date.class;

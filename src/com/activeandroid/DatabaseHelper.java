@@ -13,7 +13,10 @@ import java.util.List;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.text.TextUtils;
 import android.util.Log;
+
+import com.activeandroid.serializer.TypeSerializer;
 
 class DatabaseHelper extends SQLiteOpenHelper {
 	private final static String AA_DB_NAME = "AA_DB_NAME";
@@ -26,13 +29,13 @@ class DatabaseHelper extends SQLiteOpenHelper {
 	// PUBLIC METHODS
 
 	public DatabaseHelper(Context context) {
-		super(context, getDBName(context), null, getDBVersion(context));
-		mContext = context.getApplicationContext();
+		super(context, getDBName(), null, getDBVersion());
+		mContext = context;
 	}
 
 	@Override
 	public void onCreate(SQLiteDatabase db) {
-		final ArrayList<Class<? extends ActiveRecordBase<?>>> tables = ReflectionUtils.getEntityClasses(mContext);
+		final ArrayList<Class<? extends ActiveRecordBase<?>>> tables = ReflectionUtils.getEntityClasses();
 
 		if (Params.LOGGING_ENABLED) {
 			Log.v(Params.LOGGING_TAG, "Creating " + tables.size() + " tables");
@@ -102,16 +105,16 @@ class DatabaseHelper extends SQLiteOpenHelper {
 	}
 
 	private void createTable(SQLiteDatabase db, Class<? extends ActiveRecordBase<?>> table) {
-		ArrayList<Field> fields = ReflectionUtils.getTableFields(mContext, table);
+		ArrayList<Field> fields = ReflectionUtils.getTableFields(table);
 		ArrayList<String> definitions = new ArrayList<String>();
 
 		for (Field field : fields) {
 			Class<?> fieldType = field.getType();
-			final String fieldName = ReflectionUtils.getColumnName(mContext, field);
-			final Integer fieldLength = ReflectionUtils.getColumnLength(mContext, field);
+			final String fieldName = ReflectionUtils.getColumnName(field);
+			final Integer fieldLength = ReflectionUtils.getColumnLength(field);
 			String definition = null;
 
-			TypeSerializer typeSerializer = ((Application) mContext).getParserForType(fieldType);
+			TypeSerializer typeSerializer = ApplicationCache.getInstance().getParserForType(fieldType);
 			if (typeSerializer != null) {
 				definition = fieldName + " " + typeSerializer.getSerializedType().toString();
 			}
@@ -140,8 +143,8 @@ class DatabaseHelper extends SQLiteOpenHelper {
 			}
 		}
 
-		String sql = StringUtils.format("CREATE TABLE IF NOT EXISTS {0} ({1});",
-				ReflectionUtils.getTableName(mContext, table), StringUtils.join(definitions, ", "));
+		String sql = String.format("CREATE TABLE IF NOT EXISTS %s (%s);", ReflectionUtils.getTableName(table),
+				TextUtils.join(", ", definitions));
 
 		if (Params.LOGGING_ENABLED) {
 			Log.v(Params.LOGGING_TAG, sql);
@@ -150,8 +153,8 @@ class DatabaseHelper extends SQLiteOpenHelper {
 		db.execSQL(sql);
 	}
 
-	private static String getDBName(Context context) {
-		String aaName = ReflectionUtils.getMetaDataString(context, AA_DB_NAME);
+	private static String getDBName() {
+		String aaName = ReflectionUtils.getMetaDataString(AA_DB_NAME);
 
 		if (aaName == null) {
 			aaName = "Application.db";
@@ -160,8 +163,8 @@ class DatabaseHelper extends SQLiteOpenHelper {
 		return aaName;
 	}
 
-	private static int getDBVersion(Context context) {
-		Integer aaVersion = ReflectionUtils.getMetaDataInteger(context, AA_DB_VERSION);
+	private static int getDBVersion() {
+		Integer aaVersion = ReflectionUtils.getMetaDataInteger(AA_DB_VERSION);
 
 		if (aaVersion == null || aaVersion == 0) {
 			aaVersion = 1;

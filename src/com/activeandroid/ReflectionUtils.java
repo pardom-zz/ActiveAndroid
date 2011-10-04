@@ -14,13 +14,13 @@ import android.util.Log;
 
 import com.activeandroid.annotation.Column;
 import com.activeandroid.annotation.Table;
+import com.activeandroid.serializer.TypeSerializer;
 
 import dalvik.system.DexFile;
 
 final class ReflectionUtils {
-	public static Integer getColumnLength(Context context, Field field) {
-		final Application application = (Application) context;
-		final Integer cachedValue = application.getColumnInteger(field);
+	public static Integer getColumnLength(Field field) {
+		final Integer cachedValue = ApplicationCache.getInstance().getColumnInteger(field);
 		if (cachedValue != null) {
 			return cachedValue;
 		}
@@ -35,14 +35,13 @@ final class ReflectionUtils {
 			}
 		}
 
-		application.addColumnLength(field, columnLength);
+		ApplicationCache.getInstance().addColumnLength(field, columnLength);
 
 		return columnLength;
 	}
 
-	public static String getColumnName(Context context, Field field) {
-		final Application application = (Application) context;
-		final String cachedValue = application.getColumnName(field);
+	public static String getColumnName(Field field) {
+		final String cachedValue = ApplicationCache.getInstance().getColumnName(field);
 		if (cachedValue != null) {
 			return cachedValue;
 		}
@@ -54,13 +53,14 @@ final class ReflectionUtils {
 			columnName = annotation.name();
 		}
 
-		application.addColumnName(field, columnName);
+		ApplicationCache.getInstance().addColumnName(field, columnName);
 
 		return columnName;
 	}
 
 	@SuppressWarnings("unchecked")
-	public static ArrayList<Class<? extends ActiveRecordBase<?>>> getEntityClasses(Context context) {
+	public static ArrayList<Class<? extends ActiveRecordBase<?>>> getEntityClasses() {
+		final Context context = ApplicationCache.getInstance().getContext();
 		final ArrayList<Class<? extends ActiveRecordBase<?>>> entityClasses = new ArrayList<Class<? extends ActiveRecordBase<?>>>();
 
 		try {
@@ -99,7 +99,8 @@ final class ReflectionUtils {
 		return entityClasses;
 	}
 
-	public static String getMetaDataString(Context context, String name) {
+	public static String getMetaDataString(String name) {
+		final Context context = ApplicationCache.getInstance().getContext();
 		String value = null;
 
 		try {
@@ -118,7 +119,8 @@ final class ReflectionUtils {
 		return value;
 	}
 
-	public static Integer getMetaDataInteger(Context context, String name) {
+	public static Integer getMetaDataInteger(String name) {
+		final Context context = ApplicationCache.getInstance().getContext();
 		Integer value = null;
 
 		try {
@@ -137,7 +139,8 @@ final class ReflectionUtils {
 		return value;
 	}
 
-	public static HashMap<Class<?>, TypeSerializer> getParsers(Context context) {
+	public static HashMap<Class<?>, TypeSerializer> getParsers() {
+		final Context context = ApplicationCache.getInstance().getContext();
 		HashMap<Class<?>, TypeSerializer> parsers = new HashMap<Class<?>, TypeSerializer>();
 
 		try {
@@ -184,9 +187,8 @@ final class ReflectionUtils {
 		return parsers;
 	}
 
-	public static ArrayList<Field> getTableFields(Context context, Class<?> type) {
-		final Application application = (Application) context;
-		final ArrayList<Field> cachedValue = application.getClassFields(type);
+	public static ArrayList<Field> getTableFields(Class<?> type) {
+		final ArrayList<Field> cachedValue = ApplicationCache.getInstance().getClassFields(type);
 		if (cachedValue != null) {
 			return cachedValue;
 		}
@@ -210,14 +212,13 @@ final class ReflectionUtils {
 			}
 		}
 
-		application.addClassFields(type, typeFields);
+		ApplicationCache.getInstance().addClassFields(type, typeFields);
 
 		return typeFields;
 	}
 
-	public static String getTableName(Context context, Class<?> type) {
-		final Application application = (Application) context;
-		final String cachedValue = application.getTableName(type);
+	public static String getTableName(Class<?> type) {
+		final String cachedValue = ApplicationCache.getInstance().getTableName(type);
 		if (cachedValue != null) {
 			return cachedValue;
 		}
@@ -232,7 +233,7 @@ final class ReflectionUtils {
 			tableName = type.getSimpleName();
 		}
 
-		application.addTableName(type, tableName);
+		ApplicationCache.getInstance().addTableName(type, tableName);
 
 		return tableName;
 	}

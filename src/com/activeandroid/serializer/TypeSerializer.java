@@ -1,10 +1,10 @@
-package com.activeandroid;
+package com.activeandroid.serializer;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public abstract class TypeSerializer {
-	final static Map<SerializedType, Class<?>> TYPE_MAPPING = new HashMap<SerializedType, Class<?>>() {
+	final public static Map<SerializedType, Class<?>> TYPE_MAPPING = new HashMap<SerializedType, Class<?>>() {
 		private static final long serialVersionUID = 2372163661642835762L;
 		{
 			put(SerializedType.BOOLEAN, Boolean.class);
