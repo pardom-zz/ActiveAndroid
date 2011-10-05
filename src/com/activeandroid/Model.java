@@ -15,21 +15,21 @@ import com.activeandroid.annotation.Column;
 import com.activeandroid.serializer.TypeSerializer;
 
 @SuppressWarnings("unchecked")
-public abstract class ActiveRecordBase<T> {
+public abstract class Model {
 	////////////////////////////////////////////////////////////////////////////////
 	// PRIVATE MEMBERS
 
 	@Column(name = "Id")
 	private Long mId = null;
 
-	private ApplicationCache mApplicationCache = ApplicationCache.getInstance();
+	private Registry mApplicationCache = Registry.getInstance();
 	private Context mContext;
 	private String mTableName;
 
 	////////////////////////////////////////////////////////////////////////////////
 	// CONSTRUCTORS
 
-	public ActiveRecordBase() {
+	public Model() {
 		mContext = mApplicationCache.getContext();
 		mTableName = ReflectionUtils.getTableName(getClass());
 
@@ -136,17 +136,17 @@ public abstract class ActiveRecordBase<T> {
 					values.put(fieldName, value.toString());
 				}
 				else if (!fieldType.isPrimitive() && fieldType.getSuperclass() != null
-						&& fieldType.getSuperclass().equals(ActiveRecordBase.class)) {
+						&& fieldType.getSuperclass().equals(Model.class)) {
 
-					final long entityId = ((ActiveRecordBase<?>) value).getId();
+					final long entityId = ((Model) value).getId();
 					values.put(fieldName, entityId);
 				}
 			}
 			catch (IllegalArgumentException e) {
-				Log.e(Params.LOGGING_TAG, e.getClass().getName() + ": " + e.getMessage());
+				Log.e(Params.Logging.TAG, e.getClass().getName() + ": " + e.getMessage());
 			}
 			catch (IllegalAccessException e) {
-				Log.e(Params.LOGGING_TAG, e.getClass().getName() + ": " + e.getMessage());
+				Log.e(Params.Logging.TAG, e.getClass().getName() + ": " + e.getMessage());
 			}
 		}
 
@@ -169,10 +169,10 @@ public abstract class ActiveRecordBase<T> {
 	 * @param through the field on the other object through which this object is related.
 	 * @return ArrayList<E> ArrayList of objects returned by the query.
 	 */
-	protected <E> ArrayList<E> getMany(Class<? extends ActiveRecordBase<E>> type, String through) {
+	protected <E> ArrayList<E> getMany(Class<? extends Model> type, String through) {
 		final String tableName = ReflectionUtils.getTableName(type);
 		final String selection = tableName + "." + through + "=" + getId();
-		return query(type, null, selection, null, null, null, null, null);
+		return query(type, false, null, selection, null, null, null, null, null);
 	}
 
 	// ###  QUERY SHORTCUT METHODS
@@ -183,7 +183,7 @@ public abstract class ActiveRecordBase<T> {
 	 * @param id the primary key id of the record to be deleted.
 	 * @return boolean returns true if the record was found and deleted.
 	 */
-	public static boolean delete(Class<? extends ActiveRecordBase<?>> type, long id) {
+	public static boolean delete(Class<? extends Model> type, long id) {
 		return delete(type, "Id=?", new String[] { String.valueOf(id) }) > 0;
 	}
 
@@ -194,12 +194,12 @@ public abstract class ActiveRecordBase<T> {
 	 * @param id the primary key id of the record to be loaded.
 	 * @return <T> object returned by the query.
 	 */
-	public static <T> T load(Class<? extends ActiveRecordBase<?>> type, long id) {
+	public static <T> T load(Class<? extends Model> type, long id) {
 		final String tableName = ReflectionUtils.getTableName(type);
 		final String selection = tableName + ".Id=?";
 		final String[] selectionArgs = new String[] { String.valueOf(id) };
 
-		return querySingle(type, null, selection, selectionArgs, null, null, null);
+		return querySingle(type, false, null, selection, selectionArgs, null, null, null);
 	}
 
 	/**
@@ -208,8 +208,8 @@ public abstract class ActiveRecordBase<T> {
 	 * @param type the type of this object.
 	 * @return <T> object returned by the query.
 	 */
-	public static <T> T first(Class<? extends ActiveRecordBase<?>> type) {
-		return querySingle(type, null, null, null, null, null, null);
+	public static <T> T first(Class<? extends Model> type) {
+		return querySingle(type, false, null, null, null, null, null, null);
 	}
 
 	/**
@@ -218,8 +218,8 @@ public abstract class ActiveRecordBase<T> {
 	 * @param type the type of this object
 	 * @return <T> object returned by the query.
 	 */
-	public static <T> T last(Class<? extends ActiveRecordBase<?>> type) {
-		return querySingle(type, null, null, null, null, null, "Id DESC");
+	public static <T> T last(Class<? extends Model> type) {
+		return querySingle(type, false, null, null, null, null, null, "Id DESC");
 	}
 
 	// ### STANDARD METHODS
@@ -232,8 +232,8 @@ public abstract class ActiveRecordBase<T> {
 	 * @param whereArgs arguments to be supplied to the where clause.
 	 * @return int the number of records affected.
 	 */
-	public static int delete(Class<? extends ActiveRecordBase<?>> type, String whereClause, String[] whereArgs) {
-		final SQLiteDatabase db = ApplicationCache.getInstance().openDatabase();
+	public static int delete(Class<? extends Model> type, String whereClause, String[] whereArgs) {
+		final SQLiteDatabase db = Registry.getInstance().openDatabase();
 		final String table = ReflectionUtils.getTableName(type);
 
 		final int count = db.delete(table, whereClause, whereArgs);
@@ -254,12 +254,12 @@ public abstract class ActiveRecordBase<T> {
 	 * @param limit limit clause applied to the query (including distinct), or null for no clause.
 	 * @return ArrayList<T> ArrayList of objects returned by the query.
 	 */
-	public static <T> ArrayList<T> query(Class<? extends ActiveRecordBase<?>> type, String[] columns, String selection,
-			String[] selectionArgs, String groupBy, String having, String orderBy, String limit) {
+	public static <T> ArrayList<T> query(Class<? extends Model> type, boolean distinct, String[] columns,
+			String selection, String[] selectionArgs, String groupBy, String having, String orderBy, String limit) {
 
-		final SQLiteDatabase db = ApplicationCache.getInstance().openDatabase();
-		final Cursor cursor = db.query(ReflectionUtils.getTableName(type), columns, selection, selectionArgs, groupBy,
-				having, orderBy, limit);
+		final SQLiteDatabase db = Registry.getInstance().openDatabase();
+		final Cursor cursor = db.query(distinct, ReflectionUtils.getTableName(type), columns, selection, selectionArgs,
+				groupBy, having, orderBy, limit);
 
 		final ArrayList<T> entities = processCursor(type, cursor);
 
@@ -281,10 +281,10 @@ public abstract class ActiveRecordBase<T> {
 	 * @param orderBy order by clause applied to the query, or null for no clause.
 	 * @return <T> object returned by the query.
 	 */
-	public static <T> T querySingle(Class<? extends ActiveRecordBase<?>> type, String[] columns, String selection,
+	public static <T> T querySingle(Class<? extends Model> type, boolean distinct, String[] columns, String selection,
 			String[] selectionArgs, String groupBy, String having, String orderBy) {
 
-		return (T) getFirst(query(type, columns, selection, selectionArgs, groupBy, having, orderBy, "1"));
+		return (T) getFirst(query(type, distinct, columns, selection, selectionArgs, groupBy, having, orderBy, "1"));
 	}
 
 	// raw sql query
@@ -297,10 +297,9 @@ public abstract class ActiveRecordBase<T> {
 	 * @param sql the SQL query string.
 	 * @return ArrayList<T> ArrayList of objects returned by the query.
 	 */
-	public static final <T> ArrayList<T> rawQuery(Class<? extends ActiveRecordBase<?>> type, String sql,
-			String[] selectionArgs) {
+	public static final <T> ArrayList<T> rawQuery(Class<? extends Model> type, String sql, String[] selectionArgs) {
 
-		final SQLiteDatabase db = ApplicationCache.getInstance().openDatabase();
+		final SQLiteDatabase db = Registry.getInstance().openDatabase();
 		final Cursor cursor = db.rawQuery(sql, selectionArgs);
 
 		final ArrayList<T> entities = processCursor(type, cursor);
@@ -318,8 +317,7 @@ public abstract class ActiveRecordBase<T> {
 	 * @param sql the SQL query string.
 	 * @return <T> object returned by the query.
 	 */
-	public static final <T> T rawQuerySingle(Class<? extends ActiveRecordBase<?>> type, String sql,
-			String[] selectionArgs) {
+	public static final <T> T rawQuerySingle(Class<? extends Model> type, String sql, String[] selectionArgs) {
 
 		return (T) getFirst(rawQuery(type, sql, selectionArgs));
 	}
@@ -335,7 +333,7 @@ public abstract class ActiveRecordBase<T> {
 		return null;
 	}
 
-	private static final <T> ArrayList<T> processCursor(Class<? extends ActiveRecordBase<?>> type, Cursor cursor) {
+	private static final <T> ArrayList<T> processCursor(Class<? extends Model> type, Cursor cursor) {
 		final ArrayList<T> entities = new ArrayList<T>();
 
 		try {
@@ -344,7 +342,7 @@ public abstract class ActiveRecordBase<T> {
 			if (cursor.moveToFirst()) {
 				do {
 					T entity = (T) entityConstructor.newInstance();
-					((ActiveRecordBase<T>) entity).loadFromCursor(type, cursor);
+					((Model) entity).loadFromCursor(type, cursor);
 					entities.add(entity);
 				}
 				while (cursor.moveToNext());
@@ -352,28 +350,28 @@ public abstract class ActiveRecordBase<T> {
 
 		}
 		catch (IllegalArgumentException e) {
-			Log.e(Params.LOGGING_TAG, e.getMessage());
+			Log.e(Params.Logging.TAG, e.getMessage());
 		}
 		catch (InstantiationException e) {
-			Log.e(Params.LOGGING_TAG, e.getMessage());
+			Log.e(Params.Logging.TAG, e.getMessage());
 		}
 		catch (IllegalAccessException e) {
-			Log.e(Params.LOGGING_TAG, e.getMessage());
+			Log.e(Params.Logging.TAG, e.getMessage());
 		}
 		catch (InvocationTargetException e) {
-			Log.e(Params.LOGGING_TAG, e.getMessage());
+			Log.e(Params.Logging.TAG, e.getMessage());
 		}
 		catch (SecurityException e) {
-			Log.e(Params.LOGGING_TAG, e.getMessage());
+			Log.e(Params.Logging.TAG, e.getMessage());
 		}
 		catch (NoSuchMethodException e) {
-			Log.e(Params.LOGGING_TAG, "Missing required constructor: " + e.getMessage());
+			Log.e(Params.Logging.TAG, "Missing required constructor: " + e.getMessage());
 		}
 
 		return entities;
 	}
 
-	private final void loadFromCursor(Class<? extends ActiveRecordBase<?>> type, Cursor cursor) {
+	private final void loadFromCursor(Class<? extends Model> type, Cursor cursor) {
 		final ArrayList<Field> fields = ReflectionUtils.getTableFields(type);
 
 		for (Field field : fields) {
@@ -424,15 +422,15 @@ public abstract class ActiveRecordBase<T> {
 					value = cursor.getString(columnIndex).charAt(0);
 				}
 				else if (!fieldType.isPrimitive() && fieldType.getSuperclass() != null
-						&& fieldType.getSuperclass().equals(ActiveRecordBase.class)) {
+						&& fieldType.getSuperclass().equals(Model.class)) {
 
 					long entityId = cursor.getLong(columnIndex);
-					Class<? extends ActiveRecordBase<?>> entityType = (Class<? extends ActiveRecordBase<?>>) fieldType;
+					Class<? extends Model> entityType = (Class<? extends Model>) fieldType;
 
-					ActiveRecordBase<?> entity = mApplicationCache.getEntity(entityType, entityId);
+					Model entity = mApplicationCache.getEntity(entityType, entityId);
 
 					if (entity == null) {
-						entity = ActiveRecordBase.load(entityType, entityId);
+						entity = Model.load(entityType, entityId);
 					}
 
 					value = entity;
@@ -449,13 +447,13 @@ public abstract class ActiveRecordBase<T> {
 				}
 			}
 			catch (IllegalArgumentException e) {
-				Log.e(Params.LOGGING_TAG, e.getMessage());
+				Log.e(Params.Logging.TAG, e.getMessage());
 			}
 			catch (IllegalAccessException e) {
-				Log.e(Params.LOGGING_TAG, e.getMessage());
+				Log.e(Params.Logging.TAG, e.getMessage());
 			}
 			catch (SecurityException e) {
-				Log.e(Params.LOGGING_TAG, e.getMessage());
+				Log.e(Params.Logging.TAG, e.getMessage());
 			}
 		}
 	}
@@ -465,7 +463,7 @@ public abstract class ActiveRecordBase<T> {
 
 	@Override
 	public boolean equals(Object obj) {
-		final ActiveRecordBase<?> other = (ActiveRecordBase<?>) obj;
+		final Model other = (Model) obj;
 
 		return (this.mTableName == other.mTableName) && (this.mId == other.mId);
 	}

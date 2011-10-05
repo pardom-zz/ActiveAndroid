@@ -1,7 +1,9 @@
-package com.activeandroid;
+package com.activeandroid.query;
 
-public class QueryBase {
-	protected Class<? extends ActiveRecordBase<?>> mTable = null;
+import com.activeandroid.Model;
+
+public abstract class QueryBase {
+	protected Class<? extends Model> mTable = null;
 
 	protected void ensureTableDeclared() {
 		if (mTable == null) {

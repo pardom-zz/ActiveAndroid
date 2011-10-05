@@ -35,13 +35,13 @@ class DatabaseHelper extends SQLiteOpenHelper {
 
 	@Override
 	public void onCreate(SQLiteDatabase db) {
-		final ArrayList<Class<? extends ActiveRecordBase<?>>> tables = ReflectionUtils.getEntityClasses();
+		final ArrayList<Class<? extends Model>> tables = ReflectionUtils.getEntityClasses();
 
-		if (Params.LOGGING_ENABLED) {
-			Log.v(Params.LOGGING_TAG, "Creating " + tables.size() + " tables");
+		if (Params.Logging.ENABLED) {
+			Log.v(Params.Logging.TAG, "Creating " + tables.size() + " tables");
 		}
 
-		for (Class<? extends ActiveRecordBase<?>> table : tables) {
+		for (Class<? extends Model> table : tables) {
 			createTable(db, table);
 		}
 	}
@@ -72,12 +72,12 @@ class DatabaseHelper extends SQLiteOpenHelper {
 					}
 				}
 				catch (NumberFormatException e) {
-					Log.w(Params.LOGGING_TAG, "Skipping invalidly named file: " + file);
+					Log.w(Params.Logging.TAG, "Skipping invalidly named file: " + file);
 				}
 			}
 		}
 		catch (IOException e) {
-			Log.e(Params.LOGGING_TAG, e.getMessage());
+			Log.e(Params.Logging.TAG, e.getMessage());
 		}
 
 		return migrationExecuted;
@@ -98,13 +98,13 @@ class DatabaseHelper extends SQLiteOpenHelper {
 
 		}
 		catch (IOException e) {
-			Log.e(Params.LOGGING_TAG, e.getMessage());
+			Log.e(Params.Logging.TAG, e.getMessage());
 		}
 
 		db.execSQL(text.toString());
 	}
 
-	private void createTable(SQLiteDatabase db, Class<? extends ActiveRecordBase<?>> table) {
+	private void createTable(SQLiteDatabase db, Class<? extends Model> table) {
 		ArrayList<Field> fields = ReflectionUtils.getTableFields(table);
 		ArrayList<String> definitions = new ArrayList<String>();
 
@@ -114,7 +114,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
 			final Integer fieldLength = ReflectionUtils.getColumnLength(field);
 			String definition = null;
 
-			TypeSerializer typeSerializer = ApplicationCache.getInstance().getParserForType(fieldType);
+			TypeSerializer typeSerializer = Registry.getInstance().getParserForType(fieldType);
 			if (typeSerializer != null) {
 				definition = fieldName + " " + typeSerializer.getSerializedType().toString();
 			}
@@ -146,8 +146,8 @@ class DatabaseHelper extends SQLiteOpenHelper {
 		String sql = String.format("CREATE TABLE IF NOT EXISTS %s (%s);", ReflectionUtils.getTableName(table),
 				TextUtils.join(", ", definitions));
 
-		if (Params.LOGGING_ENABLED) {
-			Log.v(Params.LOGGING_TAG, sql);
+		if (Params.Logging.ENABLED) {
+			Log.v(Params.Logging.TAG, sql);
 		}
 
 		db.execSQL(sql);

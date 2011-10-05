@@ -1,8 +1,11 @@
-package com.activeandroid;
+package com.activeandroid.query;
 
 import java.util.ArrayList;
 
+import com.activeandroid.Model;
+
 final public class Select extends QueryBase {
+	private boolean mDistinct = false;
 	private String[] mColumns = null;
 	private String mSelection = null;
 	private String[] mSelectionArgs = null;
@@ -18,7 +21,12 @@ final public class Select extends QueryBase {
 		mColumns = columns;
 	}
 
-	public Select from(Class<? extends ActiveRecordBase<?>> table) {
+	public Select distinct() {
+		mDistinct = true;
+		return this;
+	}
+
+	public Select from(Class<? extends Model> table) {
 		mTable = table;
 		return this;
 	}
@@ -63,12 +71,12 @@ final public class Select extends QueryBase {
 
 	public <T> ArrayList<T> execute() {
 		ensureTableDeclared();
-		return ActiveRecordBase
-				.query(mTable, mColumns, mSelection, mSelectionArgs, mGroupBy, mHaving, mOrderBy, mLimit);
+		return Model
+				.query(mTable, mDistinct, mColumns, mSelection, mSelectionArgs, mGroupBy, mHaving, mOrderBy, mLimit);
 	}
 
 	public <T> T executeSingle() {
 		ensureTableDeclared();
-		return ActiveRecordBase.querySingle(mTable, mColumns, mSelection, mSelectionArgs, mGroupBy, mHaving, mOrderBy);
+		return Model.querySingle(mTable, mDistinct, mColumns, mSelection, mSelectionArgs, mGroupBy, mHaving, mOrderBy);
 	}
 }

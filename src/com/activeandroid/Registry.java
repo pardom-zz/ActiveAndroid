@@ -6,8 +6,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.activeandroid.serializer.TypeSerializer;
-
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -18,14 +16,16 @@ import android.content.pm.PackageManager.NameNotFoundException;
 import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 
-public class ApplicationCache {
+import com.activeandroid.serializer.TypeSerializer;
+
+class Registry {
 	private Context mContext;
 	private DatabaseHelper mDatabaseHelper;
 	private SQLiteDatabase mDatabase;
 
 	private boolean mIsInitialized = false;
 
-	private Set<ActiveRecordBase<?>> mEntities;
+	private Set<Model> mEntities;
 
 	private HashMap<Class<?>, TypeSerializer> mParsers;
 	private HashMap<Class<?>, String> mTableNames;
@@ -34,14 +34,16 @@ public class ApplicationCache {
 	private HashMap<Field, Integer> mColumnLengths;
 
 	// Hide constructor. Must use getInstance()
-	private ApplicationCache() {
+	private Registry() {
 	}
 
 	private static class InstanceHolder {
-		public static final ApplicationCache instance = new ApplicationCache();
+		public static final Registry instance = new Registry();
 	}
 
-	public static ApplicationCache getInstance() {
+	// Public methods
+
+	static Registry getInstance() {
 		return InstanceHolder.instance;
 	}
 
@@ -98,7 +100,7 @@ public class ApplicationCache {
 		mDatabaseHelper = new DatabaseHelper(mContext);
 		mParsers = ReflectionUtils.getParsers();
 
-		mEntities = new HashSet<ActiveRecordBase<?>>();
+		mEntities = new HashSet<Model>();
 		mTableNames = new HashMap<Class<?>, String>();
 		mClassFields = new HashMap<Class<?>, ArrayList<Field>>();
 		mColumnNames = new HashMap<Field, String>();
@@ -109,7 +111,7 @@ public class ApplicationCache {
 		mIsInitialized = true;
 	}
 
-	public void dispose() {
+	final void dispose() {
 		mDatabaseHelper = null;
 		mParsers = null;
 
@@ -163,11 +165,11 @@ public class ApplicationCache {
 		mColumnLengths.put(field, columnLength);
 	}
 
-	final void addEntities(Set<ActiveRecordBase<?>> entities) {
+	final void addEntities(Set<Model> entities) {
 		mEntities.addAll(entities);
 	}
 
-	final void addEntity(ActiveRecordBase<?> entity) {
+	final void addEntity(Model entity) {
 		mEntities.add(entity);
 	}
 
@@ -187,8 +189,8 @@ public class ApplicationCache {
 		return mColumnLengths.get(field);
 	}
 
-	final ActiveRecordBase<?> getEntity(Class<? extends ActiveRecordBase<?>> entityType, long id) {
-		for (ActiveRecordBase<?> entity : mEntities) {
+	final Model getEntity(Class<? extends Model> entityType, long id) {
+		for (Model entity : mEntities) {
 			if (entity != null) {
 				if (entity.getClass() != null && entity.getClass() == entityType) {
 					if (entity.getId() != null && entity.getId() == id) {
@@ -213,7 +215,7 @@ public class ApplicationCache {
 		return android.os.Build.MODEL.equals("sdk") || android.os.Build.MODEL.equals("google_sdk");
 	}
 
-	final void removeEntity(ActiveRecordBase<?> entity) {
+	final void removeEntity(Model entity) {
 		mEntities.remove(entity);
 	}
 }

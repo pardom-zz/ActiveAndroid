@@ -1,4 +1,6 @@
-package com.activeandroid;
+package com.activeandroid.query;
+
+import com.activeandroid.Model;
 
 final public class Delete extends QueryBase {
 	private String mSelection = null;
@@ -7,7 +9,7 @@ final public class Delete extends QueryBase {
 	public Delete() {
 	}
 
-	public Delete from(Class<? extends ActiveRecordBase<?>> table) {
+	public Delete from(Class<? extends Model> table) {
 		mTable = table;
 		return this;
 	}
@@ -32,6 +34,6 @@ final public class Delete extends QueryBase {
 
 	public int execute() {
 		ensureTableDeclared();
-		return ActiveRecordBase.delete(mTable, mSelection, mSelectionArgs);
+		return Model.delete(mTable, mSelection, mSelectionArgs);
 	}
 }

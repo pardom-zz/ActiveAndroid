@@ -20,7 +20,7 @@ import dalvik.system.DexFile;
 
 final class ReflectionUtils {
 	public static Integer getColumnLength(Field field) {
-		final Integer cachedValue = ApplicationCache.getInstance().getColumnInteger(field);
+		final Integer cachedValue = Registry.getInstance().getColumnInteger(field);
 		if (cachedValue != null) {
 			return cachedValue;
 		}
@@ -35,13 +35,13 @@ final class ReflectionUtils {
 			}
 		}
 
-		ApplicationCache.getInstance().addColumnLength(field, columnLength);
+		Registry.getInstance().addColumnLength(field, columnLength);
 
 		return columnLength;
 	}
 
 	public static String getColumnName(Field field) {
-		final String cachedValue = ApplicationCache.getInstance().getColumnName(field);
+		final String cachedValue = Registry.getInstance().getColumnName(field);
 		if (cachedValue != null) {
 			return cachedValue;
 		}
@@ -53,15 +53,15 @@ final class ReflectionUtils {
 			columnName = annotation.name();
 		}
 
-		ApplicationCache.getInstance().addColumnName(field, columnName);
+		Registry.getInstance().addColumnName(field, columnName);
 
 		return columnName;
 	}
 
 	@SuppressWarnings("unchecked")
-	public static ArrayList<Class<? extends ActiveRecordBase<?>>> getEntityClasses() {
-		final Context context = ApplicationCache.getInstance().getContext();
-		final ArrayList<Class<? extends ActiveRecordBase<?>>> entityClasses = new ArrayList<Class<? extends ActiveRecordBase<?>>>();
+	public static ArrayList<Class<? extends Model>> getEntityClasses() {
+		final Context context = Registry.getInstance().getContext();
+		final ArrayList<Class<? extends Model>> entityClasses = new ArrayList<Class<? extends Model>>();
 
 		try {
 			final String path = context.getPackageManager().getApplicationInfo(context.getPackageName(), 0).sourceDir;
@@ -78,29 +78,29 @@ final class ReflectionUtils {
 					superClass = discoveredClass.getSuperclass();
 				}
 				catch (ClassNotFoundException e) {
-					Log.e(Params.LOGGING_TAG, e.getMessage());
+					Log.e(Params.Logging.TAG, e.getMessage());
 				}
 
 				if (discoveredClass != null && superClass != null) {
-					if (superClass.equals(ActiveRecordBase.class)) {
-						entityClasses.add((Class<? extends ActiveRecordBase<?>>) discoveredClass);
+					if (superClass.equals(Model.class)) {
+						entityClasses.add((Class<? extends Model>) discoveredClass);
 					}
 				}
 			}
 
 		}
 		catch (IOException e) {
-			Log.e(Params.LOGGING_TAG, e.getMessage());
+			Log.e(Params.Logging.TAG, e.getMessage());
 		}
 		catch (NameNotFoundException e) {
-			Log.e(Params.LOGGING_TAG, e.getMessage());
+			Log.e(Params.Logging.TAG, e.getMessage());
 		}
 
 		return entityClasses;
 	}
 
 	public static String getMetaDataString(String name) {
-		final Context context = ApplicationCache.getInstance().getContext();
+		final Context context = Registry.getInstance().getContext();
 		String value = null;
 
 		try {
@@ -108,19 +108,19 @@ final class ReflectionUtils {
 			final ApplicationInfo ai = pm.getApplicationInfo(context.getPackageName(), PackageManager.GET_META_DATA);
 			value = ai.metaData.getString(name);
 
-			if (Params.LOGGING_ENABLED) {
-				Log.v(Params.LOGGING_TAG, name + ": " + value);
+			if (Params.Logging.ENABLED) {
+				Log.v(Params.Logging.TAG, name + ": " + value);
 			}
 		}
 		catch (Exception e) {
-			Log.w(Params.LOGGING_TAG, "Couldn't find meta data string: " + name);
+			Log.w(Params.Logging.TAG, "Couldn't find meta data string: " + name);
 		}
 
 		return value;
 	}
 
 	public static Integer getMetaDataInteger(String name) {
-		final Context context = ApplicationCache.getInstance().getContext();
+		final Context context = Registry.getInstance().getContext();
 		Integer value = null;
 
 		try {
@@ -128,19 +128,19 @@ final class ReflectionUtils {
 			final ApplicationInfo ai = pm.getApplicationInfo(context.getPackageName(), PackageManager.GET_META_DATA);
 			value = ai.metaData.getInt(name);
 
-			if (Params.LOGGING_ENABLED) {
-				Log.v(Params.LOGGING_TAG, name + ": " + value);
+			if (Params.Logging.ENABLED) {
+				Log.v(Params.Logging.TAG, name + ": " + value);
 			}
 		}
 		catch (Exception e) {
-			Log.w(Params.LOGGING_TAG, "Couldn't find meta data string: " + name);
+			Log.w(Params.Logging.TAG, "Couldn't find meta data string: " + name);
 		}
 
 		return value;
 	}
 
 	public static HashMap<Class<?>, TypeSerializer> getParsers() {
-		final Context context = ApplicationCache.getInstance().getContext();
+		final Context context = Registry.getInstance().getContext();
 		HashMap<Class<?>, TypeSerializer> parsers = new HashMap<Class<?>, TypeSerializer>();
 
 		try {
@@ -167,28 +167,28 @@ final class ReflectionUtils {
 					}
 				}
 				catch (ClassNotFoundException e) {
-					Log.e(Params.LOGGING_TAG, e.getMessage());
+					Log.e(Params.Logging.TAG, e.getMessage());
 				}
 				catch (InstantiationException e) {
-					Log.e(Params.LOGGING_TAG, e.getMessage());
+					Log.e(Params.Logging.TAG, e.getMessage());
 				}
 				catch (IllegalAccessException e) {
-					Log.e(Params.LOGGING_TAG, e.getMessage());
+					Log.e(Params.Logging.TAG, e.getMessage());
 				}
 			}
 		}
 		catch (IOException e) {
-			Log.e(Params.LOGGING_TAG, e.getMessage());
+			Log.e(Params.Logging.TAG, e.getMessage());
 		}
 		catch (NameNotFoundException e) {
-			Log.e(Params.LOGGING_TAG, e.getMessage());
+			Log.e(Params.Logging.TAG, e.getMessage());
 		}
 
 		return parsers;
 	}
 
 	public static ArrayList<Field> getTableFields(Class<?> type) {
-		final ArrayList<Field> cachedValue = ApplicationCache.getInstance().getClassFields(type);
+		final ArrayList<Field> cachedValue = Registry.getInstance().getClassFields(type);
 		if (cachedValue != null) {
 			return cachedValue;
 		}
@@ -199,10 +199,10 @@ final class ReflectionUtils {
 			typeFields.add(type.getSuperclass().getDeclaredField("mId"));
 		}
 		catch (SecurityException e) {
-			Log.e(Params.LOGGING_TAG, e.getMessage());
+			Log.e(Params.Logging.TAG, e.getMessage());
 		}
 		catch (NoSuchFieldException e) {
-			Log.e(Params.LOGGING_TAG, e.getMessage());
+			Log.e(Params.Logging.TAG, e.getMessage());
 		}
 
 		Field[] fields = type.getDeclaredFields();
@@ -212,13 +212,13 @@ final class ReflectionUtils {
 			}
 		}
 
-		ApplicationCache.getInstance().addClassFields(type, typeFields);
+		Registry.getInstance().addClassFields(type, typeFields);
 
 		return typeFields;
 	}
 
 	public static String getTableName(Class<?> type) {
-		final String cachedValue = ApplicationCache.getInstance().getTableName(type);
+		final String cachedValue = Registry.getInstance().getTableName(type);
 		if (cachedValue != null) {
 			return cachedValue;
 		}
@@ -233,7 +233,7 @@ final class ReflectionUtils {
 			tableName = type.getSimpleName();
 		}
 
-		ApplicationCache.getInstance().addTableName(type, tableName);
+		Registry.getInstance().addTableName(type, tableName);
 
 		return tableName;
 	}
@@ -253,7 +253,7 @@ final class ReflectionUtils {
 				|| type.equals(Short.class)
 				|| type.equals(short.class)
 				|| (!type.isPrimitive() && type.getSuperclass() != null && type.getSuperclass().equals(
-						ActiveRecordBase.class));
+						Model.class));
 	}
 
 	public static boolean typeIsSQLiteString(Class<?> type) {
