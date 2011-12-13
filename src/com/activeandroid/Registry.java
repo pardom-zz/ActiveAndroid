@@ -18,7 +18,7 @@ import android.net.Uri;
 
 import com.activeandroid.serializer.TypeSerializer;
 
-class Registry {
+final class Registry {
 	private Context mContext;
 	private DatabaseHelper mDatabaseHelper;
 	private SQLiteDatabase mDatabase;
@@ -43,11 +43,11 @@ class Registry {
 
 	// Public methods
 
-	static Registry getInstance() {
+	public static Registry getInstance() {
 		return InstanceHolder.instance;
 	}
 
-	final void initialize(Context context) {
+	public synchronized void initialize(Context context) {
 		if (mIsInitialized) {
 			return;
 		}
@@ -111,7 +111,11 @@ class Registry {
 		mIsInitialized = true;
 	}
 
-	final void dispose() {
+	public synchronized void clearCache() {
+		mEntities = new HashSet<Model>();
+	}
+
+	public synchronized void dispose() {
 		mDatabaseHelper = null;
 		mParsers = null;
 
@@ -128,7 +132,7 @@ class Registry {
 
 	// Open/close database
 
-	final SQLiteDatabase openDatabase() {
+	public synchronized SQLiteDatabase openDatabase() {
 		if (mDatabase != null) {
 			return mDatabase;
 		}
@@ -138,7 +142,7 @@ class Registry {
 		return mDatabase;
 	}
 
-	final void closeDatabase() {
+	public synchronized void closeDatabase() {
 		if (mDatabase != null) {
 			mDatabase.close();
 			mDatabase = null;
@@ -147,49 +151,49 @@ class Registry {
 
 	// Non-public methods
 
-	final Context getContext() {
+	public Context getContext() {
 		return mContext;
 	}
 
-	//
+	// Cache methods
 
-	final void addClassFields(Class<?> type, ArrayList<Field> fields) {
+	public synchronized void addClassFields(Class<?> type, ArrayList<Field> fields) {
 		mClassFields.put(type, fields);
 	}
 
-	final void addColumnName(Field field, String columnName) {
+	public synchronized void addColumnName(Field field, String columnName) {
 		mColumnNames.put(field, columnName);
 	}
 
-	final void addColumnLength(Field field, Integer columnLength) {
+	public synchronized void addColumnLength(Field field, Integer columnLength) {
 		mColumnLengths.put(field, columnLength);
 	}
 
-	final void addEntities(Set<Model> entities) {
+	public synchronized void addEntities(Set<Model> entities) {
 		mEntities.addAll(entities);
 	}
 
-	final void addEntity(Model entity) {
+	public synchronized void addEntity(Model entity) {
 		mEntities.add(entity);
 	}
 
-	final void addTableName(Class<?> type, String tableName) {
+	public synchronized void addTableName(Class<?> type, String tableName) {
 		mTableNames.put(type, tableName);
 	}
 
-	final ArrayList<Field> getClassFields(Class<?> type) {
+	public synchronized ArrayList<Field> getClassFields(Class<?> type) {
 		return mClassFields.get(type);
 	}
 
-	final String getColumnName(Field field) {
+	public synchronized String getColumnName(Field field) {
 		return mColumnNames.get(field);
 	}
 
-	final Integer getColumnInteger(Field field) {
+	public synchronized Integer getColumnInteger(Field field) {
 		return mColumnLengths.get(field);
 	}
 
-	final Model getEntity(Class<? extends Model> entityType, long id) {
+	public synchronized Model getEntity(Class<? extends Model> entityType, long id) {
 		for (Model entity : mEntities) {
 			if (entity != null) {
 				if (entity.getClass() != null && entity.getClass() == entityType) {
@@ -203,19 +207,21 @@ class Registry {
 		return null;
 	}
 
-	final TypeSerializer getParserForType(Class<?> fieldType) {
+	public synchronized TypeSerializer getParserForType(Class<?> fieldType) {
 		return mParsers.get(fieldType);
 	}
 
-	final String getTableName(Class<?> type) {
+	public synchronized String getTableName(Class<?> type) {
 		return mTableNames.get(type);
 	}
 
-	private boolean isEmulator() {
-		return android.os.Build.MODEL.equals("sdk") || android.os.Build.MODEL.equals("google_sdk");
+	public synchronized void removeEntity(Model entity) {
+		mEntities.remove(entity);
 	}
 
-	final void removeEntity(Model entity) {
-		mEntities.remove(entity);
+	// Private methods
+
+	private boolean isEmulator() {
+		return android.os.Build.MODEL.equals("sdk") || android.os.Build.MODEL.equals("google_sdk");
 	}
 }

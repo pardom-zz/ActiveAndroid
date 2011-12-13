@@ -169,7 +169,7 @@ public abstract class Model {
 	 * @param through the field on the other object through which this object is related.
 	 * @return ArrayList<E> ArrayList of objects returned by the query.
 	 */
-	protected <E> ArrayList<E> getMany(Class<? extends Model> type, String through) {
+	protected <E extends Model> ArrayList<E> getMany(Class<? extends Model> type, String through) {
 		final String tableName = ReflectionUtils.getTableName(type);
 		final String selection = tableName + "." + through + "=" + getId();
 		return query(type, false, null, selection, null, null, null, null, null);
@@ -194,7 +194,7 @@ public abstract class Model {
 	 * @param id the primary key id of the record to be loaded.
 	 * @return <T> object returned by the query.
 	 */
-	public static <T> T load(Class<? extends Model> type, long id) {
+	public static <T extends Model> T load(Class<? extends Model> type, long id) {
 		final String tableName = ReflectionUtils.getTableName(type);
 		final String selection = tableName + ".Id=?";
 		final String[] selectionArgs = new String[] { String.valueOf(id) };
@@ -208,7 +208,7 @@ public abstract class Model {
 	 * @param type the type of this object.
 	 * @return <T> object returned by the query.
 	 */
-	public static <T> T first(Class<? extends Model> type) {
+	public static <T extends Model> T first(Class<? extends Model> type) {
 		return querySingle(type, false, null, null, null, null, null, null);
 	}
 
@@ -218,7 +218,7 @@ public abstract class Model {
 	 * @param type the type of this object
 	 * @return <T> object returned by the query.
 	 */
-	public static <T> T last(Class<? extends Model> type) {
+	public static <T extends Model> T last(Class<? extends Model> type) {
 		return querySingle(type, false, null, null, null, null, null, "Id DESC");
 	}
 
@@ -254,7 +254,7 @@ public abstract class Model {
 	 * @param limit limit clause applied to the query (including distinct), or null for no clause.
 	 * @return ArrayList<T> ArrayList of objects returned by the query.
 	 */
-	public static <T> ArrayList<T> query(Class<? extends Model> type, boolean distinct, String[] columns,
+	public static <T extends Model> ArrayList<T> query(Class<? extends Model> type, boolean distinct, String[] columns,
 			String selection, String[] selectionArgs, String groupBy, String having, String orderBy, String limit) {
 
 		final SQLiteDatabase db = Registry.getInstance().openDatabase();
@@ -281,7 +281,7 @@ public abstract class Model {
 	 * @param orderBy order by clause applied to the query, or null for no clause.
 	 * @return <T> object returned by the query.
 	 */
-	public static <T> T querySingle(Class<? extends Model> type, boolean distinct, String[] columns, String selection,
+	public static <T extends Model> T querySingle(Class<? extends Model> type, boolean distinct, String[] columns, String selection,
 			String[] selectionArgs, String groupBy, String having, String orderBy) {
 
 		return (T) getFirst(query(type, distinct, columns, selection, selectionArgs, groupBy, having, orderBy, "1"));
@@ -297,7 +297,7 @@ public abstract class Model {
 	 * @param sql the SQL query string.
 	 * @return ArrayList<T> ArrayList of objects returned by the query.
 	 */
-	public static final <T> ArrayList<T> rawQuery(Class<? extends Model> type, String sql, String[] selectionArgs) {
+	public static final <T extends Model> ArrayList<T> rawQuery(Class<? extends Model> type, String sql, String[] selectionArgs) {
 
 		final SQLiteDatabase db = Registry.getInstance().openDatabase();
 		final Cursor cursor = db.rawQuery(sql, selectionArgs);
@@ -317,7 +317,7 @@ public abstract class Model {
 	 * @param sql the SQL query string.
 	 * @return <T> object returned by the query.
 	 */
-	public static final <T> T rawQuerySingle(Class<? extends Model> type, String sql, String[] selectionArgs) {
+	public static final <T extends Model> T rawQuerySingle(Class<? extends Model> type, String sql, String[] selectionArgs) {
 
 		return (T) getFirst(rawQuery(type, sql, selectionArgs));
 	}
@@ -325,7 +325,7 @@ public abstract class Model {
 	////////////////////////////////////////////////////////////////////////////////
 	// PRIVATE METHODS
 
-	private static <T> T getFirst(ArrayList<T> entities) {
+	private static <T extends Model> T getFirst(ArrayList<T> entities) {
 		if (entities.size() > 0) {
 			return entities.get(0);
 		}
@@ -333,7 +333,7 @@ public abstract class Model {
 		return null;
 	}
 
-	private static final <T> ArrayList<T> processCursor(Class<? extends Model> type, Cursor cursor) {
+	private static final <T extends Model> ArrayList<T> processCursor(Class<? extends Model> type, Cursor cursor) {
 		final ArrayList<T> entities = new ArrayList<T>();
 
 		try {
