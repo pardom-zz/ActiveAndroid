@@ -22,7 +22,7 @@ public abstract class Model {
 	@Column(name = "Id")
 	private Long mId = null;
 
-	private Registry mApplicationCache = Registry.getInstance();
+	private Registry mRegistry = Registry.getInstance();
 	private Context mContext;
 	private String mTableName;
 
@@ -30,10 +30,10 @@ public abstract class Model {
 	// CONSTRUCTORS
 
 	public Model() {
-		mContext = mApplicationCache.getContext();
+		mContext = mRegistry.getContext();
 		mTableName = ReflectionUtils.getTableName(getClass());
 
-		mApplicationCache.addEntity(this);
+		mRegistry.addEntity(this);
 	}
 
 	////////////////////////////////////////////////////////////////////////////////
@@ -69,9 +69,9 @@ public abstract class Model {
 	 * Deletes the current object's record from the database. References to this object will be null.
 	 */
 	public void delete() {
-		final SQLiteDatabase db = mApplicationCache.openDatabase();
+		final SQLiteDatabase db = mRegistry.openDatabase();
 		db.delete(mTableName, "Id=?", new String[] { getId().toString() });
-		mApplicationCache.removeEntity(this);
+		mRegistry.removeEntity(this);
 	}
 
 	/**
@@ -79,7 +79,7 @@ public abstract class Model {
 	 * its current existence. 
 	 */
 	public void save() {
-		final SQLiteDatabase db = mApplicationCache.openDatabase();
+		final SQLiteDatabase db = mRegistry.openDatabase();
 		final ContentValues values = new ContentValues();
 
 		for (Field field : ReflectionUtils.getTableFields(this.getClass())) {
@@ -92,7 +92,7 @@ public abstract class Model {
 				Object value = field.get(this);
 
 				if (value != null) {
-					final TypeSerializer typeSerializer = mApplicationCache.getParserForType(fieldType);
+					final TypeSerializer typeSerializer = mRegistry.getParserForType(fieldType);
 					if (typeSerializer != null) {
 						// serialize data
 						value = typeSerializer.serialize(value);
@@ -176,6 +176,15 @@ public abstract class Model {
 	}
 
 	// ###  QUERY SHORTCUT METHODS
+	
+	/**
+	 * Delete all records in the table.
+	 * @param type the type of this object.
+	 * @return int the number of records affected.
+	 */
+	public static int delete(Class<? extends Model> type) {
+		return delete(type, null, null);
+	}
 
 	/**
 	 * Delete records in the table specified by the where clause.
@@ -387,7 +396,7 @@ public abstract class Model {
 
 			try {
 				boolean columnIsNull = cursor.isNull(columnIndex);
-				TypeSerializer typeSerializer = mApplicationCache.getParserForType(fieldType);
+				TypeSerializer typeSerializer = mRegistry.getParserForType(fieldType);
 				Object value = null;
 
 				if (typeSerializer != null) {
@@ -427,7 +436,7 @@ public abstract class Model {
 					long entityId = cursor.getLong(columnIndex);
 					Class<? extends Model> entityType = (Class<? extends Model>) fieldType;
 
-					Model entity = mApplicationCache.getEntity(entityType, entityId);
+					Model entity = mRegistry.getEntity(entityType, entityId);
 
 					if (entity == null) {
 						entity = Model.load(entityType, entityId);

@@ -31,7 +31,6 @@ final class Registry {
 	private HashMap<Class<?>, String> mTableNames;
 	private HashMap<Class<?>, ArrayList<Field>> mClassFields;
 	private HashMap<Field, String> mColumnNames;
-	private HashMap<Field, Integer> mColumnLengths;
 
 	// Hide constructor. Must use getInstance()
 	private Registry() {
@@ -104,7 +103,6 @@ final class Registry {
 		mTableNames = new HashMap<Class<?>, String>();
 		mClassFields = new HashMap<Class<?>, ArrayList<Field>>();
 		mColumnNames = new HashMap<Field, String>();
-		mColumnLengths = new HashMap<Field, Integer>();
 
 		openDatabase();
 
@@ -123,7 +121,6 @@ final class Registry {
 		mTableNames = null;
 		mClassFields = null;
 		mColumnNames = null;
-		mColumnLengths = null;
 
 		closeDatabase();
 
@@ -165,10 +162,6 @@ final class Registry {
 		mColumnNames.put(field, columnName);
 	}
 
-	public synchronized void addColumnLength(Field field, Integer columnLength) {
-		mColumnLengths.put(field, columnLength);
-	}
-
 	public synchronized void addEntities(Set<Model> entities) {
 		mEntities.addAll(entities);
 	}
@@ -187,10 +180,6 @@ final class Registry {
 
 	public synchronized String getColumnName(Field field) {
 		return mColumnNames.get(field);
-	}
-
-	public synchronized Integer getColumnInteger(Field field) {
-		return mColumnLengths.get(field);
 	}
 
 	public synchronized Model getEntity(Class<? extends Model> entityType, long id) {

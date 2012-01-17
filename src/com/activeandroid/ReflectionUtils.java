@@ -19,27 +19,6 @@ import com.activeandroid.serializer.TypeSerializer;
 import dalvik.system.DexFile;
 
 final class ReflectionUtils {
-	public static Integer getColumnLength(Field field) {
-		final Integer cachedValue = Registry.getInstance().getColumnInteger(field);
-		if (cachedValue != null) {
-			return cachedValue;
-		}
-
-		Integer columnLength = null;
-
-		final Column annotation = field.getAnnotation(Column.class);
-		if (annotation != null) {
-			final int length = annotation.length();
-			if (length > -1) {
-				columnLength = length;
-			}
-		}
-
-		Registry.getInstance().addColumnLength(field, columnLength);
-
-		return columnLength;
-	}
-
 	public static String getColumnName(Field field) {
 		final String cachedValue = Registry.getInstance().getColumnName(field);
 		if (cachedValue != null) {
@@ -59,9 +38,9 @@ final class ReflectionUtils {
 	}
 
 	@SuppressWarnings("unchecked")
-	public static ArrayList<Class<? extends Model>> getEntityClasses() {
+	public static ArrayList<Class<? extends Model>> getModelClasses() {
 		final Context context = Registry.getInstance().getContext();
-		final ArrayList<Class<? extends Model>> entityClasses = new ArrayList<Class<? extends Model>>();
+		final ArrayList<Class<? extends Model>> modelClasses = new ArrayList<Class<? extends Model>>();
 
 		try {
 			final String path = context.getPackageManager().getApplicationInfo(context.getPackageName(), 0).sourceDir;
@@ -76,37 +55,36 @@ final class ReflectionUtils {
 				try {
 					discoveredClass = Class.forName(name, false, context.getClass().getClassLoader());
 					superClass = discoveredClass.getSuperclass();
-				}
-				catch (ClassNotFoundException e) {
-					Log.e(Params.Logging.TAG, e.getMessage());
-				}
 
-				if (discoveredClass != null && superClass != null) {
-					if (superClass.equals(Model.class)) {
-						entityClasses.add((Class<? extends Model>) discoveredClass);
+					if (discoveredClass != null && superClass != null) {
+						if (superClass.equals(Model.class)) {
+							modelClasses.add((Class<? extends Model>) discoveredClass);
+						}
 					}
 				}
+				catch (ClassNotFoundException e) {
+					Log.e(Params.Logging.TAG, "ClassNotFoundException: " + e.getMessage());
+				}
 			}
-
 		}
 		catch (IOException e) {
-			Log.e(Params.Logging.TAG, e.getMessage());
+			Log.e(Params.Logging.TAG, "IOException: " + e.getMessage());
 		}
 		catch (NameNotFoundException e) {
-			Log.e(Params.Logging.TAG, e.getMessage());
+			Log.e(Params.Logging.TAG, "NameNotFoundException: " + e.getMessage());
 		}
 
-		return entityClasses;
+		return modelClasses;
 	}
 
-	public static String getMetaDataString(String name) {
+	public static Integer getMetaDataInteger(String name) {
 		final Context context = Registry.getInstance().getContext();
-		String value = null;
+		Integer value = null;
 
 		try {
 			final PackageManager pm = context.getPackageManager();
 			final ApplicationInfo ai = pm.getApplicationInfo(context.getPackageName(), PackageManager.GET_META_DATA);
-			value = ai.metaData.getString(name);
+			value = ai.metaData.getInt(name);
 
 			if (Params.Logging.ENABLED) {
 				Log.v(Params.Logging.TAG, name + ": " + value);
@@ -119,14 +97,14 @@ final class ReflectionUtils {
 		return value;
 	}
 
-	public static Integer getMetaDataInteger(String name) {
+	public static String getMetaDataString(String name) {
 		final Context context = Registry.getInstance().getContext();
-		Integer value = null;
+		String value = null;
 
 		try {
 			final PackageManager pm = context.getPackageManager();
 			final ApplicationInfo ai = pm.getApplicationInfo(context.getPackageName(), PackageManager.GET_META_DATA);
-			value = ai.metaData.getInt(name);
+			value = ai.metaData.getString(name);
 
 			if (Params.Logging.ENABLED) {
 				Log.v(Params.Logging.TAG, name + ": " + value);
@@ -167,21 +145,21 @@ final class ReflectionUtils {
 					}
 				}
 				catch (ClassNotFoundException e) {
-					Log.e(Params.Logging.TAG, e.getMessage());
+					Log.e(Params.Logging.TAG, "ClassNotFoundException: " + e.getMessage());
 				}
 				catch (InstantiationException e) {
-					Log.e(Params.Logging.TAG, e.getMessage());
+					Log.e(Params.Logging.TAG, "InstantiationException: " + e.getMessage());
 				}
 				catch (IllegalAccessException e) {
-					Log.e(Params.Logging.TAG, e.getMessage());
+					Log.e(Params.Logging.TAG, "IllegalAccessException: " + e.getMessage());
 				}
 			}
 		}
 		catch (IOException e) {
-			Log.e(Params.Logging.TAG, e.getMessage());
+			Log.e(Params.Logging.TAG, "IOException: " + e.getMessage());
 		}
 		catch (NameNotFoundException e) {
-			Log.e(Params.Logging.TAG, e.getMessage());
+			Log.e(Params.Logging.TAG, "NameNotFoundException: " + e.getMessage());
 		}
 
 		return parsers;
@@ -199,10 +177,10 @@ final class ReflectionUtils {
 			typeFields.add(type.getSuperclass().getDeclaredField("mId"));
 		}
 		catch (SecurityException e) {
-			Log.e(Params.Logging.TAG, e.getMessage());
+			Log.e(Params.Logging.TAG, "SecurityException: " + e.getMessage());
 		}
 		catch (NoSuchFieldException e) {
-			Log.e(Params.Logging.TAG, e.getMessage());
+			Log.e(Params.Logging.TAG, "NoSuchFieldException: " + e.getMessage());
 		}
 
 		Field[] fields = type.getDeclaredFields();
@@ -244,19 +222,13 @@ final class ReflectionUtils {
 	}
 
 	public static boolean typeIsSQLiteInteger(Class<?> type) {
-		return type.equals(Boolean.class)
-				|| type.equals(boolean.class)
-				|| type.equals(Integer.class)
-				|| type.equals(int.class)
-				|| type.equals(Long.class)
-				|| type.equals(long.class)
-				|| type.equals(Short.class)
-				|| type.equals(short.class)
-				|| (!type.isPrimitive() && type.getSuperclass() != null && type.getSuperclass().equals(
-						Model.class));
+		return type.equals(Boolean.class) || type.equals(boolean.class) || type.equals(Integer.class)
+				|| type.equals(int.class) || type.equals(Long.class) || type.equals(long.class)
+				|| type.equals(Short.class) || type.equals(short.class)
+				|| (!type.isPrimitive() && type.getSuperclass() != null && type.getSuperclass().equals(Model.class));
 	}
 
-	public static boolean typeIsSQLiteString(Class<?> type) {
+	public static boolean typeIsSQLiteText(Class<?> type) {
 		return type.equals(String.class) || type.equals(Character.class) || type.equals(char.class);
 	}
 }

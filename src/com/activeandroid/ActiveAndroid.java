@@ -3,11 +3,11 @@ package com.activeandroid;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 
-final public class ActiveAndroid {
+public final class ActiveAndroid {
 	public static void initialize(Context context) {
 		Registry.getInstance().initialize(context);
 	}
-	
+
 	public static void clearCache() {
 		Registry.getInstance().clearCache();
 	}

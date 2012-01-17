@@ -13,15 +13,19 @@ import java.util.List;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.os.Build;
 import android.text.TextUtils;
 import android.util.Log;
 
+import com.activeandroid.annotation.Column;
 import com.activeandroid.serializer.TypeSerializer;
 
 class DatabaseHelper extends SQLiteOpenHelper {
 	private final static String AA_DB_NAME = "AA_DB_NAME";
 	private final static String AA_DB_VERSION = "AA_DB_VERSION";
 	private final static String MIGRATION_PATH = "migrations";
+
+	private final static boolean FOREIGN_KEYS_SUPPORTED = Integer.parseInt(Build.VERSION.SDK) >= 8;
 
 	private Context mContext;
 
@@ -35,7 +39,11 @@ class DatabaseHelper extends SQLiteOpenHelper {
 
 	@Override
 	public void onCreate(SQLiteDatabase db) {
-		final ArrayList<Class<? extends Model>> tables = ReflectionUtils.getEntityClasses();
+		if (FOREIGN_KEYS_SUPPORTED) {
+			db.execSQL("PRAGMA foreign_keys=ON;");
+		}
+
+		final ArrayList<Class<? extends Model>> tables = ReflectionUtils.getModelClasses();
 
 		if (Params.Logging.ENABLED) {
 			Log.v(Params.Logging.TAG, "Creating " + tables.size() + " tables");
@@ -48,6 +56,10 @@ class DatabaseHelper extends SQLiteOpenHelper {
 
 	@Override
 	public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+		if (FOREIGN_KEYS_SUPPORTED) {
+			db.execSQL("PRAGMA foreign_keys=ON;");
+		}
+
 		if (!executeMigrations(db, oldVersion, newVersion)) {
 			onCreate(db);
 		}
@@ -109,36 +121,9 @@ class DatabaseHelper extends SQLiteOpenHelper {
 		ArrayList<String> definitions = new ArrayList<String>();
 
 		for (Field field : fields) {
-			Class<?> fieldType = field.getType();
-			final String fieldName = ReflectionUtils.getColumnName(field);
-			final Integer fieldLength = ReflectionUtils.getColumnLength(field);
-			String definition = null;
-
-			TypeSerializer typeSerializer = Registry.getInstance().getParserForType(fieldType);
-			if (typeSerializer != null) {
-				definition = fieldName + " " + typeSerializer.getSerializedType().toString();
-			}
-			else if (ReflectionUtils.typeIsSQLiteReal(fieldType)) {
-				definition = fieldName + " REAL";
-
-			}
-			else if (ReflectionUtils.typeIsSQLiteInteger(fieldType)) {
-				definition = fieldName + " INTEGER";
-
-			}
-			else if (ReflectionUtils.typeIsSQLiteString(fieldType)) {
-				definition = fieldName + " TEXT";
-			}
+			String definition = createColumnDefinition(field);
 
 			if (definition != null) {
-				if (fieldLength != null && fieldLength > 0) {
-					definition += "(" + fieldLength + ")";
-				}
-
-				if (fieldName.equals("Id")) {
-					definition += " PRIMARY KEY AUTOINCREMENT";
-				}
-
 				definitions.add(definition);
 			}
 		}
@@ -151,6 +136,69 @@ class DatabaseHelper extends SQLiteOpenHelper {
 		}
 
 		db.execSQL(sql);
+	}
+
+	private String createColumnDefinition(Field field) {
+		String definition = null;
+
+		final Class<?> type = field.getType();
+		final String name = ReflectionUtils.getColumnName(field);
+		final TypeSerializer typeSerializer = Registry.getInstance().getParserForType(type);
+
+		// Column definition
+		final Column column = field.getAnnotation(Column.class);
+		final Integer length = column.length();
+
+		if (typeSerializer != null) {
+			definition = name + " " + typeSerializer.getSerializedType().toString();
+		}
+		else if (ReflectionUtils.typeIsSQLiteReal(type)) {
+			definition = name + " REAL";
+
+		}
+		else if (ReflectionUtils.typeIsSQLiteInteger(type)) {
+			definition = name + " INTEGER";
+
+		}
+		else if (ReflectionUtils.typeIsSQLiteText(type)) {
+			definition = name + " TEXT";
+		}
+
+		if (definition != null) {
+			//////////////////////////////////
+			// LENGTH
+
+			if (length > -1) {
+				definition += "(" + length + ")";
+			}
+
+			//////////////////////////////////
+			// PRIMARY KEY
+
+			if (name.equals("Id")) {
+				definition += " PRIMARY KEY AUTOINCREMENT";
+			}
+
+			//////////////////////////////////
+			// NOT NULL
+
+			if (column.notNull()) {
+				definition += " NOT NULL ON CONFLICT " + column.onNullConflict().toString();
+			}
+
+			//////////////////////////////////
+			// FOREIGN KEY
+
+			if (FOREIGN_KEYS_SUPPORTED && !type.isPrimitive() && type.getSuperclass() != null
+					&& type.getSuperclass().equals(Model.class)) {
+
+				definition += " REFERENCES " + ReflectionUtils.getTableName(type) + "(Id)";
+				definition += " ON DELETE " + column.onDelete().toString().replace("_", " ");
+				definition += " ON UPDATE " + column.onUpdate().toString().replace("_", " ");
+			}
+		}
+
+		return definition;
 	}
 
 	private static String getDBName() {

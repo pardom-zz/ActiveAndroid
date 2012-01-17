@@ -19,7 +19,7 @@ public class From {
 	private String mLimit;
 	private String mOffset;
 
-	private List<String> mArguments;
+	private List<Object> mArguments;
 
 	public From(Class<? extends Model> table, QueryBase queryBase) {
 		mType = table;
@@ -27,7 +27,7 @@ public class From {
 		mQueryBase = queryBase;
 
 		mJoins = new ArrayList<Join>();
-		mArguments = new ArrayList<String>();
+		mArguments = new ArrayList<Object>();
 	}
 
 	public From as(String alias) {
@@ -70,7 +70,7 @@ public class From {
 		return this;
 	}
 
-	public From where(String where, String... args) {
+	public From where(String where, Object... args) {
 		mWhere = where;
 		addArguments(args);
 		return this;
@@ -101,7 +101,7 @@ public class From {
 		return this;
 	}
 
-	void addArguments(String[] args) {
+	void addArguments(Object[] args) {
 		mArguments.addAll(Arrays.asList(args));
 	}
 
@@ -150,10 +150,21 @@ public class From {
 	}
 
 	public <T extends Model> ArrayList<T> execute() {
-		return Model.rawQuery(mType, toSql(), mArguments != null ? mArguments.toArray(new String[] {}) : null);
+		return Model.rawQuery(mType, toSql(), getArguments());
 	}
 
 	public <T extends Model> T executeSingle() {
-		return Model.rawQuerySingle(mType, toSql(), mArguments != null ? mArguments.toArray(new String[] {}) : null);
+		return Model.rawQuerySingle(mType, toSql(), getArguments());
+	}
+
+	private String[] getArguments() {
+		final int size = mArguments.size();
+		final String[] args = new String[size];
+
+		for (int i = 0; i < size; i++) {
+			args[i] = mArguments.get(i).toString();
+		}
+
+		return args;
 	}
 }

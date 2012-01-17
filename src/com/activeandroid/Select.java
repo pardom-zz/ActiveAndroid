@@ -1,7 +1,7 @@
 package com.activeandroid;
 
-import android.text.TextUtils;
 
+import android.text.TextUtils;
 
 public class Select extends QueryBase {
 	private String[] mColumns;
@@ -42,7 +42,7 @@ public class Select extends QueryBase {
 		return mFrom;
 	}
 
-	static class Column {
+	public static class Column {
 		String name;
 		String alias;
 

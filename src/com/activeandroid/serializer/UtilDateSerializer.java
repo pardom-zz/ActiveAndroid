@@ -14,7 +14,7 @@ final public class UtilDateSerializer extends TypeSerializer {
 	}
 
 	@Override
-	public Object serialize(Object data) {
+	public Long serialize(Object data) {
 		if (data == null) {
 			return null;
 		}

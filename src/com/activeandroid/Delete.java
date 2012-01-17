@@ -1,6 +1,7 @@
 package com.activeandroid;
 
 
+
 final public class Delete extends QueryBase {
 
 	public Delete() {
