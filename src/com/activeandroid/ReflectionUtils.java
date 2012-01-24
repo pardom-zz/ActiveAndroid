@@ -10,7 +10,6 @@ import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.PackageManager.NameNotFoundException;
-import android.util.Log;
 
 import com.activeandroid.annotation.Column;
 import com.activeandroid.annotation.Table;
@@ -19,6 +18,31 @@ import com.activeandroid.serializer.TypeSerializer;
 import dalvik.system.DexFile;
 
 final class ReflectionUtils {
+
+	// ###############################
+	// ### Table/Column names
+
+	public static String getTableName(Class<?> type) {
+		final String cachedValue = Registry.getInstance().getTableName(type);
+		if (cachedValue != null) {
+			return cachedValue;
+		}
+
+		String tableName = null;
+		final Table annotation = type.getAnnotation(Table.class);
+
+		if (annotation != null) {
+			tableName = annotation.name();
+		}
+		else {
+			tableName = type.getSimpleName();
+		}
+
+		Registry.getInstance().addTableName(type, tableName);
+
+		return tableName;
+	}
+
 	public static String getColumnName(Field field) {
 		final String cachedValue = Registry.getInstance().getColumnName(field);
 		if (cachedValue != null) {
@@ -36,6 +60,9 @@ final class ReflectionUtils {
 
 		return columnName;
 	}
+
+	// ############################### 
+	// ### Dex reflection
 
 	@SuppressWarnings("unchecked")
 	public static ArrayList<Class<? extends Model>> getModelClasses() {
@@ -63,15 +90,15 @@ final class ReflectionUtils {
 					}
 				}
 				catch (ClassNotFoundException e) {
-					Log.e(Params.Logging.TAG, "ClassNotFoundException: " + e.getMessage());
+					Log.e("ClassNotFoundException: " + e.getMessage());
 				}
 			}
 		}
 		catch (IOException e) {
-			Log.e(Params.Logging.TAG, "IOException: " + e.getMessage());
+			Log.e("IOException: " + e.getMessage());
 		}
 		catch (NameNotFoundException e) {
-			Log.e(Params.Logging.TAG, "NameNotFoundException: " + e.getMessage());
+			Log.e("NameNotFoundException: " + e.getMessage());
 		}
 
 		return modelClasses;
@@ -86,12 +113,10 @@ final class ReflectionUtils {
 			final ApplicationInfo ai = pm.getApplicationInfo(context.getPackageName(), PackageManager.GET_META_DATA);
 			value = ai.metaData.getInt(name);
 
-			if (Params.Logging.ENABLED) {
-				Log.v(Params.Logging.TAG, name + ": " + value);
-			}
+			Log.v(name + ": " + value);
 		}
 		catch (Exception e) {
-			Log.w(Params.Logging.TAG, "Couldn't find meta data string: " + name);
+			Log.w("Couldn't find meta data string: " + name);
 		}
 
 		return value;
@@ -106,12 +131,10 @@ final class ReflectionUtils {
 			final ApplicationInfo ai = pm.getApplicationInfo(context.getPackageName(), PackageManager.GET_META_DATA);
 			value = ai.metaData.getString(name);
 
-			if (Params.Logging.ENABLED) {
-				Log.v(Params.Logging.TAG, name + ": " + value);
-			}
+			Log.v(name + ": " + value);
 		}
 		catch (Exception e) {
-			Log.w(Params.Logging.TAG, "Couldn't find meta data string: " + name);
+			Log.w("Couldn't find meta data string: " + name);
 		}
 
 		return value;
@@ -145,21 +168,21 @@ final class ReflectionUtils {
 					}
 				}
 				catch (ClassNotFoundException e) {
-					Log.e(Params.Logging.TAG, "ClassNotFoundException: " + e.getMessage());
+					Log.e("ClassNotFoundException: " + e.getMessage());
 				}
 				catch (InstantiationException e) {
-					Log.e(Params.Logging.TAG, "InstantiationException: " + e.getMessage());
+					Log.e("InstantiationException: " + e.getMessage());
 				}
 				catch (IllegalAccessException e) {
-					Log.e(Params.Logging.TAG, "IllegalAccessException: " + e.getMessage());
+					Log.e("IllegalAccessException: " + e.getMessage());
 				}
 			}
 		}
 		catch (IOException e) {
-			Log.e(Params.Logging.TAG, "IOException: " + e.getMessage());
+			Log.e("IOException: " + e.getMessage());
 		}
 		catch (NameNotFoundException e) {
-			Log.e(Params.Logging.TAG, "NameNotFoundException: " + e.getMessage());
+			Log.e("NameNotFoundException: " + e.getMessage());
 		}
 
 		return parsers;
@@ -177,10 +200,10 @@ final class ReflectionUtils {
 			typeFields.add(type.getSuperclass().getDeclaredField("mId"));
 		}
 		catch (SecurityException e) {
-			Log.e(Params.Logging.TAG, "SecurityException: " + e.getMessage());
+			Log.e("SecurityException: " + e.getMessage());
 		}
 		catch (NoSuchFieldException e) {
-			Log.e(Params.Logging.TAG, "NoSuchFieldException: " + e.getMessage());
+			Log.e("NoSuchFieldException: " + e.getMessage());
 		}
 
 		Field[] fields = type.getDeclaredFields();
@@ -195,26 +218,8 @@ final class ReflectionUtils {
 		return typeFields;
 	}
 
-	public static String getTableName(Class<?> type) {
-		final String cachedValue = Registry.getInstance().getTableName(type);
-		if (cachedValue != null) {
-			return cachedValue;
-		}
-
-		String tableName = null;
-		final Table annotation = type.getAnnotation(Table.class);
-
-		if (annotation != null) {
-			tableName = annotation.name();
-		}
-		else {
-			tableName = type.getSimpleName();
-		}
-
-		Registry.getInstance().addTableName(type, tableName);
-
-		return tableName;
-	}
+	// ###############################
+	// ### Data types
 
 	public static boolean typeIsSQLiteReal(Class<?> type) {
 		return type.equals(Double.class) || type.equals(double.class) || type.equals(Float.class)

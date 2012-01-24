@@ -107,10 +107,17 @@ final class Registry {
 		openDatabase();
 
 		mIsInitialized = true;
+
+		Log.v("ActiveAndroid initialized succesfully");
 	}
 
 	public synchronized void clearCache() {
 		mEntities = new HashSet<Model>();
+		mTableNames = new HashMap<Class<?>, String>();
+		mClassFields = new HashMap<Class<?>, ArrayList<Field>>();
+		mColumnNames = new HashMap<Field, String>();
+
+		Log.v("Cache cleared");
 	}
 
 	public synchronized void dispose() {
@@ -125,14 +132,19 @@ final class Registry {
 		closeDatabase();
 
 		mIsInitialized = false;
+
+		Log.v("ActiveAndroid disposed. Call initialize to use library.");
 	}
 
 	// Open/close database
 
 	public synchronized SQLiteDatabase openDatabase() {
 		if (mDatabase != null) {
+			Log.v("Returning opened database.");
 			return mDatabase;
 		}
+
+		Log.v("Opening database");
 
 		mDatabase = mDatabaseHelper.getWritableDatabase();
 
@@ -143,6 +155,8 @@ final class Registry {
 		if (mDatabase != null) {
 			mDatabase.close();
 			mDatabase = null;
+
+			Log.v("Database closed and set to null");
 		}
 	}
 

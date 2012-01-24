@@ -20,6 +20,10 @@ public final class ActiveAndroid {
 		return Params.VERSION;
 	}
 
+	public static void setLoggingEnabled(boolean enabled) {
+		Log.configure(enabled);
+	}
+
 	// Expose Application database
 
 	public static SQLiteDatabase getDatabase() {

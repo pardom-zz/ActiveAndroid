@@ -1,5 +1,6 @@
-package com.activeandroid;
+package com.activeandroid.query;
 
+import com.activeandroid.Model;
 
 import android.text.TextUtils;
 
@@ -52,7 +53,8 @@ public class Select extends QueryBase {
 		}
 	}
 
-	public String toSql() {
+	@Override
+	String toSql() {
 		StringBuilder sql = new StringBuilder();
 
 		sql.append("SELECT ");

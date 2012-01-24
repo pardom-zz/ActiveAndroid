@@ -15,7 +15,6 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.os.Build;
 import android.text.TextUtils;
-import android.util.Log;
 
 import com.activeandroid.annotation.Column;
 import com.activeandroid.serializer.TypeSerializer;
@@ -41,13 +40,12 @@ class DatabaseHelper extends SQLiteOpenHelper {
 	public void onCreate(SQLiteDatabase db) {
 		if (FOREIGN_KEYS_SUPPORTED) {
 			db.execSQL("PRAGMA foreign_keys=ON;");
+			Log.i("Foreign Keys supported. Enabling foreign key features.");
 		}
 
 		final ArrayList<Class<? extends Model>> tables = ReflectionUtils.getModelClasses();
 
-		if (Params.Logging.ENABLED) {
-			Log.v(Params.Logging.TAG, "Creating " + tables.size() + " tables");
-		}
+		Log.i("Creating " + tables.size() + " tables");
 
 		for (Class<? extends Model> table : tables) {
 			createTable(db, table);
@@ -58,9 +56,11 @@ class DatabaseHelper extends SQLiteOpenHelper {
 	public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
 		if (FOREIGN_KEYS_SUPPORTED) {
 			db.execSQL("PRAGMA foreign_keys=ON;");
+			Log.i("Foreign Keys supported. Enabling foreign key features.");
 		}
 
 		if (!executeMigrations(db, oldVersion, newVersion)) {
+			Log.i("No migrations found. Calling onCreate");
 			onCreate(db);
 		}
 	}
@@ -69,6 +69,8 @@ class DatabaseHelper extends SQLiteOpenHelper {
 	// PRIVATE METHODS
 
 	private boolean executeMigrations(SQLiteDatabase db, int oldVersion, int newVersion) {
+		Log.i("Checking for migration scripts");
+
 		boolean migrationExecuted = false;
 		try {
 			final List<String> files = Arrays.asList(mContext.getAssets().list(MIGRATION_PATH));
@@ -84,12 +86,12 @@ class DatabaseHelper extends SQLiteOpenHelper {
 					}
 				}
 				catch (NumberFormatException e) {
-					Log.w(Params.Logging.TAG, "Skipping invalidly named file: " + file);
+					Log.w("Skipping invalidly named file: " + file);
 				}
 			}
 		}
 		catch (IOException e) {
-			Log.e(Params.Logging.TAG, e.getMessage());
+			Log.e(e.getMessage());
 		}
 
 		return migrationExecuted;
@@ -110,7 +112,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
 
 		}
 		catch (IOException e) {
-			Log.e(Params.Logging.TAG, e.getMessage());
+			Log.e(e.getMessage());
 		}
 
 		db.execSQL(text.toString());
@@ -131,9 +133,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
 		String sql = String.format("CREATE TABLE IF NOT EXISTS %s (%s);", ReflectionUtils.getTableName(table),
 				TextUtils.join(", ", definitions));
 
-		if (Params.Logging.ENABLED) {
-			Log.v(Params.Logging.TAG, sql);
-		}
+		Log.i(sql);
 
 		db.execSQL(sql);
 	}

@@ -9,7 +9,6 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.util.Log;
 
 import com.activeandroid.annotation.Column;
 import com.activeandroid.serializer.TypeSerializer;
@@ -143,10 +142,10 @@ public abstract class Model {
 				}
 			}
 			catch (IllegalArgumentException e) {
-				Log.e(Params.Logging.TAG, e.getClass().getName() + ": " + e.getMessage());
+				Log.e(e.getClass().getName() + ": " + e.getMessage());
 			}
 			catch (IllegalAccessException e) {
-				Log.e(Params.Logging.TAG, e.getClass().getName() + ": " + e.getMessage());
+				Log.e(e.getClass().getName() + ": " + e.getMessage());
 			}
 		}
 
@@ -176,7 +175,9 @@ public abstract class Model {
 	}
 
 	// ###  QUERY SHORTCUT METHODS
-	
+
+	// # DELETE
+
 	/**
 	 * Delete all records in the table.
 	 * @param type the type of this object.
@@ -194,6 +195,18 @@ public abstract class Model {
 	 */
 	public static boolean delete(Class<? extends Model> type, long id) {
 		return delete(type, "Id=?", new String[] { String.valueOf(id) }) > 0;
+	}
+
+	// # SELECT
+
+	/**
+	 * Load all records in a table.
+	 * 
+	 * @param type the type of this object
+	 * @return <T> object returned by the query.
+	 */
+	public static <T extends Model> ArrayList<T> all(Class<? extends Model> type) {
+		return query(type, false, null, null, null, null, null, null, null);
 	}
 
 	/**
@@ -251,6 +264,29 @@ public abstract class Model {
 	}
 
 	/**
+	 * Delete records in the table specified by the where clause.
+	 * @param <T>
+	 * @param type the type of this object
+	 * @param whereClause the where clause.
+	 * @param whereArgs arguments to be supplied to the where clause.
+	 * @return int the number of records affected.
+	 */
+	public static int delete(Class<? extends Model> type, String whereClause, Object... whereArgs) {
+		final SQLiteDatabase db = Registry.getInstance().openDatabase();
+		final String table = ReflectionUtils.getTableName(type);
+
+		final int size = whereArgs.length;
+		final String[] whereArgStrings = new String[size];
+		for (int i = 0; i < size; i++) {
+			whereArgStrings[i] = whereArgs[i].toString();
+		}
+
+		final int count = db.delete(table, whereClause, whereArgStrings);
+
+		return count;
+	}
+
+	/**
 	 * Return an ArrayList of all records for the specified type, where, order by, group by, having, and limit clauses. Includes only the specified columns
 	 * 
 	 * @param type the type of this object.
@@ -290,8 +326,8 @@ public abstract class Model {
 	 * @param orderBy order by clause applied to the query, or null for no clause.
 	 * @return <T> object returned by the query.
 	 */
-	public static <T extends Model> T querySingle(Class<? extends Model> type, boolean distinct, String[] columns, String selection,
-			String[] selectionArgs, String groupBy, String having, String orderBy) {
+	public static <T extends Model> T querySingle(Class<? extends Model> type, boolean distinct, String[] columns,
+			String selection, String[] selectionArgs, String groupBy, String having, String orderBy) {
 
 		return (T) getFirst(query(type, distinct, columns, selection, selectionArgs, groupBy, having, orderBy, "1"));
 	}
@@ -306,7 +342,8 @@ public abstract class Model {
 	 * @param sql the SQL query string.
 	 * @return ArrayList<T> ArrayList of objects returned by the query.
 	 */
-	public static final <T extends Model> ArrayList<T> rawQuery(Class<? extends Model> type, String sql, String[] selectionArgs) {
+	public static final <T extends Model> ArrayList<T> rawQuery(Class<? extends Model> type, String sql,
+			String[] selectionArgs) {
 
 		final SQLiteDatabase db = Registry.getInstance().openDatabase();
 		final Cursor cursor = db.rawQuery(sql, selectionArgs);
@@ -326,7 +363,8 @@ public abstract class Model {
 	 * @param sql the SQL query string.
 	 * @return <T> object returned by the query.
 	 */
-	public static final <T extends Model> T rawQuerySingle(Class<? extends Model> type, String sql, String[] selectionArgs) {
+	public static final <T extends Model> T rawQuerySingle(Class<? extends Model> type, String sql,
+			String[] selectionArgs) {
 
 		return (T) getFirst(rawQuery(type, sql, selectionArgs));
 	}
@@ -359,22 +397,22 @@ public abstract class Model {
 
 		}
 		catch (IllegalArgumentException e) {
-			Log.e(Params.Logging.TAG, e.getMessage());
+			Log.e(e.getMessage());
 		}
 		catch (InstantiationException e) {
-			Log.e(Params.Logging.TAG, e.getMessage());
+			Log.e(e.getMessage());
 		}
 		catch (IllegalAccessException e) {
-			Log.e(Params.Logging.TAG, e.getMessage());
+			Log.e(e.getMessage());
 		}
 		catch (InvocationTargetException e) {
-			Log.e(Params.Logging.TAG, e.getMessage());
+			Log.e(e.getMessage());
 		}
 		catch (SecurityException e) {
-			Log.e(Params.Logging.TAG, e.getMessage());
+			Log.e(e.getMessage());
 		}
 		catch (NoSuchMethodException e) {
-			Log.e(Params.Logging.TAG, "Missing required constructor: " + e.getMessage());
+			Log.e("Missing required constructor: " + e.getMessage());
 		}
 
 		return entities;
@@ -456,13 +494,13 @@ public abstract class Model {
 				}
 			}
 			catch (IllegalArgumentException e) {
-				Log.e(Params.Logging.TAG, e.getMessage());
+				Log.e(e.getMessage());
 			}
 			catch (IllegalAccessException e) {
-				Log.e(Params.Logging.TAG, e.getMessage());
+				Log.e(e.getMessage());
 			}
 			catch (SecurityException e) {
-				Log.e(Params.Logging.TAG, e.getMessage());
+				Log.e(e.getMessage());
 			}
 		}
 	}

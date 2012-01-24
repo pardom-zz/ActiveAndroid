@@ -1,4 +1,6 @@
-package com.activeandroid;
+package com.activeandroid.query;
+
+import com.activeandroid.Model;
 
 
 
@@ -13,7 +15,7 @@ final public class Delete extends QueryBase {
 	}
 
 	@Override
-	public String toSql() {
+	String toSql() {
 		return "DELETE ";
 	}
 }

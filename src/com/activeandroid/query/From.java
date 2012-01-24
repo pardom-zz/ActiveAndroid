@@ -1,10 +1,12 @@
-package com.activeandroid;
+package com.activeandroid.query;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import com.activeandroid.Join.JoinType;
+import com.activeandroid.Model;
+import com.activeandroid.QueryUtils;
+import com.activeandroid.query.Join.JoinType;
 
 public class From {
 	private QueryBase mQueryBase;
@@ -112,7 +114,7 @@ public class From {
 
 		sql.append("FROM ");
 
-		sql.append(ReflectionUtils.getTableName(mType) + " ");
+		sql.append(QueryUtils.getTableName(mType) + " ");
 
 		if (mAlias != null) {
 			sql.append("AS " + mAlias + " ");

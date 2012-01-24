@@ -1,10 +1,12 @@
-package com.activeandroid;
+package com.activeandroid.query;
 
 import android.text.TextUtils;
 
+import com.activeandroid.Model;
+import com.activeandroid.QueryUtils;
 
 public class Join {
-	public static enum JoinType {
+	static enum JoinType {
 		LEFT, OUTER, INNER, CROSS
 	}
 
@@ -15,9 +17,9 @@ public class Join {
 	private String mOn;
 	private String[] mUsing;
 
-	public Join(From from, Class<? extends Model> type, JoinType joinType) {
+	Join(From from, Class<? extends Model> table, JoinType joinType) {
 		mFrom = from;
-		mType = type;
+		mType = table;
 		mJoinType = joinType;
 	}
 
@@ -31,7 +33,7 @@ public class Join {
 		return mFrom;
 	}
 
-	public From on(String on, String... args) {
+	public From on(String on, Object... args) {
 		mOn = on;
 		mFrom.addArguments(args);
 		return mFrom;
@@ -49,7 +51,7 @@ public class Join {
 			sql.append(mJoinType.toString() + " ");
 		}
 
-		sql.append("JOIN " + ReflectionUtils.getTableName(mType) + " ");
+		sql.append("JOIN " + QueryUtils.getTableName(mType) + " ");
 
 		if (mAlias != null) {
 			sql.append("AS " + mAlias + " ");
