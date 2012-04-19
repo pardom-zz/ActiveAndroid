@@ -512,6 +512,6 @@ public abstract class Model {
 	public boolean equals(Object obj) {
 		final Model other = (Model) obj;
 
-		return (this.mTableName == other.mTableName) && (this.mId == other.mId);
+		return this.mId != null && (this.mTableName == other.mTableName) && (this.mId == other.mId);
 	}
 }
