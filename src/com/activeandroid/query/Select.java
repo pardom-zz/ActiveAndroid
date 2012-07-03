@@ -1,10 +1,10 @@
 package com.activeandroid.query;
 
-import com.activeandroid.Model;
-
 import android.text.TextUtils;
 
-public class Select extends QueryBase {
+import com.activeandroid.Model;
+
+public class Select implements Sqlable {
 	private String[] mColumns;
 	private boolean mDistinct = false;
 	private boolean mAll = false;
@@ -39,8 +39,7 @@ public class Select extends QueryBase {
 	}
 
 	public From from(Class<? extends Model> table) {
-		mFrom = new From(table, this);
-		return mFrom;
+		return new From(table, this);
 	}
 
 	public static class Column {
@@ -54,7 +53,7 @@ public class Select extends QueryBase {
 	}
 
 	@Override
-	String toSql() {
+	public String toSql() {
 		StringBuilder sql = new StringBuilder();
 
 		sql.append("SELECT ");

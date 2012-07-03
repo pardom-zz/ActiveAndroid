@@ -5,7 +5,7 @@ import android.text.TextUtils;
 import com.activeandroid.Model;
 import com.activeandroid.QueryUtils;
 
-public class Join {
+public class Join implements Sqlable {
 	static enum JoinType {
 		LEFT, OUTER, INNER, CROSS
 	}
@@ -44,26 +44,27 @@ public class Join {
 		return mFrom;
 	}
 
-	String toSql() {
-		StringBuilder sql = new StringBuilder();
+	@Override
+	public String toSql() {
+		String sql = "";
 
 		if (mJoinType != null) {
-			sql.append(mJoinType.toString() + " ");
+			sql += mJoinType.toString() + " ";
 		}
 
-		sql.append("JOIN " + QueryUtils.getTableName(mType) + " ");
+		sql += "JOIN " + QueryUtils.getTableName(mType) + " ";
 
 		if (mAlias != null) {
-			sql.append("AS " + mAlias + " ");
+			sql += "AS " + mAlias + " ";
 		}
 
 		if (mOn != null) {
-			sql.append("ON " + mOn + " ");
+			sql += "ON " + mOn + " ";
 		}
 		else if (mUsing != null) {
-			sql.append("USING (" + TextUtils.join(", ", mUsing) + ") ");
+			sql += "USING (" + TextUtils.join(", ", mUsing) + ") ";
 		}
 
-		return sql.toString();
+		return sql;
 	}
 }

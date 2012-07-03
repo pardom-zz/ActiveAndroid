@@ -8,8 +8,8 @@ import com.activeandroid.Model;
 import com.activeandroid.QueryUtils;
 import com.activeandroid.query.Join.JoinType;
 
-public class From {
-	private QueryBase mQueryBase;
+public class From implements Sqlable {
+	private Sqlable mQueryBase;
 
 	private Class<? extends Model> mType;
 	private String mAlias;
@@ -21,15 +21,15 @@ public class From {
 	private String mLimit;
 	private String mOffset;
 
-	private List<Object> mArguments;
+	private List<Object> mWhereArguments;
 
-	public From(Class<? extends Model> table, QueryBase queryBase) {
+	public From(Class<? extends Model> table, Sqlable queryBase) {
 		mType = table;
 		mJoins = new ArrayList<Join>();
 		mQueryBase = queryBase;
 
 		mJoins = new ArrayList<Join>();
-		mArguments = new ArrayList<Object>();
+		mWhereArguments = new ArrayList<Object>();
 	}
 
 	public From as(String alias) {
@@ -69,12 +69,16 @@ public class From {
 
 	public From where(String where) {
 		mWhere = where;
+		mWhereArguments.clear();
+
 		return this;
 	}
 
 	public From where(String where, Object... args) {
 		mWhere = where;
-		addArguments(args);
+		mWhereArguments.clear();
+		mWhereArguments.addAll(Arrays.asList(args));
+
 		return this;
 	}
 
@@ -104,51 +108,49 @@ public class From {
 	}
 
 	void addArguments(Object[] args) {
-		mArguments.addAll(Arrays.asList(args));
+		mWhereArguments.addAll(Arrays.asList(args));
 	}
 
-	String toSql() {
-		StringBuilder sql = new StringBuilder();
+	@Override
+	public String toSql() {
+		String sql = "";
 
-		sql.append(mQueryBase.toSql());
-
-		sql.append("FROM ");
-
-		sql.append(QueryUtils.getTableName(mType) + " ");
+		sql += mQueryBase.toSql();
+		sql += "FROM " + QueryUtils.getTableName(mType) + " ";
 
 		if (mAlias != null) {
-			sql.append("AS " + mAlias + " ");
+			sql += "AS " + mAlias + " ";
 		}
 
 		for (Join join : mJoins) {
-			sql.append(join.toSql());
+			sql += join.toSql();
 		}
 
 		if (mWhere != null) {
-			sql.append("WHERE " + mWhere + " ");
+			sql += "WHERE " + mWhere + " ";
 		}
 
 		if (mGroupBy != null) {
-			sql.append("GROUP BY " + mGroupBy + " ");
+			sql += "GROUP BY " + mGroupBy + " ";
 		}
 
 		if (mHaving != null) {
-			sql.append("HAVING " + mHaving + " ");
+			sql += "HAVING " + mHaving + " ";
 		}
 
 		if (mOrderBy != null) {
-			sql.append("ORDER BY " + mOrderBy + " ");
+			sql += "ORDER BY " + mOrderBy + " ";
 		}
 
 		if (mLimit != null) {
-			sql.append("LIMIT " + mLimit + " ");
+			sql += "LIMIT " + mLimit + " ";
 		}
 
 		if (mOffset != null) {
-			sql.append("OFFSET " + mOffset + " ");
+			sql += "OFFSET " + mOffset + " ";
 		}
 
-		return sql.toString();
+		return sql;
 	}
 
 	public <T extends Model> ArrayList<T> execute() {
@@ -160,11 +162,11 @@ public class From {
 	}
 
 	private String[] getArguments() {
-		final int size = mArguments.size();
+		final int size = mWhereArguments.size();
 		final String[] args = new String[size];
 
 		for (int i = 0; i < size; i++) {
-			args[i] = mArguments.get(i).toString();
+			args[i] = mWhereArguments.get(i).toString();
 		}
 
 		return args;

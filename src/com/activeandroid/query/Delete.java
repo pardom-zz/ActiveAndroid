@@ -2,20 +2,17 @@ package com.activeandroid.query;
 
 import com.activeandroid.Model;
 
-
-
-final public class Delete extends QueryBase {
+final public class Delete implements Sqlable {
 
 	public Delete() {
 	}
 
 	public From from(Class<? extends Model> table) {
-		mFrom = new From(table, this);
-		return mFrom;
+		return new From(table, this);
 	}
 
 	@Override
-	String toSql() {
+	public String toSql() {
 		return "DELETE ";
 	}
 }

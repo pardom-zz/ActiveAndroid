@@ -98,24 +98,19 @@ class DatabaseHelper extends SQLiteOpenHelper {
 	}
 
 	private void executeSqlScript(SQLiteDatabase db, String file) {
-		final StringBuilder text = new StringBuilder();
-
 		try {
 			final InputStream is = mContext.getAssets().open(MIGRATION_PATH + "/" + file);
 			final BufferedReader reader = new BufferedReader(new InputStreamReader(is));
-			String line;
+			String line = null;
 
 			while ((line = reader.readLine()) != null) {
-				text.append(line);
-				text.append("\n");
+				db.execSQL(line);
 			}
-
 		}
 		catch (IOException e) {
 			Log.e(e.getMessage());
 		}
 
-		db.execSQL(text.toString());
 	}
 
 	private void createTable(SQLiteDatabase db, Class<? extends Model> table) {

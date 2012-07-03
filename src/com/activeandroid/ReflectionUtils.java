@@ -76,6 +76,11 @@ final class ReflectionUtils {
 
 			while (entries.hasMoreElements()) {
 				final String name = entries.nextElement();
+
+				if (name.contains("com.activeandroid")) {
+					continue;
+				}
+
 				Class<?> discoveredClass = null;
 				Class<?> superClass = null;
 
@@ -151,6 +156,11 @@ final class ReflectionUtils {
 
 			while (entries.hasMoreElements()) {
 				final String name = entries.nextElement();
+
+				if (name.contains("com.activeandroid") && !name.contains("serializer")) {
+					continue;
+				}
+
 				Class<?> discoveredClass = null;
 				Class<?> superClass = null;
 
