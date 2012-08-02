@@ -18,6 +18,8 @@ import com.activeandroid.serializer.TypeSerializer;
 import dalvik.system.DexFile;
 
 final class ReflectionUtils {
+	private final static String AA_DB_NAME = "AA_DB_NAME";
+	private final static String AA_DB_VERSION = "AA_DB_VERSION";
 
 	// ###############################
 	// ### Table/Column names
@@ -226,6 +228,29 @@ final class ReflectionUtils {
 		Registry.getInstance().addClassFields(type, typeFields);
 
 		return typeFields;
+	}
+
+	// ###############################
+	// ### Manifest values
+
+	public static String getDbName() {
+		String aaName = ReflectionUtils.getMetaDataString(AA_DB_NAME);
+
+		if (aaName == null) {
+			aaName = "Application.db";
+		}
+
+		return aaName;
+	}
+
+	public static int getDbVersion() {
+		Integer aaVersion = ReflectionUtils.getMetaDataInteger(AA_DB_VERSION);
+
+		if (aaVersion == null || aaVersion == 0) {
+			aaVersion = 1;
+		}
+
+		return aaVersion;
 	}
 
 	// ###############################

@@ -1,5 +1,10 @@
 package com.activeandroid;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -21,7 +26,6 @@ import com.activeandroid.serializer.TypeSerializer;
 final class Registry {
 	private Context mContext;
 	private DatabaseHelper mDatabaseHelper;
-	private SQLiteDatabase mDatabase;
 
 	private boolean mIsInitialized = false;
 
@@ -52,6 +56,8 @@ final class Registry {
 		}
 
 		mContext = context.getApplicationContext();
+
+		copyAttachedDatabase();
 
 		if (Params.IS_TRIAL) {
 			final boolean isEmulator = isEmulator();
@@ -139,25 +145,11 @@ final class Registry {
 	// Open/close database
 
 	public synchronized SQLiteDatabase openDatabase() {
-		if (mDatabase != null) {
-			Log.v("Returning opened database.");
-			return mDatabase;
-		}
-
-		Log.v("Opening database");
-
-		mDatabase = mDatabaseHelper.getWritableDatabase();
-
-		return mDatabase;
+		return mDatabaseHelper.getWritableDatabase();
 	}
 
 	public synchronized void closeDatabase() {
-		if (mDatabase != null) {
-			mDatabase.close();
-			mDatabase = null;
-
-			Log.v("Database closed and set to null");
-		}
+		mDatabaseHelper.close();
 	}
 
 	// Non-public methods
@@ -223,6 +215,37 @@ final class Registry {
 	}
 
 	// Private methods
+
+	private void copyAttachedDatabase() {
+		final String dbName = ReflectionUtils.getDbName();
+		final File dbPath = mContext.getDatabasePath(dbName);
+
+		// If the database already exists, return
+		if (dbPath.exists()) {
+			return;
+		}
+
+		// Make sure we have a path to the file
+		dbPath.getParentFile().mkdirs();
+
+		try {
+			final InputStream input = mContext.getAssets().open(dbName);
+			final OutputStream output = new FileOutputStream(dbPath);
+
+			byte[] buffer = new byte[1024];
+			int length;
+
+			while ((length = input.read(buffer)) > 0) {
+				output.write(buffer, 0, length);
+			}
+
+			output.flush();
+			output.close();
+			input.close();
+		}
+		catch (IOException e) {
+		}
+	}
 
 	private boolean isEmulator() {
 		return android.os.Build.MODEL.equals("sdk") || android.os.Build.MODEL.equals("google_sdk");

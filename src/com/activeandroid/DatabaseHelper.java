@@ -20,10 +20,7 @@ import com.activeandroid.annotation.Column;
 import com.activeandroid.serializer.TypeSerializer;
 
 class DatabaseHelper extends SQLiteOpenHelper {
-	private final static String AA_DB_NAME = "AA_DB_NAME";
-	private final static String AA_DB_VERSION = "AA_DB_VERSION";
 	private final static String MIGRATION_PATH = "migrations";
-
 	private final static boolean FOREIGN_KEYS_SUPPORTED = Integer.parseInt(Build.VERSION.SDK) >= 8;
 
 	private Context mContext;
@@ -32,7 +29,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
 	// PUBLIC METHODS
 
 	public DatabaseHelper(Context context) {
-		super(context, getDBName(), null, getDBVersion());
+		super(context, ReflectionUtils.getDbName(), null, ReflectionUtils.getDbVersion());
 		mContext = context;
 	}
 
@@ -47,9 +44,16 @@ class DatabaseHelper extends SQLiteOpenHelper {
 
 		Log.i("Creating " + tables.size() + " tables");
 
+		db.beginTransaction();
+
 		for (Class<? extends Model> table : tables) {
 			createTable(db, table);
 		}
+
+		db.setTransactionSuccessful();
+		db.endTransaction();
+
+		executeMigrations(db, -1, db.getVersion());
 	}
 
 	@Override
@@ -76,6 +80,8 @@ class DatabaseHelper extends SQLiteOpenHelper {
 			final List<String> files = Arrays.asList(mContext.getAssets().list(MIGRATION_PATH));
 			Collections.sort(files, new NaturalOrderComparator());
 
+			db.beginTransaction();
+
 			for (String file : files) {
 				try {
 					final int version = Integer.valueOf(file.replace(".sql", ""));
@@ -89,6 +95,9 @@ class DatabaseHelper extends SQLiteOpenHelper {
 					Log.w("Skipping invalidly named file: " + file);
 				}
 			}
+
+			db.setTransactionSuccessful();
+			db.endTransaction();
 		}
 		catch (IOException e) {
 			Log.e(e.getMessage());
@@ -194,25 +203,5 @@ class DatabaseHelper extends SQLiteOpenHelper {
 		}
 
 		return definition;
-	}
-
-	private static String getDBName() {
-		String aaName = ReflectionUtils.getMetaDataString(AA_DB_NAME);
-
-		if (aaName == null) {
-			aaName = "Application.db";
-		}
-
-		return aaName;
-	}
-
-	private static int getDBVersion() {
-		Integer aaVersion = ReflectionUtils.getMetaDataInteger(AA_DB_VERSION);
-
-		if (aaVersion == null || aaVersion == 0) {
-			aaVersion = 1;
-		}
-
-		return aaVersion;
 	}
 }

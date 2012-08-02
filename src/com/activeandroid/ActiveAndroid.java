@@ -4,8 +4,12 @@ import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 
 public final class ActiveAndroid {
+	private static Object mLock = new Object();
+
 	public static void initialize(Context context) {
-		Registry.getInstance().initialize(context);
+		synchronized (mLock) {
+			Registry.getInstance().initialize(context);
+		}
 	}
 
 	public static void clearCache() {
@@ -27,7 +31,9 @@ public final class ActiveAndroid {
 	// Expose Application database
 
 	public static SQLiteDatabase getDatabase() {
-		return Registry.getInstance().openDatabase();
+		synchronized (mLock) {
+			return Registry.getInstance().openDatabase();
+		}
 	}
 
 	// Convenience wrappers
