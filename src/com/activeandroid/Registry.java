@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.zip.GZIPInputStream;
 
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -229,22 +230,37 @@ final class Registry {
 		dbPath.getParentFile().mkdirs();
 
 		try {
-			final InputStream input = mContext.getAssets().open(dbName);
+			InputStream inputStream = mContext.getAssets().open(dbName);
+			if (isGZIPFile(dbName)) {
+				inputStream = new GZIPInputStream(inputStream);
+			}
+
 			final OutputStream output = new FileOutputStream(dbPath);
 
 			byte[] buffer = new byte[1024];
 			int length;
 
-			while ((length = input.read(buffer)) > 0) {
+			while ((length = inputStream.read(buffer)) > 0) {
 				output.write(buffer, 0, length);
 			}
 
 			output.flush();
 			output.close();
-			input.close();
+			inputStream.close();
 		}
-		catch (IOException e) {
+		catch (Exception e) {
+			Log.e(e.getMessage());
 		}
+	}
+
+	private boolean isGZIPFile(final String dbName) throws IOException {
+		InputStream inputStream = mContext.getAssets().open(dbName);
+
+		byte[] header = new byte[2];
+		inputStream.read(header);
+		inputStream.close();
+
+		return (header[0] == (byte) 0x1f) && (header[1] == (byte) 0x8b);
 	}
 
 	private boolean isEmulator() {
