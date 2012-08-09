@@ -97,9 +97,17 @@ public class From implements Sqlable {
 		return this;
 	}
 
+	public From limit(int limit) {
+		return limit(String.valueOf(limit));
+	}
+
 	public From limit(String limit) {
 		mLimit = limit;
 		return this;
+	}
+
+	public From offset(int offset) {
+		return offset(String.valueOf(offset));
 	}
 
 	public From offset(String offset) {
