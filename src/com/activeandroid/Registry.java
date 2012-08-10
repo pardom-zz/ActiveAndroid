@@ -229,13 +229,12 @@ final class Registry {
 		// Make sure we have a path to the file
 		dbPath.getParentFile().mkdirs();
 
-		InputStream inputStream;
+		InputStream inputStream = null;
 		try {
 			inputStream = mContext.getAssets().open(dbName + ".gz");
 			dbName += ".gz";
 		}
 		catch (Exception e) {
-			inputStream = null;
 		}
 
 		try {
@@ -260,19 +259,26 @@ final class Registry {
 			output.close();
 			inputStream.close();
 		}
-		catch (Exception e) {
-			Log.e(e.getMessage());
+		catch (IOException e) {
+			Log.e("Failed to open file", e);
 		}
 	}
 
-	private boolean isGZIPFile(final String dbName) throws IOException {
-		InputStream inputStream = mContext.getAssets().open(dbName);
+	private boolean isGZIPFile(final String dbName) {
+		try {
+			InputStream inputStream = mContext.getAssets().open(dbName);
 
-		byte[] header = new byte[2];
-		inputStream.read(header);
-		inputStream.close();
+			byte[] buffer = new byte[2];
+			inputStream.read(buffer);
+			inputStream.close();
 
-		return (header[0] == (byte) 0x1f) && (header[1] == (byte) 0x8b);
+			return (buffer[0] == (byte) 0x1f) && (buffer[1] == (byte) 0x8b);
+		}
+		catch (IOException e) {
+			Log.e("Failed to open file", e);
+		}
+
+		return false;
 	}
 
 	private boolean isEmulator() {
