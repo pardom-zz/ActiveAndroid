@@ -218,7 +218,7 @@ final class Registry {
 	// Private methods
 
 	private void copyAttachedDatabase() {
-		final String dbName = ReflectionUtils.getDbName();
+		String dbName = ReflectionUtils.getDbName();
 		final File dbPath = mContext.getDatabasePath(dbName);
 
 		// If the database already exists, return
@@ -229,8 +229,20 @@ final class Registry {
 		// Make sure we have a path to the file
 		dbPath.getParentFile().mkdirs();
 
+		InputStream inputStream;
 		try {
-			InputStream inputStream = mContext.getAssets().open(dbName);
+			inputStream = mContext.getAssets().open(dbName + ".gz");
+			dbName += ".gz";
+		}
+		catch (Exception e) {
+			inputStream = null;
+		}
+
+		try {
+			if (inputStream == null) {
+				inputStream = mContext.getAssets().open(dbName);
+			}
+
 			if (isGZIPFile(dbName)) {
 				inputStream = new GZIPInputStream(inputStream);
 			}
