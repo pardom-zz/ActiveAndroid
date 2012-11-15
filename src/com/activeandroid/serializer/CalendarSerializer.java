@@ -2,23 +2,21 @@ package com.activeandroid.serializer;
 
 import java.util.Calendar;
 
-final public class CalendarSerializer extends TypeSerializer {
-	@Override
+import com.activeandroid.util.SQLiteUtils.SQLiteType;
+
+final public class CalendarSerializer implements TypeSerializer {
 	public Class<?> getDeserializedType() {
 		return Calendar.class;
 	}
 
-	@Override
-	public TypeSerializer.SerializedType getSerializedType() {
-		return SerializedType.LONG;
+	public SQLiteType getSerializedType() {
+		return SQLiteType.INTEGER;
 	}
 
-	@Override
 	public Long serialize(Object data) {
 		return ((Calendar) data).getTimeInMillis();
 	}
 
-	@Override
 	public Calendar deserialize(Object data) {
 		Calendar calendar = Calendar.getInstance();
 		calendar.setTimeInMillis((Long) data);

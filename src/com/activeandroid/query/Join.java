@@ -3,7 +3,7 @@ package com.activeandroid.query;
 import android.text.TextUtils;
 
 import com.activeandroid.Model;
-import com.activeandroid.QueryUtils;
+import com.activeandroid.util.ReflectionUtils;
 
 public class Join implements Sqlable {
 	static enum JoinType {
@@ -52,7 +52,7 @@ public class Join implements Sqlable {
 			sql += mJoinType.toString() + " ";
 		}
 
-		sql += "JOIN " + QueryUtils.getTableName(mType) + " ";
+		sql += "JOIN " + ReflectionUtils.getTableName(mType) + " ";
 
 		if (mAlias != null) {
 			sql += "AS " + mAlias + " ";

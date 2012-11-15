@@ -1,11 +1,12 @@
 package com.activeandroid;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.lang.reflect.Field;
-import java.util.ArrayList;
+import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -13,41 +14,46 @@ import java.util.List;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.os.Build;
-import android.text.TextUtils;
 
-import com.activeandroid.annotation.Column;
-import com.activeandroid.serializer.TypeSerializer;
+import com.activeandroid.util.Log;
+import com.activeandroid.util.NaturalOrderComparator;
+import com.activeandroid.util.ReflectionUtils;
+import com.activeandroid.util.SQLiteUtils;
 
-class DatabaseHelper extends SQLiteOpenHelper {
+public class DatabaseHelper extends SQLiteOpenHelper {
+	//////////////////////////////////////////////////////////////////////////////////////
+	// PRIVATE CONSTANTS
+	//////////////////////////////////////////////////////////////////////////////////////
+
+	private final static String AA_DB_NAME = "AA_DB_NAME";
+	private final static String AA_DB_VERSION = "AA_DB_VERSION";
+
 	private final static String MIGRATION_PATH = "migrations";
-	private final static boolean FOREIGN_KEYS_SUPPORTED = Integer.parseInt(Build.VERSION.SDK) >= 8;
 
-	private Context mContext;
-
-	//////////////////////////////////////////////////////////////////////////////////
-	// PUBLIC METHODS
+	//////////////////////////////////////////////////////////////////////////////////////
+	// CONSTRUCTORS
+	//////////////////////////////////////////////////////////////////////////////////////
 
 	public DatabaseHelper(Context context) {
-		super(context, ReflectionUtils.getDbName(), null, ReflectionUtils.getDbVersion());
-		mContext = context;
+		super(context, getDbName(context), null, getDbVersion(context));
+		copyAttachedDatabase(context);
 	}
+
+	//////////////////////////////////////////////////////////////////////////////////////
+	// OVERRIDEN METHODS
+	//////////////////////////////////////////////////////////////////////////////////////
 
 	@Override
 	public void onCreate(SQLiteDatabase db) {
-		if (FOREIGN_KEYS_SUPPORTED) {
+		if (SQLiteUtils.FOREIGN_KEYS_SUPPORTED) {
 			db.execSQL("PRAGMA foreign_keys=ON;");
 			Log.i("Foreign Keys supported. Enabling foreign key features.");
 		}
 
-		final ArrayList<Class<? extends Model>> tables = ReflectionUtils.getModelClasses();
-
-		Log.i("Creating " + tables.size() + " tables");
-
 		db.beginTransaction();
 
-		for (Class<? extends Model> table : tables) {
-			createTable(db, table);
+		for (Class<? extends Model> table : ReflectionUtils.getModelClasses(Cache.getContext())) {
+			db.execSQL(SQLiteUtils.createTableDefinition(table));
 		}
 
 		db.setTransactionSuccessful();
@@ -58,26 +64,62 @@ class DatabaseHelper extends SQLiteOpenHelper {
 
 	@Override
 	public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-		if (FOREIGN_KEYS_SUPPORTED) {
+		if (SQLiteUtils.FOREIGN_KEYS_SUPPORTED) {
 			db.execSQL("PRAGMA foreign_keys=ON;");
 			Log.i("Foreign Keys supported. Enabling foreign key features.");
 		}
 
 		if (!executeMigrations(db, oldVersion, newVersion)) {
-			Log.i("No migrations found. Calling onCreate");
+			Log.i("No migrations found. Calling onCreate.");
 			onCreate(db);
 		}
 	}
 
-	//////////////////////////////////////////////////////////////////////////////////
+	//////////////////////////////////////////////////////////////////////////////////////
+	// PUBLIC METHODS
+	//////////////////////////////////////////////////////////////////////////////////////
+
+	public void copyAttachedDatabase(Context context) {
+		String dbName = getDbName(context);
+		final File dbPath = context.getDatabasePath(dbName);
+
+		// If the database already exists, return
+		if (dbPath.exists()) {
+			return;
+		}
+
+		// Make sure we have a path to the file
+		dbPath.getParentFile().mkdirs();
+
+		// Try to copy database file
+		try {
+			final InputStream inputStream = context.getAssets().open(dbName);
+			final OutputStream output = new FileOutputStream(dbPath);
+
+			byte[] buffer = new byte[1024];
+			int length;
+
+			while ((length = inputStream.read(buffer)) > 0) {
+				output.write(buffer, 0, length);
+			}
+
+			output.flush();
+			output.close();
+			inputStream.close();
+		}
+		catch (IOException e) {
+			Log.e("Failed to open file", e);
+		}
+	}
+
+	//////////////////////////////////////////////////////////////////////////////////////
 	// PRIVATE METHODS
+	//////////////////////////////////////////////////////////////////////////////////////
 
 	private boolean executeMigrations(SQLiteDatabase db, int oldVersion, int newVersion) {
-		Log.i("Checking for migration scripts");
-
 		boolean migrationExecuted = false;
 		try {
-			final List<String> files = Arrays.asList(mContext.getAssets().list(MIGRATION_PATH));
+			final List<String> files = Arrays.asList(Cache.getContext().getAssets().list(MIGRATION_PATH));
 			Collections.sort(files, new NaturalOrderComparator());
 
 			db.beginTransaction();
@@ -89,10 +131,12 @@ class DatabaseHelper extends SQLiteOpenHelper {
 					if (version > oldVersion && version <= newVersion) {
 						executeSqlScript(db, file);
 						migrationExecuted = true;
+
+						Log.i(file + " executed succesfully.");
 					}
 				}
 				catch (NumberFormatException e) {
-					Log.w("Skipping invalidly named file: " + file);
+					Log.w("Skipping invalidly named file: " + file, e);
 				}
 			}
 
@@ -100,7 +144,7 @@ class DatabaseHelper extends SQLiteOpenHelper {
 			db.endTransaction();
 		}
 		catch (IOException e) {
-			Log.e(e.getMessage());
+			Log.e("Failed to execute migrations.", e);
 		}
 
 		return migrationExecuted;
@@ -108,8 +152,8 @@ class DatabaseHelper extends SQLiteOpenHelper {
 
 	private void executeSqlScript(SQLiteDatabase db, String file) {
 		try {
-			final InputStream is = mContext.getAssets().open(MIGRATION_PATH + "/" + file);
-			final BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+			final InputStream input = Cache.getContext().getAssets().open(MIGRATION_PATH + "/" + file);
+			final BufferedReader reader = new BufferedReader(new InputStreamReader(input));
 			String line = null;
 
 			while ((line = reader.readLine()) != null) {
@@ -117,91 +161,29 @@ class DatabaseHelper extends SQLiteOpenHelper {
 			}
 		}
 		catch (IOException e) {
-			Log.e(e.getMessage());
+			Log.e("Failed to execute " + file, e);
 		}
-
 	}
 
-	private void createTable(SQLiteDatabase db, Class<? extends Model> table) {
-		ArrayList<Field> fields = ReflectionUtils.getTableFields(table);
-		ArrayList<String> definitions = new ArrayList<String>();
+	// Meta-data methods
 
-		for (Field field : fields) {
-			String definition = createColumnDefinition(field);
+	private static String getDbName(Context context) {
+		String aaName = ReflectionUtils.getMetaData(context, AA_DB_NAME);
 
-			if (definition != null) {
-				definitions.add(definition);
-			}
+		if (aaName == null) {
+			aaName = "Application.db";
 		}
 
-		String sql = String.format("CREATE TABLE IF NOT EXISTS %s (%s);", ReflectionUtils.getTableName(table),
-				TextUtils.join(", ", definitions));
-
-		Log.i(sql);
-
-		db.execSQL(sql);
+		return aaName;
 	}
 
-	private String createColumnDefinition(Field field) {
-		String definition = null;
+	private static int getDbVersion(Context context) {
+		Integer aaVersion = ReflectionUtils.getMetaData(context, AA_DB_VERSION);
 
-		final Class<?> type = field.getType();
-		final String name = ReflectionUtils.getColumnName(field);
-		final TypeSerializer typeSerializer = Registry.getInstance().getParserForType(type);
-
-		// Column definition
-		final Column column = field.getAnnotation(Column.class);
-		final Integer length = column.length();
-
-		if (typeSerializer != null) {
-			definition = name + " " + typeSerializer.getSerializedType().toString();
-		}
-		else if (ReflectionUtils.typeIsSQLiteReal(type)) {
-			definition = name + " REAL";
-
-		}
-		else if (ReflectionUtils.typeIsSQLiteInteger(type)) {
-			definition = name + " INTEGER";
-
-		}
-		else if (ReflectionUtils.typeIsSQLiteText(type)) {
-			definition = name + " TEXT";
+		if (aaVersion == null || aaVersion == 0) {
+			aaVersion = 1;
 		}
 
-		if (definition != null) {
-			//////////////////////////////////
-			// LENGTH
-
-			if (length > -1) {
-				definition += "(" + length + ")";
-			}
-
-			//////////////////////////////////
-			// PRIMARY KEY
-
-			if (name.equals("Id")) {
-				definition += " PRIMARY KEY AUTOINCREMENT";
-			}
-
-			//////////////////////////////////
-			// NOT NULL
-
-			if (column.notNull()) {
-				definition += " NOT NULL ON CONFLICT " + column.onNullConflict().toString();
-			}
-
-			//////////////////////////////////
-			// FOREIGN KEY
-
-			if (FOREIGN_KEYS_SUPPORTED && !type.isPrimitive() && type.getSuperclass() != null
-					&& type.getSuperclass().equals(Model.class)) {
-
-				definition += " REFERENCES " + ReflectionUtils.getTableName(type) + "(Id)";
-				definition += " ON DELETE " + column.onDelete().toString().replace("_", " ");
-				definition += " ON UPDATE " + column.onUpdate().toString().replace("_", " ");
-			}
-		}
-
-		return definition;
+		return aaVersion;
 	}
 }

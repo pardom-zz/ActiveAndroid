@@ -2,18 +2,17 @@ package com.activeandroid.serializer;
 
 import java.util.Date;
 
-final public class UtilDateSerializer extends TypeSerializer {
-	@Override
+import com.activeandroid.util.SQLiteUtils.SQLiteType;
+
+final public class UtilDateSerializer implements TypeSerializer {
 	public Class<?> getDeserializedType() {
 		return Date.class;
 	}
 
-	@Override
-	public SerializedType getSerializedType() {
-		return SerializedType.LONG;
+	public SQLiteType getSerializedType() {
+		return SQLiteType.INTEGER;
 	}
 
-	@Override
 	public Long serialize(Object data) {
 		if (data == null) {
 			return null;
@@ -22,7 +21,6 @@ final public class UtilDateSerializer extends TypeSerializer {
 		return ((Date) data).getTime();
 	}
 
-	@Override
 	public Date deserialize(Object data) {
 		if (data == null) {
 			return null;

@@ -8,10 +8,4 @@ public class Application extends android.app.Application {
 		super.onCreate();
 		ActiveAndroid.initialize(this);
 	}
-
-	@Override
-	public void onTerminate() {
-		ActiveAndroid.dispose();
-		super.onTerminate();
-	}
 }

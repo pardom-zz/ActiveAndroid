@@ -1,64 +1,72 @@
 package com.activeandroid;
 
+import com.activeandroid.util.Log;
+
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 
 public final class ActiveAndroid {
-	private static Object mLock = new Object();
+	//////////////////////////////////////////////////////////////////////////////////////
+	// PRIVATE MEMBERS
+	//////////////////////////////////////////////////////////////////////////////////////
+	
+	private static Object sLock = new Object();
 
+	//////////////////////////////////////////////////////////////////////////////////////
+	// PUBLIC METHODS
+	//////////////////////////////////////////////////////////////////////////////////////
+	
 	public static void initialize(Context context) {
-		synchronized (mLock) {
-			Registry.getInstance().initialize(context);
+		initialize(context, false);
+	}
+
+	public static void initialize(Context context, boolean loggingEnabled) {
+		setLoggingEnabled(loggingEnabled);
+
+		synchronized (sLock) {
+			Cache.initialize(context);
 		}
 	}
 
 	public static void clearCache() {
-		Registry.getInstance().clearCache();
+		Cache.clear();
 	}
 
 	public static void dispose() {
-		Registry.getInstance().dispose();
-	}
-
-	public static String getVersion() {
-		return Params.VERSION;
+		Cache.dispose();
 	}
 
 	public static void setLoggingEnabled(boolean enabled) {
-		Log.configure(enabled);
+		Log.setEnabled(enabled);
 	}
 
-	// Expose Application database
-
 	public static SQLiteDatabase getDatabase() {
-		synchronized (mLock) {
-			return Registry.getInstance().openDatabase();
+		synchronized (sLock) {
+			return Cache.openDatabase();
 		}
 	}
 
-	// Convenience wrappers
-
 	public static void beginTransaction() {
-		Registry.getInstance().openDatabase().beginTransaction();
+		Cache.openDatabase().beginTransaction();
 	}
 
 	public static void endTransaction() {
-		Registry.getInstance().openDatabase().endTransaction();
-	}
-
-	public static void execSQL(String sql) {
-		Registry.getInstance().openDatabase().execSQL(sql);
-	}
-
-	public static void execSQL(String sql, Object[] bindArgs) {
-		Registry.getInstance().openDatabase().execSQL(sql, bindArgs);
-	}
-
-	public static boolean inTransaction() {
-		return Registry.getInstance().openDatabase().inTransaction();
+		Cache.openDatabase().endTransaction();
 	}
 
 	public static void setTransactionSuccessful() {
-		Registry.getInstance().openDatabase().setTransactionSuccessful();
+		Cache.openDatabase().setTransactionSuccessful();
+	}
+
+	public static boolean inTransaction() {
+		return Cache.openDatabase().inTransaction();
+	}
+
+	public static void execSQL(String sql) {
+		Cache.openDatabase().execSQL(sql);
+	}
+
+	public static void execSQL(String sql, Object[] bindArgs) {
+		Cache.openDatabase().execSQL(sql, bindArgs);
 	}
 }

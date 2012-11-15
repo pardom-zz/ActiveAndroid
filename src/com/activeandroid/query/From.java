@@ -5,8 +5,8 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.activeandroid.Model;
-import com.activeandroid.QueryUtils;
 import com.activeandroid.query.Join.JoinType;
+import com.activeandroid.util.ReflectionUtils;
 
 public class From implements Sqlable {
 	private Sqlable mQueryBase;
@@ -21,7 +21,7 @@ public class From implements Sqlable {
 	private String mLimit;
 	private String mOffset;
 
-	private List<Object> mWhereArguments;
+	private List<Object> mArguments;
 
 	public From(Class<? extends Model> table, Sqlable queryBase) {
 		mType = table;
@@ -29,7 +29,7 @@ public class From implements Sqlable {
 		mQueryBase = queryBase;
 
 		mJoins = new ArrayList<Join>();
-		mWhereArguments = new ArrayList<Object>();
+		mArguments = new ArrayList<Object>();
 	}
 
 	public From as(String alias) {
@@ -69,15 +69,15 @@ public class From implements Sqlable {
 
 	public From where(String where) {
 		mWhere = where;
-		mWhereArguments.clear();
+		mArguments.clear();
 
 		return this;
 	}
 
 	public From where(String where, Object... args) {
 		mWhere = where;
-		mWhereArguments.clear();
-		mWhereArguments.addAll(Arrays.asList(args));
+		mArguments.clear();
+		mArguments.addAll(Arrays.asList(args));
 
 		return this;
 	}
@@ -116,7 +116,7 @@ public class From implements Sqlable {
 	}
 
 	void addArguments(Object[] args) {
-		mWhereArguments.addAll(Arrays.asList(args));
+		mArguments.addAll(Arrays.asList(args));
 	}
 
 	@Override
@@ -124,7 +124,7 @@ public class From implements Sqlable {
 		String sql = "";
 
 		sql += mQueryBase.toSql();
-		sql += "FROM " + QueryUtils.getTableName(mType) + " ";
+		sql += "FROM " + ReflectionUtils.getTableName(mType) + " ";
 
 		if (mAlias != null) {
 			sql += "AS " + mAlias + " ";
@@ -170,11 +170,11 @@ public class From implements Sqlable {
 	}
 
 	private String[] getArguments() {
-		final int size = mWhereArguments.size();
+		final int size = mArguments.size();
 		final String[] args = new String[size];
 
 		for (int i = 0; i < size; i++) {
-			args[i] = mWhereArguments.get(i).toString();
+			args[i] = mArguments.get(i).toString();
 		}
 
 		return args;

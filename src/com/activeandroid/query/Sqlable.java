@@ -1,5 +1,5 @@
 package com.activeandroid.query;
 
 interface Sqlable {
-	String toSql();
+	public String toSql();
 }

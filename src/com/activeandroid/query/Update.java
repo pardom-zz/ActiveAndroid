@@ -1,7 +1,7 @@
 package com.activeandroid.query;
 
 import com.activeandroid.Model;
-import com.activeandroid.QueryUtils;
+import com.activeandroid.util.ReflectionUtils;
 
 final public class Update implements Sqlable {
 	private Class<? extends Model> mType;
@@ -24,6 +24,6 @@ final public class Update implements Sqlable {
 
 	@Override
 	public String toSql() {
-		return "UPDATE " + QueryUtils.getTableName(mType) + " ";
+		return "UPDATE " + ReflectionUtils.getTableName(mType) + " ";
 	}
 }
