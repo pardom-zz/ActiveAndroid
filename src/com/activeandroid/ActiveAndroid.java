@@ -7,25 +7,16 @@ import android.database.sqlite.SQLiteDatabase;
 
 public final class ActiveAndroid {
 	//////////////////////////////////////////////////////////////////////////////////////
-	// PRIVATE MEMBERS
-	//////////////////////////////////////////////////////////////////////////////////////
-	
-	private static Object sLock = new Object();
-
-	//////////////////////////////////////////////////////////////////////////////////////
 	// PUBLIC METHODS
 	//////////////////////////////////////////////////////////////////////////////////////
-	
-	public static void initialize(Context context) {
+
+	public synchronized static void initialize(Context context) {
 		initialize(context, false);
 	}
 
-	public static void initialize(Context context, boolean loggingEnabled) {
+	public synchronized static void initialize(Context context, boolean loggingEnabled) {
 		setLoggingEnabled(loggingEnabled);
-
-		synchronized (sLock) {
-			Cache.initialize(context);
-		}
+		Cache.initialize(context);
 	}
 
 	public static void clearCache() {
@@ -40,10 +31,8 @@ public final class ActiveAndroid {
 		Log.setEnabled(enabled);
 	}
 
-	public static SQLiteDatabase getDatabase() {
-		synchronized (sLock) {
-			return Cache.openDatabase();
-		}
+	public synchronized static SQLiteDatabase getDatabase() {
+		return Cache.openDatabase();
 	}
 
 	public static void beginTransaction() {
