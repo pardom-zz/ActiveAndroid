@@ -1,9 +1,8 @@
 package com.activeandroid;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import android.content.Context;
@@ -11,7 +10,6 @@ import android.database.sqlite.SQLiteDatabase;
 
 import com.activeandroid.serializer.TypeSerializer;
 import com.activeandroid.util.Log;
-import com.activeandroid.util.ReflectionUtils;
 
 public final class Cache {
 	//////////////////////////////////////////////////////////////////////////////////////
@@ -19,13 +17,11 @@ public final class Cache {
 	//////////////////////////////////////////////////////////////////////////////////////
 
 	private static Context sContext;
+
+	private static ModelInfo sModelInfo;
 	private static DatabaseHelper sDatabaseHelper;
 
 	private static Set<Model> sEntities;
-	private static HashMap<Class<?>, String> sTableNames;
-	private static HashMap<Field, String> sColumnNames;
-	private static HashMap<Class<?>, ArrayList<Field>> sClassFields;
-	private static HashMap<Class<?>, TypeSerializer> sParsers;
 
 	private static boolean sIsInitialized = false;
 
@@ -48,13 +44,10 @@ public final class Cache {
 
 		sContext = context.getApplicationContext();
 
+		sModelInfo = new ModelInfo(sContext);
 		sDatabaseHelper = new DatabaseHelper(sContext);
-		sParsers = ReflectionUtils.getParsers(sContext);
 
 		sEntities = new HashSet<Model>();
-		sTableNames = new HashMap<Class<?>, String>();
-		sClassFields = new HashMap<Class<?>, ArrayList<Field>>();
-		sColumnNames = new HashMap<Field, String>();
 
 		openDatabase();
 
@@ -65,21 +58,13 @@ public final class Cache {
 
 	public static synchronized void clear() {
 		sEntities = new HashSet<Model>();
-		sTableNames = new HashMap<Class<?>, String>();
-		sClassFields = new HashMap<Class<?>, ArrayList<Field>>();
-		sColumnNames = new HashMap<Field, String>();
-
 		Log.v("Cache cleared.");
 	}
 
 	public static synchronized void dispose() {
-		sDatabaseHelper = null;
-		sParsers = null;
-
 		sEntities = null;
-		sTableNames = null;
-		sClassFields = null;
-		sColumnNames = null;
+		sModelInfo = null;
+		sDatabaseHelper = null;
 
 		closeDatabase();
 
@@ -87,6 +72,8 @@ public final class Cache {
 
 		Log.v("ActiveAndroid disposed. Call initialize to use library.");
 	}
+
+	// Database access
 
 	public static synchronized SQLiteDatabase openDatabase() {
 		return sDatabaseHelper.getWritableDatabase();
@@ -96,57 +83,53 @@ public final class Cache {
 		sDatabaseHelper.close();
 	}
 
+	// Context access
+
 	public static Context getContext() {
 		return sContext;
 	}
 
-	public static synchronized void addClassFields(Class<?> type, ArrayList<Field> fields) {
-		sClassFields.put(type, fields);
-	}
-
-	public static synchronized void addColumnName(Field field, String columnName) {
-		sColumnNames.put(field, columnName);
-	}
+	// Entity cache
 
 	public static synchronized void addEntity(Model entity) {
 		sEntities.add(entity);
 	}
 
-	public static synchronized void addTableName(Class<?> type, String tableName) {
-		sTableNames.put(type, tableName);
-	}
-
-	public static synchronized ArrayList<Field> getClassFields(Class<?> type) {
-		return sClassFields.get(type);
-	}
-
-	public static synchronized String getColumnName(Field field) {
-		return sColumnNames.get(field);
-	}
-
-	public static synchronized Model getEntity(Class<? extends Model> entityType, long id) {
+	public static synchronized Model getEntity(Class<? extends Model> type, long id) {
 		for (Model entity : sEntities) {
-			if (entity != null) {
-				if (entity.getClass() != null && entity.getClass() == entityType) {
-					if (entity.getId() != null && entity.getId() == id) {
-						return entity;
-					}
-				}
+			if (entity != null && entity.getClass() != null && entity.getClass() == type && entity.getId() != null
+					&& entity.getId() == id) {
+
+				return entity;
 			}
 		}
 
 		return null;
 	}
 
-	public static synchronized TypeSerializer getParserForType(Class<?> fieldType) {
-		return sParsers.get(fieldType);
-	}
-
-	public static synchronized String getTableName(Class<?> type) {
-		return sTableNames.get(type);
-	}
-
 	public static synchronized void removeEntity(Model entity) {
 		sEntities.remove(entity);
+	}
+
+	// Model cache
+
+	public static synchronized List<TableInfo> getTableInfos() {
+		return sModelInfo.getTableInfos();
+	}
+
+	public static synchronized TableInfo getTableInfo(Class<? extends Model> type) {
+		return sModelInfo.getTableInfo(type);
+	}
+
+	public static synchronized List<Field> getClassFields(Class<? extends Model> type) {
+		return sModelInfo.getTableInfo(type).getFields();
+	}
+
+	public static synchronized TypeSerializer getParserForType(Class<?> Type) {
+		return sModelInfo.getParser(Type);
+	}
+
+	public static synchronized String getTableName(Class<? extends Model> type) {
+		return sModelInfo.getTableInfo(type).getTableName();
 	}
 }

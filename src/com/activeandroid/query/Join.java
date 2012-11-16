@@ -2,8 +2,8 @@ package com.activeandroid.query;
 
 import android.text.TextUtils;
 
+import com.activeandroid.Cache;
 import com.activeandroid.Model;
-import com.activeandroid.util.ReflectionUtils;
 
 public class Join implements Sqlable {
 	static enum JoinType {
@@ -52,7 +52,7 @@ public class Join implements Sqlable {
 			sql += mJoinType.toString() + " ";
 		}
 
-		sql += "JOIN " + ReflectionUtils.getTableName(mType) + " ";
+		sql += "JOIN " + Cache.getTableName(mType) + " ";
 
 		if (mAlias != null) {
 			sql += "AS " + mAlias + " ";

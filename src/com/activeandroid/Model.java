@@ -4,6 +4,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.List;
 
 import android.content.ContentValues;
 import android.database.Cursor;
@@ -24,14 +25,15 @@ public abstract class Model {
 
 	@Column(name = "Id")
 	private Long mId = null;
-	private String mTableName;
+
+	private TableInfo mTableInfo;
 
 	//////////////////////////////////////////////////////////////////////////////////////
 	// CONSTRUCTORS
 	//////////////////////////////////////////////////////////////////////////////////////
 
 	public Model() {
-		mTableName = ReflectionUtils.getTableName(getClass());
+		mTableInfo = Cache.getTableInfo(getClass());
 		Cache.addEntity(this);
 	}
 
@@ -71,7 +73,7 @@ public abstract class Model {
 	 * Delete the object's record from the database.
 	 */
 	public void delete() {
-		Cache.openDatabase().delete(mTableName, "Id=?", new String[] { getId().toString() });
+		Cache.openDatabase().delete(mTableInfo.getTableName(), "Id=?", new String[] { getId().toString() });
 		Cache.removeEntity(this);
 	}
 
@@ -83,8 +85,8 @@ public abstract class Model {
 		final SQLiteDatabase db = Cache.openDatabase();
 		final ContentValues values = new ContentValues();
 
-		for (Field field : ReflectionUtils.getColumnFields(this.getClass())) {
-			final String fieldName = ReflectionUtils.getColumnName(field);
+		for (Field field : mTableInfo.getFields()) {
+			final String fieldName = mTableInfo.getColumnName(field);
 			Class<?> fieldType = field.getType();
 
 			field.setAccessible(true);
@@ -128,7 +130,7 @@ public abstract class Model {
 				else if (fieldType.equals(Character.class) || fieldType.equals(char.class)) {
 					values.put(fieldName, value.toString());
 				}
-				else if (ReflectionUtils.isModelSubclass(fieldType)) {
+				else if (ReflectionUtils.isModel(fieldType)) {
 					final long entityId = ((Model) value).getId();
 					values.put(fieldName, entityId);
 				}
@@ -142,10 +144,10 @@ public abstract class Model {
 		}
 
 		if (mId == null) {
-			mId = db.insert(mTableName, null, values);
+			mId = db.insert(mTableInfo.getTableName(), null, values);
 		}
 		else {
-			db.update(mTableName, values, "Id=" + mId, null);
+			db.update(mTableInfo.getTableName(), values, "Id=" + mId, null);
 		}
 	}
 
@@ -157,11 +159,11 @@ public abstract class Model {
 	 * @param sql the SQL query string.
 	 * @return ArrayList<T> ArrayList of objects returned by the query.
 	 */
-	public static final <T extends Model> ArrayList<T> rawQuery(Class<? extends Model> type, String sql,
+	public static final <T extends Model> List<T> rawQuery(Class<? extends Model> type, String sql,
 			String[] selectionArgs) {
 
 		final Cursor cursor = Cache.openDatabase().rawQuery(sql, selectionArgs);
-		final ArrayList<T> entities = processCursor(type, cursor);
+		final List<T> entities = processCursor(type, cursor);
 		cursor.close();
 
 		return entities;
@@ -192,16 +194,15 @@ public abstract class Model {
 	 * @param foreignKey the field on the other object through which this object is related.
 	 * @return ArrayList<E> ArrayList of objects returned by the query.
 	 */
-	protected final <E extends Model> ArrayList<E> getMany(Class<? extends Model> type, String foreignKey) {
-		final String tableName = ReflectionUtils.getTableName(type);
-		return new Select().from(type).where(tableName + "." + foreignKey + "=?", getId()).execute();
+	protected final <E extends Model> List<E> getMany(Class<? extends Model> type, String foreignKey) {
+		return new Select().from(type).where(mTableInfo.getTableName() + "." + foreignKey + "=?", getId()).execute();
 	}
 
 	//////////////////////////////////////////////////////////////////////////////////////
 	// PRIVATE METHODS
 	//////////////////////////////////////////////////////////////////////////////////////
 
-	private static <T extends Model> T getFirst(ArrayList<T> entities) {
+	private static <T extends Model> T getFirst(List<T> entities) {
 		if (entities.size() > 0) {
 			return entities.get(0);
 		}
@@ -209,8 +210,8 @@ public abstract class Model {
 		return null;
 	}
 
-	private static final <T extends Model> ArrayList<T> processCursor(Class<? extends Model> type, Cursor cursor) {
-		final ArrayList<T> entities = new ArrayList<T>();
+	private static final <T extends Model> List<T> processCursor(Class<? extends Model> type, Cursor cursor) {
+		final List<T> entities = new ArrayList<T>();
 
 		try {
 			Constructor<?> entityConstructor = type.getConstructor();
@@ -248,10 +249,8 @@ public abstract class Model {
 	}
 
 	private final void loadFromCursor(Class<? extends Model> type, Cursor cursor) {
-		final ArrayList<Field> fields = ReflectionUtils.getColumnFields(type);
-
-		for (Field field : fields) {
-			final String fieldName = ReflectionUtils.getColumnName(field);
+		for (Field field : mTableInfo.getFields()) {
+			final String fieldName = mTableInfo.getColumnName(field);
 			Class<?> fieldType = field.getType();
 			final int columnIndex = cursor.getColumnIndex(fieldName);
 
@@ -297,7 +296,7 @@ public abstract class Model {
 				else if (fieldType.equals(Character.class) || fieldType.equals(char.class)) {
 					value = cursor.getString(columnIndex).charAt(0);
 				}
-				else if (ReflectionUtils.isModelSubclass(fieldType)) {
+				else if (ReflectionUtils.isModel(fieldType)) {
 					long entityId = cursor.getLong(columnIndex);
 					Class<? extends Model> entityType = (Class<? extends Model>) fieldType;
 
@@ -340,6 +339,7 @@ public abstract class Model {
 	public boolean equals(Object obj) {
 		final Model other = (Model) obj;
 
-		return this.mId != null && (this.mTableName == other.mTableName) && (this.mId == other.mId);
+		return this.mId != null && (this.mTableInfo.getTableName() == other.mTableInfo.getTableName())
+				&& (this.mId == other.mId);
 	}
 }

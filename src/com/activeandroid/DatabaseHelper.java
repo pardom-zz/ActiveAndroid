@@ -52,8 +52,8 @@ public class DatabaseHelper extends SQLiteOpenHelper {
 
 		db.beginTransaction();
 
-		for (Class<? extends Model> table : ReflectionUtils.getModelClasses(Cache.getContext())) {
-			db.execSQL(SQLiteUtils.createTableDefinition(table));
+		for (TableInfo tableInfo : Cache.getTableInfos()) {
+			db.execSQL(SQLiteUtils.createTableDefinition(tableInfo));
 		}
 
 		db.setTransactionSuccessful();

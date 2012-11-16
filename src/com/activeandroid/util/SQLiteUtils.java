@@ -8,7 +8,7 @@ import android.os.Build;
 import android.text.TextUtils;
 
 import com.activeandroid.Cache;
-import com.activeandroid.Model;
+import com.activeandroid.TableInfo;
 import com.activeandroid.annotation.Column;
 import com.activeandroid.serializer.TypeSerializer;
 
@@ -58,27 +58,26 @@ public class SQLiteUtils {
 	// PUBLIC METHODS
 	//////////////////////////////////////////////////////////////////////////////////////
 
-	public static String createTableDefinition(Class<? extends Model> type) {
-		final ArrayList<Field> fields = ReflectionUtils.getColumnFields(type);
+	public static String createTableDefinition(TableInfo tableInfo) {
 		final ArrayList<String> definitions = new ArrayList<String>();
 
-		for (Field field : fields) {
-			String definition = createColumnDefinition(field);
+		for (Field field : tableInfo.getFields()) {
+			String definition = createColumnDefinition(tableInfo, field);
 			if (!TextUtils.isEmpty(definition)) {
 				definitions.add(definition);
 			}
 		}
 
-		return String.format("CREATE TABLE IF NOT EXISTS %s (%s);", ReflectionUtils.getTableName(type),
+		return String.format("CREATE TABLE IF NOT EXISTS %s (%s);", tableInfo.getTableName(),
 				TextUtils.join(", ", definitions));
 	}
 
-	public static String createColumnDefinition(Field field) {
+	public static String createColumnDefinition(TableInfo tableInfo, Field field) {
 		String definition = null;
 
 		final Class<?> type = field.getType();
-		final String name = ReflectionUtils.getColumnName(field);
-		final TypeSerializer typeSerializer = Cache.getParserForType(type);
+		final String name = tableInfo.getColumnName(field);
+		final TypeSerializer typeSerializer = Cache.getParserForType(tableInfo.getType());
 		final Column column = field.getAnnotation(Column.class);
 
 		if (typeSerializer != null) {
@@ -87,7 +86,7 @@ public class SQLiteUtils {
 		else if (TYPE_MAP.containsKey(type)) {
 			definition = name + " " + TYPE_MAP.get(type).toString();
 		}
-		else if (ReflectionUtils.isModelSubclass(type)) {
+		else if (ReflectionUtils.isModel(type)) {
 			definition = name + " " + SQLiteType.INTEGER.toString();
 		}
 
@@ -104,8 +103,8 @@ public class SQLiteUtils {
 				definition += " NOT NULL ON CONFLICT " + column.onNullConflict().toString();
 			}
 
-			if (FOREIGN_KEYS_SUPPORTED && ReflectionUtils.isModelSubclass(type)) {
-				definition += " REFERENCES " + ReflectionUtils.getTableName(type) + "(Id)";
+			if (FOREIGN_KEYS_SUPPORTED && ReflectionUtils.isModel(type)) {
+				definition += " REFERENCES " + tableInfo.getTableName() + "(Id)";
 				definition += " ON DELETE " + column.onDelete().toString().replace("_", " ");
 				definition += " ON UPDATE " + column.onUpdate().toString().replace("_", " ");
 			}

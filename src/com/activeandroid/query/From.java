@@ -4,9 +4,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import com.activeandroid.Cache;
 import com.activeandroid.Model;
 import com.activeandroid.query.Join.JoinType;
-import com.activeandroid.util.ReflectionUtils;
 
 public class From implements Sqlable {
 	private Sqlable mQueryBase;
@@ -124,7 +124,7 @@ public class From implements Sqlable {
 		String sql = "";
 
 		sql += mQueryBase.toSql();
-		sql += "FROM " + ReflectionUtils.getTableName(mType) + " ";
+		sql += "FROM " + Cache.getTableName(mType) + " ";
 
 		if (mAlias != null) {
 			sql += "AS " + mAlias + " ";
@@ -161,7 +161,7 @@ public class From implements Sqlable {
 		return sql;
 	}
 
-	public <T extends Model> ArrayList<T> execute() {
+	public <T extends Model> List<T> execute() {
 		return Model.rawQuery(mType, toSql(), getArguments());
 	}
 
