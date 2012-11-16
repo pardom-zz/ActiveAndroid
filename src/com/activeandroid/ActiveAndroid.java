@@ -1,22 +1,22 @@
 package com.activeandroid;
 
-import com.activeandroid.util.Log;
-
-import android.content.Context;
+import android.app.Application;
 import android.database.sqlite.SQLiteDatabase;
+
+import com.activeandroid.util.Log;
 
 public final class ActiveAndroid {
 	//////////////////////////////////////////////////////////////////////////////////////
 	// PUBLIC METHODS
 	//////////////////////////////////////////////////////////////////////////////////////
 
-	public synchronized static void initialize(Context context) {
-		initialize(context, false);
+	public synchronized static void initialize(Application application) {
+		initialize(application, false);
 	}
 
-	public synchronized static void initialize(Context context, boolean loggingEnabled) {
+	public synchronized static void initialize(Application application, boolean loggingEnabled) {
 		setLoggingEnabled(loggingEnabled);
-		Cache.initialize(context);
+		Cache.initialize(application);
 	}
 
 	public static void clearCache() {

@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
+import android.app.Application;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 
@@ -35,15 +36,15 @@ public final class Cache {
 	// PUBLIC METHODS
 	//////////////////////////////////////////////////////////////////////////////////////
 
-	public static synchronized void initialize(Context context) {
+	public static synchronized void initialize(Application application) {
 		if (sIsInitialized) {
 			Log.v("ActiveAndroid already initialized.");
 			return;
 		}
 
-		sContext = context.getApplicationContext();
+		sContext = application;
 
-		sModelInfo = new ModelInfo(sContext);
+		sModelInfo = new ModelInfo(application);
 		sDatabaseHelper = new DatabaseHelper(sContext);
 
 		sEntities = new HashSet<Model>();
