@@ -1,7 +1,6 @@
 package com.activeandroid;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
@@ -38,7 +37,7 @@ class ModelInfo {
 			while (entries.hasMoreElements()) {
 				final String name = entries.nextElement();
 
-				if (name.contains("com.activeandroid")) {
+				if (!name.contains("com.activeandroid.serializer") && name.contains("com.activeandroid")) {
 					continue;
 				}
 
@@ -77,18 +76,19 @@ class ModelInfo {
 	//////////////////////////////////////////////////////////////////////////////////////
 
 	public List<TableInfo> getTableInfos() {
-		return new ArrayList<TableInfo>(mTableInfos.values());
+		return (List<TableInfo>) mTableInfos.values();
 	}
 
 	public TableInfo getTableInfo(Class<? extends Model> type) {
 		return mTableInfos.get(type);
 	}
 
+	@SuppressWarnings("unchecked")
 	public List<Class<? extends Model>> getModelClasses() {
-		return new ArrayList<Class<? extends Model>>(mTableInfos.keySet());
+		return (List<Class<? extends Model>>) mTableInfos.keySet();
 	}
 
-	public TypeSerializer getParser(Class<?> type) {
+	public TypeSerializer getTypeSerializer(Class<?> type) {
 		return mTypeSerializers.get(type);
 	}
 }
