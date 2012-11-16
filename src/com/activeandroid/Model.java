@@ -106,20 +106,22 @@ public abstract class Model {
 					}
 				}
 
+				// TODO: Find a smarter way to do this? This if block is necessary because we
+				// can't know the type until runtime.
 				if (value == null) {
 					values.putNull(fieldName);
 				}
-				else if (fieldType.equals(String.class)) {
-					values.put(fieldName, value.toString());
+				else if (fieldType.equals(Byte.class) || fieldType.equals(byte.class)) {
+					values.put(fieldName, (Byte) value);
 				}
-				else if (fieldType.equals(Boolean.class) || fieldType.equals(boolean.class)) {
-					values.put(fieldName, (Boolean) value);
-				}
-				else if (fieldType.equals(Long.class) || fieldType.equals(long.class)) {
-					values.put(fieldName, (Long) value);
+				else if (fieldType.equals(Short.class) || fieldType.equals(short.class)) {
+					values.put(fieldName, (Short) value);
 				}
 				else if (fieldType.equals(Integer.class) || fieldType.equals(int.class)) {
 					values.put(fieldName, (Integer) value);
+				}
+				else if (fieldType.equals(Long.class) || fieldType.equals(long.class)) {
+					values.put(fieldName, (Long) value);
 				}
 				else if (fieldType.equals(Float.class) || fieldType.equals(float.class)) {
 					values.put(fieldName, (Float) value);
@@ -127,12 +129,17 @@ public abstract class Model {
 				else if (fieldType.equals(Double.class) || fieldType.equals(double.class)) {
 					values.put(fieldName, (Double) value);
 				}
+				else if (fieldType.equals(Boolean.class) || fieldType.equals(boolean.class)) {
+					values.put(fieldName, (Boolean) value);
+				}
 				else if (fieldType.equals(Character.class) || fieldType.equals(char.class)) {
 					values.put(fieldName, value.toString());
 				}
+				else if (fieldType.equals(String.class)) {
+					values.put(fieldName, value.toString());
+				}
 				else if (ReflectionUtils.isModel(fieldType)) {
-					final long entityId = ((Model) value).getId();
-					values.put(fieldName, entityId);
+					values.put(fieldName, ((Model) value).getId());
 				}
 			}
 			catch (IllegalArgumentException e) {
@@ -218,6 +225,7 @@ public abstract class Model {
 
 			if (cursor.moveToFirst()) {
 				do {
+					// TODO: Investigate entity cache leak
 					T entity = (T) entityConstructor.newInstance();
 					((Model) entity).loadFromCursor(type, cursor);
 					entities.add(entity);
@@ -269,14 +277,16 @@ public abstract class Model {
 					fieldType = typeSerializer.getDeserializedType();
 				}
 
+				// TODO: Find a smarter way to do this? This if block is necessary because we
+				// can't know the type until runtime.
 				if (columnIsNull) {
 					field = null;
 				}
-				else if (fieldType.equals(String.class)) {
-					value = cursor.getString(columnIndex);
+				else if (fieldType.equals(Byte.class) || fieldType.equals(byte.class)) {
+					value = cursor.getInt(columnIndex);
 				}
-				else if (fieldType.equals(Boolean.class) || fieldType.equals(boolean.class)) {
-					value = cursor.getInt(columnIndex) != 0;
+				else if (fieldType.equals(Short.class) || fieldType.equals(short.class)) {
+					value = cursor.getInt(columnIndex);
 				}
 				else if (fieldType.equals(Integer.class) || fieldType.equals(int.class)) {
 					value = cursor.getInt(columnIndex);
@@ -290,18 +300,20 @@ public abstract class Model {
 				else if (fieldType.equals(Double.class) || fieldType.equals(double.class)) {
 					value = cursor.getDouble(columnIndex);
 				}
-				else if (fieldType.equals(Short.class) || fieldType.equals(short.class)) {
-					value = cursor.getInt(columnIndex);
+				else if (fieldType.equals(Boolean.class) || fieldType.equals(boolean.class)) {
+					value = cursor.getInt(columnIndex) != 0;
 				}
 				else if (fieldType.equals(Character.class) || fieldType.equals(char.class)) {
 					value = cursor.getString(columnIndex).charAt(0);
 				}
+				else if (fieldType.equals(String.class)) {
+					value = cursor.getString(columnIndex);
+				}
 				else if (ReflectionUtils.isModel(fieldType)) {
-					long entityId = cursor.getLong(columnIndex);
-					Class<? extends Model> entityType = (Class<? extends Model>) fieldType;
+					final long entityId = cursor.getLong(columnIndex);
+					final Class<? extends Model> entityType = (Class<? extends Model>) fieldType;
 
 					Model entity = Cache.getEntity(entityType, entityId);
-
 					if (entity == null) {
 						entity = new Select().from(entityType).where("Id=?", entityId).executeSingle();
 					}
