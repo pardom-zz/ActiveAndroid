@@ -1,7 +1,6 @@
 package com.activeandroid;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -58,8 +57,9 @@ public class TableInfo {
 		return mTableName;
 	}
 
+	@SuppressWarnings("unchecked")
 	public List<Field> getFields() {
-		return new ArrayList(mColumnNames.keySet());
+		return (List<Field>) mColumnNames.keySet();
 	}
 
 	public String getColumnName(Field field) {
