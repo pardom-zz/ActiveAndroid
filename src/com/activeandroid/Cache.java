@@ -1,8 +1,7 @@
 package com.activeandroid;
 
-import java.lang.reflect.Field;
+import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import android.content.Context;
@@ -113,16 +112,12 @@ public final class Cache {
 
 	// Model cache
 
-	public static synchronized List<TableInfo> getTableInfos() {
+	public static synchronized Collection<TableInfo> getTableInfos() {
 		return sModelInfo.getTableInfos();
 	}
 
 	public static synchronized TableInfo getTableInfo(Class<? extends Model> type) {
 		return sModelInfo.getTableInfo(type);
-	}
-
-	public static synchronized List<Field> getClassFields(Class<? extends Model> type) {
-		return sModelInfo.getTableInfo(type).getFields();
 	}
 
 	public static synchronized TypeSerializer getParserForType(Class<?> Type) {

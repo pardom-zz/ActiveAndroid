@@ -1,6 +1,7 @@
 package com.activeandroid;
 
 import java.io.IOException;
+import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
@@ -75,8 +76,8 @@ class ModelInfo {
 	// PUBLIC METHODS
 	//////////////////////////////////////////////////////////////////////////////////////
 
-	public List<TableInfo> getTableInfos() {
-		return (List<TableInfo>) mTableInfos.values();
+	public Collection<TableInfo> getTableInfos() {
+		return mTableInfos.values();
 	}
 
 	public TableInfo getTableInfo(Class<? extends Model> type) {

@@ -1,6 +1,9 @@
 package com.activeandroid;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,10 +37,10 @@ public class TableInfo {
 			mTableName = type.getSimpleName();
 		}
 
-		Field idField = getIdField(type);
-		mColumnNames.put(idField, idField.getName());
+		List<Field> fields = new ArrayList<Field>(Arrays.asList(type.getDeclaredFields()));
+		fields.add(getIdField(type));
 
-		for (Field field : type.getDeclaredFields()) {
+		for (Field field : fields) {
 			if (field.isAnnotationPresent(Column.class)) {
 				final Column columnAnnotation = field.getAnnotation(Column.class);
 				mColumnNames.put(field, columnAnnotation.name());
@@ -57,9 +60,8 @@ public class TableInfo {
 		return mTableName;
 	}
 
-	@SuppressWarnings("unchecked")
-	public List<Field> getFields() {
-		return (List<Field>) mColumnNames.keySet();
+	public Collection<Field> getFields() {
+		return mColumnNames.keySet();
 	}
 
 	public String getColumnName(Field field) {
