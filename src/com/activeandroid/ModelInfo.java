@@ -1,75 +1,44 @@
 package com.activeandroid;
 
+import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import android.content.Context;
-import android.content.pm.PackageManager.NameNotFoundException;
+import android.app.Application;
 
 import com.activeandroid.serializer.TypeSerializer;
 import com.activeandroid.util.Log;
 import com.activeandroid.util.ReflectionUtils;
-
-import dalvik.system.DexFile;
 
 class ModelInfo {
 	//////////////////////////////////////////////////////////////////////////////////////
 	// PRIVATE METHODS
 	//////////////////////////////////////////////////////////////////////////////////////
 
-	private Map<Class<? extends Model>, TableInfo> mTableInfos = new HashMap<Class<? extends Model>, TableInfo>();
-	private Map<Class<?>, TypeSerializer> mTypeSerializers = new HashMap<Class<?>, TypeSerializer>();
+	private Map<Class<? extends Model>, TableInfo> mTableInfos;
+	private Map<Class<?>, TypeSerializer> mTypeSerializers;
 
 	//////////////////////////////////////////////////////////////////////////////////////
 	// CONSTRUCTORS
 	//////////////////////////////////////////////////////////////////////////////////////
 
-	@SuppressWarnings("unchecked")
-	public ModelInfo(Context context) {
+	public ModelInfo(Application application) {
+		mTableInfos = new HashMap<Class<? extends Model>, TableInfo>();
+		mTypeSerializers = new HashMap<Class<?>, TypeSerializer>();
+
 		try {
-			final String path = context.getPackageManager().getApplicationInfo(context.getPackageName(), 0).sourceDir;
-			final DexFile dexfile = new DexFile(path);
-			final Enumeration<String> entries = dexfile.entries();
-
-			while (entries.hasMoreElements()) {
-				final String name = entries.nextElement();
-
-				if (!name.contains("com.activeandroid.serializer") && name.contains("com.activeandroid")) {
-					continue;
-				}
-
-				try {
-					Class<?> discoveredClass = Class.forName(name, false, context.getClass().getClassLoader());
-					if (ReflectionUtils.isModel(discoveredClass)) {
-						Class<? extends Model> modelClass = (Class<? extends Model>) discoveredClass;
-						mTableInfos.put(modelClass, new TableInfo(modelClass));
-					}
-					else if (ReflectionUtils.isTypeSerializer(discoveredClass)) {
-						TypeSerializer typeSerializer = (TypeSerializer) discoveredClass.newInstance();
-						mTypeSerializers.put(typeSerializer.getClass(), typeSerializer);
-					}
-				}
-				catch (ClassNotFoundException e) {
-					Log.e("Couldn't create class.", e.getMessage());
-				}
-				catch (InstantiationException e) {
-					Log.e("Couldn't instantiate TypeSerializer.", e.getMessage());
-				}
-				catch (IllegalAccessException e) {
-					Log.e("IllegalAccessException: ", e.getMessage());
-				}
-			}
+			scanForModel(application);
 		}
 		catch (IOException e) {
-			Log.e("Couln't open source path.", e.getMessage());
+			Log.e("Couln't open source path.", e);
 		}
-		catch (NameNotFoundException e) {
-			Log.e("Couldn't find ApplicationInfo for package name.", e.getMessage());
-		}
+
+		Log.i("ModelInfo loaded.");
 	}
 
 	//////////////////////////////////////////////////////////////////////////////////////
@@ -91,5 +60,65 @@ class ModelInfo {
 
 	public TypeSerializer getTypeSerializer(Class<?> type) {
 		return mTypeSerializers.get(type);
+	}
+
+	//////////////////////////////////////////////////////////////////////////////////////
+	// PRIVATE METHODS
+	//////////////////////////////////////////////////////////////////////////////////////
+
+	private void scanForModel(Application application) throws IOException {
+
+		ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+		String packageName = application.getPackageName();
+		Enumeration<URL> resources = classLoader.getResources("");
+
+		while (resources.hasMoreElements()) {
+			File dir = new File(resources.nextElement().getFile());
+			if (dir.getPath().contains("bin")) {
+				scanForModelClasses(dir, packageName, application.getClass().getClassLoader());
+			}
+		}
+	}
+
+	private void scanForModelClasses(File dir, String packageName, ClassLoader classLoader) {
+		if (!dir.exists()) {
+			return;
+		}
+
+		for (File file : dir.listFiles()) {
+			if (file.isDirectory()) {
+				scanForModelClasses(file, packageName, classLoader);
+			}
+			else if (file.getName().endsWith(".class")) {
+				String className = file.getPath().replace("/", ".");
+				className = className.substring(className.lastIndexOf("bin.") + 4, className.length() - 6);
+
+				if (className.startsWith("classes.")) {
+					className = className.substring(8);
+				}
+
+				try {
+					Class<?> discoveredClass = Class.forName(className, false, classLoader);
+					if (ReflectionUtils.isModel(discoveredClass)) {
+						@SuppressWarnings("unchecked")
+						Class<? extends Model> modelClass = (Class<? extends Model>) discoveredClass;
+						mTableInfos.put(modelClass, new TableInfo(modelClass));
+					}
+					else if (ReflectionUtils.isTypeSerializer(discoveredClass)) {
+						TypeSerializer typeSerializer = (TypeSerializer) discoveredClass.newInstance();
+						mTypeSerializers.put(typeSerializer.getClass(), typeSerializer);
+					}
+				}
+				catch (ClassNotFoundException e) {
+					Log.e("Couldn't create class.", e);
+				}
+				catch (InstantiationException e) {
+					Log.e("Couldn't instantiate TypeSerializer.", e);
+				}
+				catch (IllegalAccessException e) {
+					Log.e("IllegalAccessException", e);
+				}
+			}
+		}
 	}
 }
