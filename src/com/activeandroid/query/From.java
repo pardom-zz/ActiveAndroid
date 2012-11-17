@@ -190,6 +190,7 @@ public class From implements Sqlable {
 
 	public <T extends Model> T executeSingle() {
 		if (mQueryBase instanceof Select) {
+			limit(1);
 			return SQLiteUtils.rawQuerySingle(mType, toSql(), getArguments());
 		}
 		else {
