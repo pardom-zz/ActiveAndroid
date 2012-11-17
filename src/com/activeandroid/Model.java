@@ -16,10 +16,7 @@ package com.activeandroid;
  * limitations under the License.
  */
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
 import java.util.List;
 
 import android.content.ContentValues;
@@ -57,46 +54,15 @@ public abstract class Model {
 	// PUBLIC METHODS
 	//////////////////////////////////////////////////////////////////////////////////////
 
-	/**
-	 * Gets the current object's record Id.
-	 * @return Long the current object's record Id.
-	 */
 	public Long getId() {
 		return mId;
 	}
 
-	/**
-	 * Convenience method to delete a record by primary key Id.
-	 * @param type the type of this object.
-	 * @param id the primary key Id of the record to be deleted.
-	 */
-	public static void delete(Class<? extends Model> type, long id) {
-		new Delete().from(type).where("Id=?", id).execute();
-	}
-
-	/**
-	 * Convenience method to load a record by primary key Id.
-	 * 
-	 * @param type the type of this object.
-	 * @param id the primary key id of the record to be loaded.
-	 * @return <T> object returned by the query.
-	 */
-	public static <T extends Model> T load(Class<? extends Model> type, long id) {
-		return new Select().from(type).where("Id=?", id).executeSingle();
-	}
-
-	/**
-	 * Delete the object's record from the database.
-	 */
 	public void delete() {
 		Cache.openDatabase().delete(mTableInfo.getTableName(), "Id=?", new String[] { getId().toString() });
 		Cache.removeEntity(this);
 	}
 
-	/**
-	 * Saves the object as a record to the database. Will insert or update the record based on
-	 * its current existence. 
-	 */
 	public void save() {
 		final SQLiteDatabase db = Cache.openDatabase();
 		final ContentValues values = new ContentValues();
@@ -174,49 +140,20 @@ public abstract class Model {
 		}
 	}
 
-	/**
-	 * Return an ArrayList of all records for the specified SQL query
-	 * 
-	 * @param context the current context.
-	 * @param type the type of this object.
-	 * @param sql the SQL query string.
-	 * @return ArrayList<T> ArrayList of objects returned by the query.
-	 */
-	public static final <T extends Model> List<T> rawQuery(Class<? extends Model> type, String sql,
-			String[] selectionArgs) {
+	// Convenience methods
 
-		final Cursor cursor = Cache.openDatabase().rawQuery(sql, selectionArgs);
-		final List<T> entities = processCursor(type, cursor);
-		cursor.close();
-
-		return entities;
+	public static void delete(Class<? extends Model> type, long id) {
+		new Delete().from(type).where("Id=?", id).execute();
 	}
 
-	/**
-	 * Return a single object for the specified SQL query
-	 * 
-	 * @param context the current context.
-	 * @param type the type of this object.
-	 * @param sql the SQL query string.
-	 * @return <T> object returned by the query.
-	 */
-	public static final <T extends Model> T rawQuerySingle(Class<? extends Model> type, String sql,
-			String[] selectionArgs) {
-
-		return (T) getFirst(rawQuery(type, sql, selectionArgs));
+	public static <T extends Model> T load(Class<? extends Model> type, long id) {
+		return new Select().from(type).where("Id=?", id).executeSingle();
 	}
 
 	//////////////////////////////////////////////////////////////////////////////////////
 	// PROTECTED METHODS
 	//////////////////////////////////////////////////////////////////////////////////////
 
-	/**
-	 * Retrieves related entities on a field on the object.
-	 * 
-	 * @param type the type of this object.
-	 * @param foreignKey the field on the other object through which this object is related.
-	 * @return ArrayList<E> ArrayList of objects returned by the query.
-	 */
 	protected final <E extends Model> List<E> getMany(Class<? extends Model> type, String foreignKey) {
 		return new Select().from(type).where(mTableInfo.getTableName() + "." + foreignKey + "=?", getId()).execute();
 	}
@@ -225,54 +162,7 @@ public abstract class Model {
 	// PRIVATE METHODS
 	//////////////////////////////////////////////////////////////////////////////////////
 
-	private static <T extends Model> T getFirst(List<T> entities) {
-		if (entities.size() > 0) {
-			return entities.get(0);
-		}
-
-		return null;
-	}
-
-	private static final <T extends Model> List<T> processCursor(Class<? extends Model> type, Cursor cursor) {
-		final List<T> entities = new ArrayList<T>();
-
-		try {
-			Constructor<?> entityConstructor = type.getConstructor();
-
-			if (cursor.moveToFirst()) {
-				do {
-					// TODO: Investigate entity cache leak
-					T entity = (T) entityConstructor.newInstance();
-					((Model) entity).loadFromCursor(type, cursor);
-					entities.add(entity);
-				}
-				while (cursor.moveToNext());
-			}
-
-		}
-		catch (IllegalArgumentException e) {
-			Log.e(e.getMessage());
-		}
-		catch (InstantiationException e) {
-			Log.e(e.getMessage());
-		}
-		catch (IllegalAccessException e) {
-			Log.e(e.getMessage());
-		}
-		catch (InvocationTargetException e) {
-			Log.e(e.getMessage());
-		}
-		catch (SecurityException e) {
-			Log.e(e.getMessage());
-		}
-		catch (NoSuchMethodException e) {
-			Log.e("Missing required constructor: " + e.getMessage());
-		}
-
-		return entities;
-	}
-
-	private final void loadFromCursor(Class<? extends Model> type, Cursor cursor) {
+	public final void loadFromCursor(Class<? extends Model> type, Cursor cursor) {
 		for (Field field : mTableInfo.getFields()) {
 			final String fieldName = mTableInfo.getColumnName(field);
 			Class<?> fieldType = field.getType();

@@ -16,19 +16,23 @@ package com.activeandroid.util;
  * limitations under the License.
  */
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
+import android.database.Cursor;
 import android.os.Build;
 import android.text.TextUtils;
 
 import com.activeandroid.Cache;
+import com.activeandroid.Model;
 import com.activeandroid.TableInfo;
 import com.activeandroid.annotation.Column;
 import com.activeandroid.serializer.TypeSerializer;
 
-public class SQLiteUtils {
+public final class SQLiteUtils {
 	//////////////////////////////////////////////////////////////////////////////////////
 	// ENUMERATIONS
 	//////////////////////////////////////////////////////////////////////////////////////
@@ -73,6 +77,34 @@ public class SQLiteUtils {
 	//////////////////////////////////////////////////////////////////////////////////////
 	// PUBLIC METHODS
 	//////////////////////////////////////////////////////////////////////////////////////
+
+	public static void execSql(String sql) {
+		Cache.openDatabase().execSQL(sql);
+	}
+
+	public static void execSql(String sql, Object[] bindArgs) {
+		Cache.openDatabase().execSQL(sql, bindArgs);
+	}
+
+	public static <T extends Model> List<T> rawQuery(Class<? extends Model> type, String sql, String[] selectionArgs) {
+		Cursor cursor = Cache.openDatabase().rawQuery(sql, selectionArgs);
+		List<T> entities = processCursor(type, cursor);
+		cursor.close();
+
+		return entities;
+	}
+
+	public static <T extends Model> T rawQuerySingle(Class<? extends Model> type, String sql, String[] selectionArgs) {
+		List<T> entities = rawQuery(type, sql, selectionArgs);
+
+		if (entities.size() > 0) {
+			return entities.get(0);
+		}
+
+		return null;
+	}
+
+	// Database creation
 
 	public static String createTableDefinition(TableInfo tableInfo) {
 		final ArrayList<String> definitions = new ArrayList<String>();
@@ -130,5 +162,34 @@ public class SQLiteUtils {
 		}
 
 		return definition;
+	}
+
+	//////////////////////////////////////////////////////////////////////////////////////
+	// PRIVATE METHODS
+	//////////////////////////////////////////////////////////////////////////////////////
+
+	@SuppressWarnings("unchecked")
+	private static <T extends Model> List<T> processCursor(Class<? extends Model> type, Cursor cursor) {
+		final List<T> entities = new ArrayList<T>();
+
+		try {
+			Constructor<?> entityConstructor = type.getConstructor();
+
+			if (cursor.moveToFirst()) {
+				do {
+					// TODO: Investigate entity cache leak
+					T entity = (T) entityConstructor.newInstance();
+					((Model) entity).loadFromCursor(type, cursor);
+					entities.add(entity);
+				}
+				while (cursor.moveToNext());
+			}
+
+		}
+		catch (Exception e) {
+			Log.e("Failed to process cursor.", e);
+		}
+
+		return entities;
 	}
 }

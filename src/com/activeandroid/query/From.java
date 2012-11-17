@@ -23,6 +23,7 @@ import java.util.List;
 import com.activeandroid.Cache;
 import com.activeandroid.Model;
 import com.activeandroid.query.Join.JoinType;
+import com.activeandroid.util.SQLiteUtils;
 
 public class From implements Sqlable {
 	private Sqlable mQueryBase;
@@ -178,11 +179,23 @@ public class From implements Sqlable {
 	}
 
 	public <T extends Model> List<T> execute() {
-		return Model.rawQuery(mType, toSql(), getArguments());
+		if (mQueryBase instanceof Select) {
+			return SQLiteUtils.rawQuery(mType, toSql(), getArguments());
+		}
+		else {
+			SQLiteUtils.execSql(toSql(), getArguments());
+			return null;
+		}
 	}
 
 	public <T extends Model> T executeSingle() {
-		return Model.rawQuerySingle(mType, toSql(), getArguments());
+		if (mQueryBase instanceof Select) {
+			return SQLiteUtils.rawQuerySingle(mType, toSql(), getArguments());
+		}
+		else {
+			SQLiteUtils.execSql(toSql(), getArguments());
+			return null;
+		}
 	}
 
 	private String[] getArguments() {

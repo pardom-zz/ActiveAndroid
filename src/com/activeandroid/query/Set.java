@@ -20,7 +20,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import com.activeandroid.Model;
+import com.activeandroid.util.SQLiteUtils;
 
 public class Set implements Sqlable {
 	private Update mUpdate;
@@ -76,7 +76,7 @@ public class Set implements Sqlable {
 	}
 
 	public void execute() {
-		Model.rawQuery(mUpdate.getType(), toSql(), getArguments());
+		SQLiteUtils.execSql(toSql(), getArguments());
 	}
 
 	private String[] getArguments() {
