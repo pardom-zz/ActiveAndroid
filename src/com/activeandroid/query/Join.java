@@ -21,7 +21,7 @@ import android.text.TextUtils;
 import com.activeandroid.Cache;
 import com.activeandroid.Model;
 
-public class Join implements Sqlable {
+public final class Join implements Sqlable {
 	static enum JoinType {
 		LEFT, OUTER, INNER, CROSS
 	}

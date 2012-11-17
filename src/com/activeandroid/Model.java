@@ -54,16 +54,16 @@ public abstract class Model {
 	// PUBLIC METHODS
 	//////////////////////////////////////////////////////////////////////////////////////
 
-	public Long getId() {
+	public final Long getId() {
 		return mId;
 	}
 
-	public void delete() {
+	public final void delete() {
 		Cache.openDatabase().delete(mTableInfo.getTableName(), "Id=?", new String[] { getId().toString() });
 		Cache.removeEntity(this);
 	}
 
-	public void save() {
+	public final void save() {
 		final SQLiteDatabase db = Cache.openDatabase();
 		final ContentValues values = new ContentValues();
 
@@ -150,17 +150,7 @@ public abstract class Model {
 		return new Select().from(type).where("Id=?", id).executeSingle();
 	}
 
-	//////////////////////////////////////////////////////////////////////////////////////
-	// PROTECTED METHODS
-	//////////////////////////////////////////////////////////////////////////////////////
-
-	protected final <E extends Model> List<E> getMany(Class<? extends Model> type, String foreignKey) {
-		return new Select().from(type).where(mTableInfo.getTableName() + "." + foreignKey + "=?", getId()).execute();
-	}
-
-	//////////////////////////////////////////////////////////////////////////////////////
-	// PRIVATE METHODS
-	//////////////////////////////////////////////////////////////////////////////////////
+	// Model population
 
 	public final void loadFromCursor(Class<? extends Model> type, Cursor cursor) {
 		for (Field field : mTableInfo.getFields()) {
@@ -247,6 +237,14 @@ public abstract class Model {
 				Log.e(e.getMessage());
 			}
 		}
+	}
+
+	//////////////////////////////////////////////////////////////////////////////////////
+	// PROTECTED METHODS
+	//////////////////////////////////////////////////////////////////////////////////////
+
+	protected final <E extends Model> List<E> getMany(Class<? extends Model> type, String foreignKey) {
+		return new Select().from(type).where(mTableInfo.getTableName() + "." + foreignKey + "=?", getId()).execute();
 	}
 
 	//////////////////////////////////////////////////////////////////////////////////////

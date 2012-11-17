@@ -25,7 +25,7 @@ import com.activeandroid.Model;
 import com.activeandroid.query.Join.JoinType;
 import com.activeandroid.util.SQLiteUtils;
 
-public class From implements Sqlable {
+public final class From implements Sqlable {
 	private Sqlable mQueryBase;
 
 	private Class<? extends Model> mType;

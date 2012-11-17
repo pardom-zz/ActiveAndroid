@@ -36,7 +36,7 @@ import com.activeandroid.util.NaturalOrderComparator;
 import com.activeandroid.util.ReflectionUtils;
 import com.activeandroid.util.SQLiteUtils;
 
-public class DatabaseHelper extends SQLiteOpenHelper {
+public final class DatabaseHelper extends SQLiteOpenHelper {
 	//////////////////////////////////////////////////////////////////////////////////////
 	// PRIVATE CONSTANTS
 	//////////////////////////////////////////////////////////////////////////////////////

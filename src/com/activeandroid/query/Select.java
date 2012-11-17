@@ -20,7 +20,7 @@ import android.text.TextUtils;
 
 import com.activeandroid.Model;
 
-public class Select implements Sqlable {
+public final class Select implements Sqlable {
 	private String[] mColumns;
 	private boolean mDistinct = false;
 	private boolean mAll = false;

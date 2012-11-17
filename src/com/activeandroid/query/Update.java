@@ -19,7 +19,7 @@ package com.activeandroid.query;
 import com.activeandroid.Cache;
 import com.activeandroid.Model;
 
-final public class Update implements Sqlable {
+public final class Update implements Sqlable {
 	private Class<? extends Model> mType;
 
 	public Update(Class<? extends Model> table) {

@@ -22,7 +22,7 @@ import java.util.List;
 
 import com.activeandroid.util.SQLiteUtils;
 
-public class Set implements Sqlable {
+public final class Set implements Sqlable {
 	private Update mUpdate;
 
 	private String mSet;
