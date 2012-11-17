@@ -2,7 +2,7 @@ package com.activeandroid.serializer;
 
 import com.activeandroid.util.SQLiteUtils.SQLiteType;
 
-public interface TypeSerializer {
+public abstract class TypeSerializer {
 	public abstract Class<?> getDeserializedType();
 
 	public abstract SQLiteType getSerializedType();

@@ -4,7 +4,7 @@ import java.util.Calendar;
 
 import com.activeandroid.util.SQLiteUtils.SQLiteType;
 
-final public class CalendarSerializer implements TypeSerializer {
+final public class CalendarSerializer extends TypeSerializer {
 	public Class<?> getDeserializedType() {
 		return Calendar.class;
 	}

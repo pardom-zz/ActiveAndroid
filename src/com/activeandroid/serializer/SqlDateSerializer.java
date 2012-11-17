@@ -4,7 +4,7 @@ import java.sql.Date;
 
 import com.activeandroid.util.SQLiteUtils.SQLiteType;
 
-final public class SqlDateSerializer implements TypeSerializer {
+final public class SqlDateSerializer extends TypeSerializer {
 	public Class<?> getDeserializedType() {
 		return Date.class;
 	}
