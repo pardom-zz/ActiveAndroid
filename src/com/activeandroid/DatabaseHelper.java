@@ -173,7 +173,7 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
 			String line = null;
 
 			while ((line = reader.readLine()) != null) {
-				db.execSQL(line);
+				db.execSQL(line.replace(";", ""));
 			}
 		}
 		catch (IOException e) {

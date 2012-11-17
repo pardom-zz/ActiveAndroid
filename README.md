@@ -37,3 +37,7 @@ ActiveAndroid does so much more than this though. Accessing the database is a ha
 Please fork this repository and contribute back using [pull requests](http://github.com/pardom/ActiveAndroid/pulls).
 
 Any contributions, large or small, major features, bug fixes, unit tests are welcomed and appreciated but will be thoroughly reviewed and discussed.
+
+### Author
+
+Michael Pardo | www.michaelpardo.com | www.activeandroid.com
