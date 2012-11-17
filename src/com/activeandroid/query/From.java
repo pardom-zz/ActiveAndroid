@@ -158,7 +158,7 @@ public class From implements Sqlable {
 			sql += "OFFSET " + mOffset + " ";
 		}
 
-		return sql;
+		return sql.trim();
 	}
 
 	public <T extends Model> List<T> execute() {
