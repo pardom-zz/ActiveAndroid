@@ -19,6 +19,7 @@ package com.activeandroid;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -30,6 +31,8 @@ import android.app.Application;
 import com.activeandroid.serializer.TypeSerializer;
 import com.activeandroid.util.Log;
 import com.activeandroid.util.ReflectionUtils;
+
+import dalvik.system.DexFile;
 
 class ModelInfo {
 	//////////////////////////////////////////////////////////////////////////////////////
@@ -83,57 +86,87 @@ class ModelInfo {
 	//////////////////////////////////////////////////////////////////////////////////////
 
 	private void scanForModel(Application application) throws IOException {
-
-		ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
 		String packageName = application.getPackageName();
-		Enumeration<URL> resources = classLoader.getResources("");
+		String sourcePath = application.getApplicationInfo().sourceDir;
+		List<String> paths = new ArrayList<String>();
 
-		while (resources.hasMoreElements()) {
-			File dir = new File(resources.nextElement().getFile());
-			if (dir.getPath().contains("bin")) {
-				scanForModelClasses(dir, packageName, application.getClass().getClassLoader());
+		if (sourcePath != null) {
+			DexFile dexfile = new DexFile(sourcePath);
+			Enumeration<String> entries = dexfile.entries();
+
+			while (entries.hasMoreElements()) {
+				paths.add(entries.nextElement());
 			}
+		}
+		// Robolectric fallback
+		else {
+			ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+			Enumeration<URL> resources = classLoader.getResources("");
+
+			while (resources.hasMoreElements()) {
+				String path = resources.nextElement().getFile();
+				if (path.contains("bin")) {
+					paths.add(path);
+				}
+			}
+		}
+
+		for (String path : paths) {
+			File file = new File(path);
+			scanForModelClasses(file, packageName, application.getClass().getClassLoader());
 		}
 	}
 
-	private void scanForModelClasses(File dir, String packageName, ClassLoader classLoader) {
-		if (!dir.exists()) {
-			return;
-		}
-
-		for (File file : dir.listFiles()) {
-			if (file.isDirectory()) {
+	private void scanForModelClasses(File path, String packageName, ClassLoader classLoader) {
+		if (path.isDirectory()) {
+			for (File file : path.listFiles()) {
 				scanForModelClasses(file, packageName, classLoader);
 			}
-			else if (file.getName().endsWith(".class")) {
-				String className = file.getPath().replace("/", ".");
-				className = className.substring(className.lastIndexOf("bin.") + 4, className.length() - 6);
+		}
+		else {
+			String className = path.getName();
 
-				if (className.startsWith("classes.")) {
-					className = className.substring(8);
+			// Robolectric fallback
+			if (!path.getPath().equals(className)) {
+				className = path.getPath();
+
+				if (className.endsWith(".class")) {
+					className = className.substring(0, className.length() - 6);
+				}
+				else {
+					return;
 				}
 
-				try {
-					Class<?> discoveredClass = Class.forName(className, false, classLoader);
-					if (ReflectionUtils.isModel(discoveredClass)) {
-						@SuppressWarnings("unchecked")
-						Class<? extends Model> modelClass = (Class<? extends Model>) discoveredClass;
-						mTableInfos.put(modelClass, new TableInfo(modelClass));
-					}
-					else if (ReflectionUtils.isTypeSerializer(discoveredClass)) {
-						TypeSerializer typeSerializer = (TypeSerializer) discoveredClass.newInstance();
-						mTypeSerializers.put(typeSerializer.getClass(), typeSerializer);
-					}
+				className = className.replace("/", ".");
+
+				int packageNameIndex = className.lastIndexOf(packageName);
+				if (packageNameIndex < 0) {
+					return;
 				}
-				catch (ClassNotFoundException e) {
-					Log.e("Couldn't create class.", e);
+
+				className = className.substring(packageNameIndex);
+			}
+
+			try {
+				Class<?> discoveredClass = Class.forName(className, false, classLoader);
+				if (ReflectionUtils.isModel(discoveredClass)) {
+					@SuppressWarnings("unchecked")
+					Class<? extends Model> modelClass = (Class<? extends Model>) discoveredClass;
+					mTableInfos.put(modelClass, new TableInfo(modelClass));
 				}
-				catch (InstantiationException e) {
-					Log.e("Couldn't instantiate TypeSerializer.", e);
+				else if (ReflectionUtils.isTypeSerializer(discoveredClass)) {
+					TypeSerializer typeSerializer = (TypeSerializer) discoveredClass.newInstance();
+					mTypeSerializers.put(typeSerializer.getClass(), typeSerializer);
 				}
-				catch (IllegalAccessException e) {
-					Log.e("IllegalAccessException", e);
-				}
+			}
+			catch (ClassNotFoundException e) {
+				Log.e("Couldn't create class.", e);
+			}
+			catch (InstantiationException e) {
+				Log.e("Couldn't instantiate TypeSerializer.", e);
+			}
+			catch (IllegalAccessException e) {
+				Log.e("IllegalAccessException", e);
 			}
 		}
 	}
