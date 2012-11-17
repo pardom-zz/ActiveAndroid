@@ -5,6 +5,7 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 
 import com.activeandroid.Model;
+import com.activeandroid.serializer.TypeSerializer;
 
 public final class ReflectionUtils {
 	//////////////////////////////////////////////////////////////////////////////////////
@@ -12,31 +13,11 @@ public final class ReflectionUtils {
 	//////////////////////////////////////////////////////////////////////////////////////
 
 	public static boolean isModel(Class<?> type) {
-		if (type.isPrimitive()) {
-			return false;
-		}
-		else if (type.equals(Model.class)) {
-			return true;
-		}
-		else if (type.getSuperclass() != null) {
-			return isModel(type.getSuperclass());
-		}
-
-		return false;
+		return isSubclassOf(type, Model.class);
 	}
 
 	public static boolean isTypeSerializer(Class<?> type) {
-		if (type.isPrimitive()) {
-			return false;
-		}
-		else if (type.equals(Model.class)) {
-			return true;
-		}
-		else if (type.getSuperclass() != null) {
-			return isModel(type.getSuperclass());
-		}
-
-		return false;
+		return isSubclassOf(type, TypeSerializer.class);
 	}
 
 	// Meta-data
@@ -63,13 +44,11 @@ public final class ReflectionUtils {
 	//////////////////////////////////////////////////////////////////////////////////////
 
 	public static boolean isSubclassOf(Class<?> type, Class<?> superClass) {
-		if (type.isPrimitive()) {
-			return false;
-		}
-		else if (type.equals(superClass)) {
-			return true;
-		}
-		else if (type.getSuperclass() != null) {
+		if (type.getSuperclass() != null) {
+			if (type.getSuperclass().equals(superClass)) {
+				return true;
+			}
+
 			return isSubclassOf(type.getSuperclass(), superClass);
 		}
 
