@@ -38,6 +38,6 @@ Please fork this repository and contribute back using [pull requests](http://git
 
 Any contributions, large or small, major features, bug fixes, unit tests are welcomed and appreciated but will be thoroughly reviewed and discussed.
 
-### Author
+## Author
 
 Michael Pardo | www.michaelpardo.com | www.activeandroid.com
