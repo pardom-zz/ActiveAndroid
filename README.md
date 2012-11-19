@@ -38,6 +38,11 @@ Please fork this repository and contribute back using [pull requests](http://git
 
 Any contributions, large or small, major features, bug fixes, unit tests are welcomed and appreciated but will be thoroughly reviewed and discussed.
 
+[![Donate](2)](1)
+
 ## Author
 
 Michael Pardo | www.michaelpardo.com | www.activeandroid.com
+
+	[1]: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=TEQWCPJWGH6LY
+	[2]: https://www.paypalobjects.com/en_US/i/btn/btn_donate_LG.gif
