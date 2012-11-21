@@ -169,7 +169,7 @@ public final class SQLiteUtils {
 	//////////////////////////////////////////////////////////////////////////////////////
 
 	@SuppressWarnings("unchecked")
-	private static <T extends Model> List<T> processCursor(Class<? extends Model> type, Cursor cursor) {
+	public static <T extends Model> List<T> processCursor(Class<? extends Model> type, Cursor cursor) {
 		final List<T> entities = new ArrayList<T>();
 
 		try {
