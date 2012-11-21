@@ -85,6 +85,7 @@ public class ContentProvider extends android.content.ContentProvider {
 	public int delete(Uri uri, String selection, String[] selectionArgs) {
 		Class<? extends Model> type = getModelType(uri);
 		int count = Cache.openDatabase().delete(Cache.getTableName(type), selection, selectionArgs);
+
 		notifyChange(uri);
 
 		return count;
