@@ -244,7 +244,7 @@ public abstract class Model {
 	//////////////////////////////////////////////////////////////////////////////////////
 
 	protected final <E extends Model> List<E> getMany(Class<? extends Model> type, String foreignKey) {
-		return new Select().from(type).where(mTableInfo.getTableName() + "." + foreignKey + "=?", getId()).execute();
+		return new Select().from(type).where(Cache.getTableName(type) + "." + foreignKey + "=?", getId()).execute();
 	}
 
 	//////////////////////////////////////////////////////////////////////////////////////
