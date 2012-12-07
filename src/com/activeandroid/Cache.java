@@ -17,8 +17,9 @@ package com.activeandroid;
  */
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Set;
+import java.util.Map;
 
 import android.app.Application;
 import android.content.Context;
@@ -28,29 +29,29 @@ import com.activeandroid.serializer.TypeSerializer;
 import com.activeandroid.util.Log;
 
 public final class Cache {
-	//////////////////////////////////////////////////////////////////////////////////////
+	// ////////////////////////////////////////////////////////////////////////////////////
 	// PRIVATE MEMBERS
-	//////////////////////////////////////////////////////////////////////////////////////
+	// ////////////////////////////////////////////////////////////////////////////////////
 
 	private static Context sContext;
 
 	private static ModelInfo sModelInfo;
 	private static DatabaseHelper sDatabaseHelper;
 
-	private static Set<Model> sEntities;
+	private static Map<String, Model> sEntities;
 
 	private static boolean sIsInitialized = false;
 
-	//////////////////////////////////////////////////////////////////////////////////////
+	// ////////////////////////////////////////////////////////////////////////////////////
 	// CONSTRUCTORS
-	//////////////////////////////////////////////////////////////////////////////////////
+	// ////////////////////////////////////////////////////////////////////////////////////
 
 	private Cache() {
 	}
 
-	//////////////////////////////////////////////////////////////////////////////////////
+	// ////////////////////////////////////////////////////////////////////////////////////
 	// PUBLIC METHODS
-	//////////////////////////////////////////////////////////////////////////////////////
+	// ////////////////////////////////////////////////////////////////////////////////////
 
 	public static synchronized void initialize(Application application) {
 		if (sIsInitialized) {
@@ -63,7 +64,7 @@ public final class Cache {
 		sModelInfo = new ModelInfo(application);
 		sDatabaseHelper = new DatabaseHelper(sContext);
 
-		sEntities = new HashSet<Model>();
+		sEntities = new HashMap<String, Model>();
 
 		openDatabase();
 
@@ -73,7 +74,7 @@ public final class Cache {
 	}
 
 	public static synchronized void clear() {
-		sEntities = new HashSet<Model>();
+		sEntities.clear();
 		Log.v("Cache cleared.");
 	}
 
@@ -108,19 +109,11 @@ public final class Cache {
 	// Entity cache
 
 	public static synchronized void addEntity(Model entity) {
-		sEntities.add(entity);
+		sEntities.put(entity.getCacheID(), entity);
 	}
 
 	public static synchronized Model getEntity(Class<? extends Model> type, long id) {
-		for (Model entity : sEntities) {
-			if (entity != null && entity.getClass() != null && entity.getClass() == type && entity.getId() != null
-					&& entity.getId() == id) {
-
-				return entity;
-			}
-		}
-
-		return null;
+		return sEntities.get(type.getSimpleName() + id);
 	}
 
 	public static synchronized void removeEntity(Model entity) {

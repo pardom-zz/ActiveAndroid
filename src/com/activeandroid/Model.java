@@ -54,6 +54,10 @@ public abstract class Model {
 	// PUBLIC METHODS
 	//////////////////////////////////////////////////////////////////////////////////////
 
+	public String getCacheID(){
+		return this.getClass().getSimpleName() + mId;
+	}
+
 	public final Long getId() {
 		return mId;
 	}
