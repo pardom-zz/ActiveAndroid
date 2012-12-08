@@ -156,7 +156,7 @@ final class ModelInfo {
 				}
 				else if (ReflectionUtils.isTypeSerializer(discoveredClass)) {
 					TypeSerializer typeSerializer = (TypeSerializer) discoveredClass.newInstance();
-					mTypeSerializers.put(typeSerializer.getClass(), typeSerializer);
+					mTypeSerializers.put(typeSerializer.getDeserializedType(), typeSerializer);
 				}
 			}
 			catch (ClassNotFoundException e) {
