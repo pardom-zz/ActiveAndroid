@@ -17,6 +17,7 @@ package com.activeandroid;
  */
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.List;
 
 import android.content.ContentValues;
@@ -29,6 +30,7 @@ import com.activeandroid.query.Select;
 import com.activeandroid.serializer.TypeSerializer;
 import com.activeandroid.util.Log;
 import com.activeandroid.util.ReflectionUtils;
+import com.threesquared.axawellbeing.DatabaseChangeListener;
 
 @SuppressWarnings("unchecked")
 public abstract class Model {
@@ -40,6 +42,8 @@ public abstract class Model {
 	private Long mId = null;
 
 	private TableInfo mTableInfo;
+
+	private static List<DatabaseChangeListener> sListeners = new ArrayList<DatabaseChangeListener>();
 
 	//////////////////////////////////////////////////////////////////////////////////////
 	// CONSTRUCTORS
@@ -61,8 +65,15 @@ public abstract class Model {
 	public final void delete() {
 		Cache.openDatabase().delete(mTableInfo.getTableName(), "Id=?", new String[] { getId().toString() });
 		Cache.removeEntity(this);
+		notifyListeners();
 	}
 
+	private void notifyListeners() {
+		for (DatabaseChangeListener dbListener : Model.sListeners) {
+	    	dbListener.onChange(this.getClass());
+	    }
+	}
+	
 	public final void save() {
 		final SQLiteDatabase db = Cache.openDatabase();
 		final ContentValues values = new ContentValues();
@@ -134,14 +145,25 @@ public abstract class Model {
 
 		if (mId == null) {
 			mId = db.insert(mTableInfo.getTableName(), null, values);
+			notifyListeners();
 		}
 		else {
 			db.update(mTableInfo.getTableName(), values, "Id=" + mId, null);
+			notifyListeners();
 		}
 	}
 
 	// Convenience methods
-
+	
+	public static void setChangeListener(DatabaseChangeListener changeListener) {
+		Model.sListeners.add(changeListener);
+	}
+	
+	public static void removeChangeListener(DatabaseChangeListener changeListener) {
+		Model.sListeners.remove(changeListener);
+	}
+	
+	
 	public static void delete(Class<? extends Model> type, long id) {
 		new Delete().from(type).where("Id=?", id).execute();
 	}
