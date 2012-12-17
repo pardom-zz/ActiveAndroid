@@ -21,6 +21,7 @@ import java.util.List;
 
 import android.content.ContentValues;
 import android.database.Cursor;
+import android.database.DataSetObserver;
 import android.database.sqlite.SQLiteDatabase;
 
 import com.activeandroid.annotation.Column;
@@ -59,7 +60,7 @@ public abstract class Model {
 	}
 
 	public final void delete() {
-		Cache.openDatabase().delete(mTableInfo.getTableName(), "Id=?", new String[] { getId().toString() });
+		Model.delete(getClass(), getId());
 		Cache.removeEntity(this);
 	}
 
@@ -138,16 +139,27 @@ public abstract class Model {
 		else {
 			db.update(mTableInfo.getTableName(), values, "Id=" + mId, null);
 		}
+
+		mTableInfo.notifyChanged();
 	}
 
 	// Convenience methods
 
 	public static void delete(Class<? extends Model> type, long id) {
 		new Delete().from(type).where("Id=?", id).execute();
+		Cache.getTableInfo(type).notifyChanged();
 	}
 
 	public static <T extends Model> T load(Class<? extends Model> type, long id) {
 		return new Select().from(type).where("Id=?", id).executeSingle();
+	}
+
+	public static void registerDataSetObserver(Class<? extends Model> type, DataSetObserver observer) {
+		Cache.getTableInfo(type).registerObserver(observer);
+	}
+
+	public static void unregisterDataSetObserver(Class<? extends Model> type, DataSetObserver observer) {
+		Cache.getTableInfo(type).unregisterObserver(observer);
 	}
 
 	// Model population
