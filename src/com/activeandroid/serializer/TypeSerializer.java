@@ -16,12 +16,10 @@ package com.activeandroid.serializer;
  * limitations under the License.
  */
 
-import com.activeandroid.util.SQLiteUtils.SQLiteType;
-
 public abstract class TypeSerializer {
 	public abstract Class<?> getDeserializedType();
 
-	public abstract SQLiteType getSerializedType();
+	public abstract Class<?> getSerializedType();
 
 	public abstract Object serialize(Object data);
 

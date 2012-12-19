@@ -18,15 +18,13 @@ package com.activeandroid.serializer;
 
 import java.util.Date;
 
-import com.activeandroid.util.SQLiteUtils.SQLiteType;
-
 public final class UtilDateSerializer extends TypeSerializer {
 	public Class<?> getDeserializedType() {
 		return Date.class;
 	}
 
-	public SQLiteType getSerializedType() {
-		return SQLiteType.INTEGER;
+	public Class<?> getSerializedType() {
+		return long.class;
 	}
 
 	public Long serialize(Object data) {

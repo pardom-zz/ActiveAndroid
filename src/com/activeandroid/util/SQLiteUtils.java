@@ -123,15 +123,16 @@ public final class SQLiteUtils {
 	public static String createColumnDefinition(TableInfo tableInfo, Field field) {
 		String definition = null;
 
-		final Class<?> type = field.getType();
+		Class<?> type = field.getType();
 		final String name = tableInfo.getColumnName(field);
 		final TypeSerializer typeSerializer = Cache.getParserForType(field.getType());
 		final Column column = field.getAnnotation(Column.class);
 
 		if (typeSerializer != null) {
-			definition = name + " " + typeSerializer.getSerializedType().toString();
+			type = typeSerializer.getSerializedType();
 		}
-		else if (TYPE_MAP.containsKey(type)) {
+
+		if (TYPE_MAP.containsKey(type)) {
 			definition = name + " " + TYPE_MAP.get(type).toString();
 		}
 		else if (ReflectionUtils.isModel(type)) {
