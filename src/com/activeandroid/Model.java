@@ -85,6 +85,11 @@ public abstract class Model {
 						// set new object type
 						if (value != null) {
 							fieldType = value.getClass();
+							// check that the serializer returned what it promised
+							if (!fieldType.equals(typeSerializer.getSerializedType())) {
+								Log.w(String.format("TypeSerializer returned wrong type: expected a %s but got a %s",
+										typeSerializer.getSerializedType(), fieldType));
+							}
 						}
 					}
 				}
@@ -182,7 +187,7 @@ public abstract class Model {
 				Object value = null;
 
 				if (typeSerializer != null) {
-					fieldType = typeSerializer.getDeserializedType();
+				  fieldType = typeSerializer.getSerializedType();
 				}
 
 				// TODO: Find a smarter way to do this? This if block is necessary because we
