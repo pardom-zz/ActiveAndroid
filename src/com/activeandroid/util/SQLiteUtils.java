@@ -62,6 +62,7 @@ public final class SQLiteUtils {
 			put(double.class, SQLiteType.REAL);
 			put(boolean.class, SQLiteType.INTEGER);
 			put(char.class, SQLiteType.TEXT);
+			put(byte[].class, SQLiteType.BLOB);
 			put(Byte.class, SQLiteType.INTEGER);
 			put(Short.class, SQLiteType.INTEGER);
 			put(Integer.class, SQLiteType.INTEGER);
@@ -71,6 +72,7 @@ public final class SQLiteUtils {
 			put(Boolean.class, SQLiteType.INTEGER);
 			put(Character.class, SQLiteType.TEXT);
 			put(String.class, SQLiteType.TEXT);
+			put(Byte[].class, SQLiteType.BLOB);
 		}
 	};
 

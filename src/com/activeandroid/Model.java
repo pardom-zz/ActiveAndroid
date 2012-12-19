@@ -126,6 +126,9 @@ public abstract class Model {
 				else if (fieldType.equals(String.class)) {
 					values.put(fieldName, value.toString());
 				}
+				else if (fieldType.equals(Byte[].class) || fieldType.equals(byte[].class)) {
+					values.put(fieldName, (byte[]) value);
+				}
 				else if (ReflectionUtils.isModel(fieldType)) {
 					values.put(fieldName, ((Model) value).getId());
 				}
@@ -221,6 +224,9 @@ public abstract class Model {
 				}
 				else if (fieldType.equals(String.class)) {
 					value = cursor.getString(columnIndex);
+				}
+				else if (fieldType.equals(Byte[].class) || fieldType.equals(byte[].class)) {
+					value = cursor.getBlob(columnIndex);
 				}
 				else if (ReflectionUtils.isModel(fieldType)) {
 					final long entityId = cursor.getLong(columnIndex);
