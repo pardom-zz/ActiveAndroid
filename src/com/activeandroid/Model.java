@@ -277,7 +277,7 @@ public abstract class Model {
 	public boolean equals(Object obj) {
 		final Model other = (Model) obj;
 
-		return this.mId != null && (this.mTableInfo.getTableName() == other.mTableInfo.getTableName())
-				&& (this.mId == other.mId);
+		return this.mId != null && (this.mTableInfo.getTableName().equals(other.mTableInfo.getTableName()))
+				&& (this.mId.equals(other.mId));
 	}
 }
