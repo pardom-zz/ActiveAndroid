@@ -137,8 +137,8 @@ public final class Cache {
 		return sModelInfo.getTableInfo(type);
 	}
 
-	public static synchronized TypeSerializer getParserForType(Class<?> Type) {
-		return sModelInfo.getTypeSerializer(Type);
+	public static synchronized TypeSerializer getParserForType(Class<?> type) {
+		return sModelInfo.getTypeSerializer(type);
 	}
 
 	public static synchronized String getTableName(Class<? extends Model> type) {
