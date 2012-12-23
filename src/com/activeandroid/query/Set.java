@@ -70,7 +70,10 @@ public final class Set implements Sqlable {
 
 		sql += mUpdate.toSql();
 		sql += "SET " + mSet + " ";
-		sql += "WHERE " + mWhere + " ";
+		
+		if (mWhere != null) {
+			sql += "WHERE " + mWhere + " ";
+		}
 
 		return sql;
 	}
