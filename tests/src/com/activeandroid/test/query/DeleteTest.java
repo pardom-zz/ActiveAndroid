@@ -1,4 +1,4 @@
-package com.activeandroid.query;
+package com.activeandroid.test.query;
 
 /*
  * Copyright (C) 2010 Michael Pardo
@@ -16,6 +16,16 @@ package com.activeandroid.query;
  * limitations under the License.
  */
 
-public interface Sqlable {
-	public String toSql();
+import com.activeandroid.query.Delete;
+import com.activeandroid.test.MockModel;
+
+public class DeleteTest extends SqlableTestCase {
+	public void testDelete() {
+		assertSqlEquals("DELETE ", new Delete());
+	}
+
+	public void testFrom() {
+		assertSqlEquals("DELETE FROM MockModel",
+				new Delete().from(MockModel.class));
+	}
 }

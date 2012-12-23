@@ -78,11 +78,11 @@ public final class Cache {
 	}
 
 	public static synchronized void dispose() {
+		closeDatabase();
+		
 		sEntities = null;
 		sModelInfo = null;
 		sDatabaseHelper = null;
-
-		closeDatabase();
 
 		sIsInitialized = false;
 

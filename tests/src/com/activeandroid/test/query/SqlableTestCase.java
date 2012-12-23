@@ -1,4 +1,4 @@
-package com.activeandroid.query;
+package com.activeandroid.test.query;
 
 /*
  * Copyright (C) 2010 Michael Pardo
@@ -16,6 +16,11 @@ package com.activeandroid.query;
  * limitations under the License.
  */
 
-public interface Sqlable {
-	public String toSql();
+import com.activeandroid.query.Sqlable;
+import com.activeandroid.test.ActiveAndroidTestCase;
+
+public abstract class SqlableTestCase extends ActiveAndroidTestCase {
+	public static void assertSqlEquals(String expected, Sqlable actual) {
+		assertEquals(expected, actual.toSql());
+	}
 }
