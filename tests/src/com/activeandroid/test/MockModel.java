@@ -1,4 +1,4 @@
-package com.activeandroid.query;
+package com.activeandroid.test;
 
 /*
  * Copyright (C) 2010 Michael Pardo
@@ -16,6 +16,9 @@ package com.activeandroid.query;
  * limitations under the License.
  */
 
-public interface Sqlable {
-	public String toSql();
+import com.activeandroid.Model;
+import com.activeandroid.annotation.Table;
+
+@Table(name = "MockModel")
+public class MockModel extends Model {
 }

@@ -199,7 +199,7 @@ public final class From implements Sqlable {
 		}
 	}
 
-	private String[] getArguments() {
+	public String[] getArguments() {
 		final int size = mArguments.size();
 		final String[] args = new String[size];
 
