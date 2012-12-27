@@ -70,7 +70,10 @@ public final class Set implements Sqlable {
 
 		sql += mUpdate.toSql();
 		sql += "SET " + mSet + " ";
-		sql += "WHERE " + mWhere + " ";
+		
+		if (mWhere != null) {
+			sql += "WHERE " + mWhere + " ";
+		}
 
 		return sql;
 	}
@@ -79,7 +82,7 @@ public final class Set implements Sqlable {
 		SQLiteUtils.execSql(toSql(), getArguments());
 	}
 
-	private String[] getArguments() {
+	public String[] getArguments() {
 		final int setSize = mSetArguments.size();
 		final int whereSize = mWhereArguments.size();
 		final String[] args = new String[setSize + whereSize];
