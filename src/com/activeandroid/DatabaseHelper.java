@@ -33,7 +33,6 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
 import com.activeandroid.migration.Migration;
-import com.activeandroid.migration.MigrationOperation;
 import com.activeandroid.util.*;
 
 public final class DatabaseHelper extends SQLiteOpenHelper {
@@ -46,15 +45,12 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
 
 	private final static String MIGRATION_PATH = "migrations";
 
-    private Context mContext;
-
 	//////////////////////////////////////////////////////////////////////////////////////
 	// CONSTRUCTORS
 	//////////////////////////////////////////////////////////////////////////////////////
 
 	public DatabaseHelper(Context context) {
 		super(context, getDbName(context), null, getDbVersion(context));
-        mContext = context;
 		copyAttachedDatabase(context);
 	}
 
@@ -78,7 +74,7 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
 		db.setTransactionSuccessful();
 		db.endTransaction();
 
-		executeMigrations(db, -1, db.getVersion());
+		executeNamedMigrations(db, -1, db.getVersion());
 	}
 
 	@Override
@@ -88,7 +84,7 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
 			Log.i("Foreign Keys supported. Enabling foreign key features.");
 		}
 
-		if (!executeMigrations(db, oldVersion, newVersion)) {
+		if (!executeNamedMigrations(db, oldVersion, newVersion)) {
 			Log.i("No migrations found. Calling onCreate.");
 			onCreate(db);
 		}
@@ -138,7 +134,7 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
     private boolean executeNamedMigrations(SQLiteDatabase db, int oldVersion, int newVersion) {
         boolean migrationExecuted = false;
 
-        List<Migration> migrations = MigrationUtils.getMigrations(mContext, oldVersion, newVersion);
+        List<Migration> migrations = MigrationUtils.getMigrations(Cache.getContext(), oldVersion, newVersion);
         Collections.sort(migrations, new Comparator<Migration>() {
             @Override
             public int compare(Migration migration, Migration migration2) {

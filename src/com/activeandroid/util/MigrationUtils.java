@@ -20,10 +20,10 @@ public class MigrationUtils {
         try {
 
             String migrationPackage = ReflectionUtils.getMetaData(context, AA_MIGRATION_PACKAGE);
-            Class[] migrationClasses = ReflectionUtils.findClasses(migrationPackage);
+            ArrayList<Class> migrationClasses = ReflectionUtils.findClasses(context, migrationPackage);
 
             for(Class c : migrationClasses) {
-                if (c.isAssignableFrom(Migration.class)) {
+                if (ReflectionUtils.isSubclassOf(c, Migration.class)) {
                     Migration m = (Migration)c.newInstance();
                     if (m.databaseVersion() > oldVersion && m.databaseVersion() <= newVersion) {
                         migrations.add(m);
@@ -31,8 +31,6 @@ public class MigrationUtils {
                 }
             }
 
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
         } catch (InstantiationException e) {
@@ -47,11 +45,12 @@ public class MigrationUtils {
     public static String[] migrationOperationsToSql(MigrationOperation[] ops) {
         if (ops == null) return null;
 
-        ArrayList<String> statements = new ArrayList<String>(ops.length);
-        for (MigrationOperation op : ops) {
-            statements.add(op.toSqlString());
+        String[] statements = new String[ops.length];
+        for (int i = 0; i < ops.length; i++) {
+            statements[i] = ops[i].toSqlString();
         }
-        return (String[]) statements.toArray();
+
+        return statements;
     }
 
 }
