@@ -29,6 +29,7 @@ import java.util.Comparator;
 import java.util.List;
 
 import android.content.Context;
+import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
@@ -145,18 +146,7 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
         db.beginTransaction();
 
         for (Migration migration : migrations) {
-            String []sqlStatements = migration.executeSql();
-
-            if (sqlStatements == null) {
-                sqlStatements = MigrationUtils.migrationOperationsToSql(migration.change());
-            }
-
-            if (sqlStatements == null) break;
-
-            for (String statement : sqlStatements) {
-                db.execSQL(statement);
-            }
-
+            migration.execute(db);
             migrationExecuted = true;
         }
 

@@ -108,25 +108,42 @@ public final class SQLiteUtils {
 
 	// Database creation
 
-	public static String createTableDefinition(TableInfo tableInfo) {
-		final ArrayList<String> definitions = new ArrayList<String>();
+    public static String createTableDefinition(TableInfo tableInfo) {
+        return createTableDefinition(tableInfo, new ArrayList<String>(), new HashMap<String, String>());
+    }
 
-		for (Field field : tableInfo.getFields()) {
-			String definition = createColumnDefinition(tableInfo, field);
-			if (!TextUtils.isEmpty(definition)) {
-				definitions.add(definition);
-			}
-		}
-
-		return String.format("CREATE TABLE IF NOT EXISTS %s (%s);", tableInfo.getTableName(),
-				TextUtils.join(", ", definitions));
+	public static String createTableDefinition(TableInfo tableInfo, List<String> excludes) {
+		return createTableDefinition(tableInfo, excludes, new HashMap<String, String>());
 	}
 
-	public static String createColumnDefinition(TableInfo tableInfo, Field field) {
+    public static String createTableDefinition(TableInfo tableInfo, List<String> excludes, HashMap<String, String> columnNameMapping) {
+        final ArrayList<String> definitions = new ArrayList<String>();
+
+        for (Field field : tableInfo.getFields()) {
+            String columnName = tableInfo.getColumnName(field);
+            if (!excludes.contains(columnName)) {
+                String definition = (columnNameMapping.containsKey(columnName)) ?
+                        createColumnDefinition(tableInfo, field, columnNameMapping.get(columnName)) :
+                        createColumnDefinition(tableInfo, field);
+                if (!TextUtils.isEmpty(definition)) {
+                    definitions.add(definition);
+                }
+            }
+        }
+
+        return String.format("CREATE TABLE IF NOT EXISTS %s (%s);", tableInfo.getTableName(),
+                TextUtils.join(", ", definitions));
+    }
+
+    public static String createColumnDefinition(TableInfo tableInfo, Field field) {
+        return createColumnDefinition(tableInfo, field, null);
+    }
+
+	public static String createColumnDefinition(TableInfo tableInfo, Field field, String columnName) {
 		String definition = null;
 
 		Class<?> type = field.getType();
-		final String name = tableInfo.getColumnName(field);
+		final String name = (columnName == null) ? tableInfo.getColumnName(field) : columnName;
 		final TypeSerializer typeSerializer = Cache.getParserForType(field.getType());
 		final Column column = field.getAnnotation(Column.class);
 

@@ -2,6 +2,8 @@ package com.activeandroid.migration;
 
 import com.activeandroid.Model;
 
+import java.util.List;
+
 public abstract class MigrationOperation {
     protected Class<? extends Model> mModel;
 
@@ -9,5 +11,5 @@ public abstract class MigrationOperation {
         mModel = model;
     }
 
-    public abstract String toSqlString();
+    public abstract List<String> toSqlString();
 }
