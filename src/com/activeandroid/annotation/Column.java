@@ -24,7 +24,7 @@ import java.lang.annotation.Target;
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Column {
-	public enum NullConflictAction {
+	public enum ConflictAction {
 		ROLLBACK, ABORT, FAIL, IGNORE, REPLACE
 	}
 
@@ -38,9 +38,13 @@ public @interface Column {
 
 	public boolean notNull() default false;
 
-	public NullConflictAction onNullConflict() default NullConflictAction.FAIL;
+	public ConflictAction onNullConflict() default ConflictAction.FAIL;
 
 	public ForeignKeyAction onDelete() default ForeignKeyAction.NO_ACTION;
 
 	public ForeignKeyAction onUpdate() default ForeignKeyAction.NO_ACTION;
+
+	public boolean unique() default false;
+
+	public ConflictAction onUniqueConflict() default ConflictAction.FAIL;
 }
