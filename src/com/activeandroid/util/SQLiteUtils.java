@@ -154,6 +154,10 @@ public final class SQLiteUtils {
 				definition += " NOT NULL ON CONFLICT " + column.onNullConflict().toString();
 			}
 
+			if (column.unique()) {
+				definition += " UNIQUE ON CONFLICT " + column.onUniqueConflict().toString();
+			}
+
 			if (FOREIGN_KEYS_SUPPORTED && ReflectionUtils.isModel(type)) {
 				definition += " REFERENCES " + tableInfo.getTableName() + "(Id)";
 				definition += " ON DELETE " + column.onDelete().toString().replace("_", " ");
