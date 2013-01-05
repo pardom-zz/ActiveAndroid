@@ -33,166 +33,166 @@ import com.activeandroid.annotation.Column;
 import com.activeandroid.serializer.TypeSerializer;
 
 public final class SQLiteUtils {
-	//////////////////////////////////////////////////////////////////////////////////////
-	// ENUMERATIONS
-	//////////////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////
+    // ENUMERATIONS
+    //////////////////////////////////////////////////////////////////////////////////////
 
-	public enum SQLiteType {
-		INTEGER, REAL, TEXT, BLOB
-	}
+    public enum SQLiteType {
+        INTEGER, REAL, TEXT, BLOB
+    }
 
-	//////////////////////////////////////////////////////////////////////////////////////
-	// PUBLIC CONSTANTS
-	//////////////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////
+    // PUBLIC CONSTANTS
+    //////////////////////////////////////////////////////////////////////////////////////
 
-	public static final boolean FOREIGN_KEYS_SUPPORTED = Build.VERSION.SDK_INT >= Build.VERSION_CODES.FROYO;
+    public static final boolean FOREIGN_KEYS_SUPPORTED = Build.VERSION.SDK_INT >= Build.VERSION_CODES.FROYO;
 
-	//////////////////////////////////////////////////////////////////////////////////////
-	// PRIVATE CONTSANTS
-	//////////////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////
+    // PRIVATE CONTSANTS
+    //////////////////////////////////////////////////////////////////////////////////////
 
-	@SuppressWarnings("serial")
-	private static final HashMap<Class<?>, SQLiteType> TYPE_MAP = new HashMap<Class<?>, SQLiteType>() {
-		{
-			put(byte.class, SQLiteType.INTEGER);
-			put(short.class, SQLiteType.INTEGER);
-			put(int.class, SQLiteType.INTEGER);
-			put(long.class, SQLiteType.INTEGER);
-			put(float.class, SQLiteType.REAL);
-			put(double.class, SQLiteType.REAL);
-			put(boolean.class, SQLiteType.INTEGER);
-			put(char.class, SQLiteType.TEXT);
-			put(byte[].class, SQLiteType.BLOB);
-			put(Byte.class, SQLiteType.INTEGER);
-			put(Short.class, SQLiteType.INTEGER);
-			put(Integer.class, SQLiteType.INTEGER);
-			put(Long.class, SQLiteType.INTEGER);
-			put(Float.class, SQLiteType.REAL);
-			put(Double.class, SQLiteType.REAL);
-			put(Boolean.class, SQLiteType.INTEGER);
-			put(Character.class, SQLiteType.TEXT);
-			put(String.class, SQLiteType.TEXT);
-			put(Byte[].class, SQLiteType.BLOB);
-		}
-	};
+    @SuppressWarnings("serial")
+    private static final HashMap<Class<?>, SQLiteType> TYPE_MAP = new HashMap<Class<?>, SQLiteType>() {
+        {
+            put(byte.class, SQLiteType.INTEGER);
+            put(short.class, SQLiteType.INTEGER);
+            put(int.class, SQLiteType.INTEGER);
+            put(long.class, SQLiteType.INTEGER);
+            put(float.class, SQLiteType.REAL);
+            put(double.class, SQLiteType.REAL);
+            put(boolean.class, SQLiteType.INTEGER);
+            put(char.class, SQLiteType.TEXT);
+            put(byte[].class, SQLiteType.BLOB);
+            put(Byte.class, SQLiteType.INTEGER);
+            put(Short.class, SQLiteType.INTEGER);
+            put(Integer.class, SQLiteType.INTEGER);
+            put(Long.class, SQLiteType.INTEGER);
+            put(Float.class, SQLiteType.REAL);
+            put(Double.class, SQLiteType.REAL);
+            put(Boolean.class, SQLiteType.INTEGER);
+            put(Character.class, SQLiteType.TEXT);
+            put(String.class, SQLiteType.TEXT);
+            put(Byte[].class, SQLiteType.BLOB);
+        }
+    };
 
-	//////////////////////////////////////////////////////////////////////////////////////
-	// PUBLIC METHODS
-	//////////////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////
+    // PUBLIC METHODS
+    //////////////////////////////////////////////////////////////////////////////////////
 
-	public static void execSql(String sql) {
-		Cache.openDatabase().execSQL(sql);
-	}
+    public static void execSql(Class<? extends Model> type, String sql) {
+        Cache.openDatabase(ReflectionUtils.getDbMetaDataClass(type)).execSQL(sql);
+    }
 
-	public static void execSql(String sql, Object[] bindArgs) {
-		Cache.openDatabase().execSQL(sql, bindArgs);
-	}
+    public static void execSql(Class<? extends Model> type, String sql, Object[] bindArgs) {
+        Cache.openDatabase(ReflectionUtils.getDbMetaDataClass(type)).execSQL(sql, bindArgs);
+    }
 
-	public static <T extends Model> List<T> rawQuery(Class<? extends Model> type, String sql, String[] selectionArgs) {
-		Cursor cursor = Cache.openDatabase().rawQuery(sql, selectionArgs);
-		List<T> entities = processCursor(type, cursor);
-		cursor.close();
+    public static <T extends Model> List<T> rawQuery(Class<? extends Model> type, String sql, String[] selectionArgs) {
+        Cursor cursor = Cache.openDatabase(ReflectionUtils.getDbMetaDataClass(type)).rawQuery(sql, selectionArgs);
+        List<T> entities = processCursor(type, cursor);
+        cursor.close();
 
-		return entities;
-	}
+        return entities;
+    }
 
-	public static <T extends Model> T rawQuerySingle(Class<? extends Model> type, String sql, String[] selectionArgs) {
-		List<T> entities = rawQuery(type, sql, selectionArgs);
+    public static <T extends Model> T rawQuerySingle(Class<? extends Model> type, String sql, String[] selectionArgs) {
+        List<T> entities = rawQuery(type, sql, selectionArgs);
 
-		if (entities.size() > 0) {
-			return entities.get(0);
-		}
+        if (entities.size() > 0) {
+            return entities.get(0);
+        }
 
-		return null;
-	}
+        return null;
+    }
 
-	// Database creation
+    // Database creation
 
-	public static String createTableDefinition(TableInfo tableInfo) {
-		final ArrayList<String> definitions = new ArrayList<String>();
+    public static String createTableDefinition(TableInfo tableInfo) {
+        final ArrayList<String> definitions = new ArrayList<String>();
 
-		for (Field field : tableInfo.getFields()) {
-			String definition = createColumnDefinition(tableInfo, field);
-			if (!TextUtils.isEmpty(definition)) {
-				definitions.add(definition);
-			}
-		}
+        for (Field field : tableInfo.getFields()) {
+            String definition = createColumnDefinition(tableInfo, field);
+            if (!TextUtils.isEmpty(definition)) {
+                definitions.add(definition);
+            }
+        }
 
-		return String.format("CREATE TABLE IF NOT EXISTS %s (%s);", tableInfo.getTableName(),
-				TextUtils.join(", ", definitions));
-	}
+        return String.format("CREATE TABLE IF NOT EXISTS %s (%s);", tableInfo.getTableName(),
+                TextUtils.join(", ", definitions));
+    }
 
-	public static String createColumnDefinition(TableInfo tableInfo, Field field) {
-		String definition = null;
+    public static String createColumnDefinition(TableInfo tableInfo, Field field) {
+        String definition = null;
 
-		Class<?> type = field.getType();
-		final String name = tableInfo.getColumnName(field);
-		final TypeSerializer typeSerializer = Cache.getParserForType(field.getType());
-		final Column column = field.getAnnotation(Column.class);
+        Class<?> type = field.getType();
+        final String name = tableInfo.getColumnName(field);
+        final TypeSerializer typeSerializer = Cache.getParserForType(field.getType());
+        final Column column = field.getAnnotation(Column.class);
 
-		if (typeSerializer != null) {
-			type = typeSerializer.getSerializedType();
-		}
+        if (typeSerializer != null) {
+            type = typeSerializer.getSerializedType();
+        }
 
-		if (TYPE_MAP.containsKey(type)) {
-			definition = name + " " + TYPE_MAP.get(type).toString();
-		}
-		else if (ReflectionUtils.isModel(type)) {
-			definition = name + " " + SQLiteType.INTEGER.toString();
-		}
+        if (TYPE_MAP.containsKey(type)) {
+            definition = name + " " + TYPE_MAP.get(type).toString();
+        }
+        else if (ReflectionUtils.isModel(type)) {
+            definition = name + " " + SQLiteType.INTEGER.toString();
+        }
 
-		if (definition != null) {
-			if (column.length() > -1) {
-				definition += "(" + column.length() + ")";
-			}
+        if (definition != null) {
+            if (column.length() > -1) {
+                definition += "(" + column.length() + ")";
+            }
 
-			if (name.equals("Id")) {
-				definition += " PRIMARY KEY AUTOINCREMENT";
-			}
+            if (name.equals("Id")) {
+                definition += " PRIMARY KEY AUTOINCREMENT";
+            }
 
-			if (column.notNull()) {
-				definition += " NOT NULL ON CONFLICT " + column.onNullConflict().toString();
-			}
+            if (column.notNull()) {
+                definition += " NOT NULL ON CONFLICT " + column.onNullConflict().toString();
+            }
 
-			if (column.unique()) {
-				definition += " UNIQUE ON CONFLICT " + column.onUniqueConflict().toString();
-			}
+            if (column.unique()) {
+                definition += " UNIQUE ON CONFLICT " + column.onUniqueConflict().toString();
+            }
 
-			if (FOREIGN_KEYS_SUPPORTED && ReflectionUtils.isModel(type)) {
-				definition += " REFERENCES " + tableInfo.getTableName() + "(Id)";
-				definition += " ON DELETE " + column.onDelete().toString().replace("_", " ");
-				definition += " ON UPDATE " + column.onUpdate().toString().replace("_", " ");
-			}
-		}
-		else {
-			Log.e("No type mapping for: " + type.toString());
-		}
+            if (FOREIGN_KEYS_SUPPORTED && ReflectionUtils.isModel(type)) {
+                definition += " REFERENCES " + tableInfo.getTableName() + "(Id)";
+                definition += " ON DELETE " + column.onDelete().toString().replace("_", " ");
+                definition += " ON UPDATE " + column.onUpdate().toString().replace("_", " ");
+            }
+        }
+        else {
+            Log.e("No type mapping for: " + type.toString());
+        }
 
-		return definition;
-	}
+        return definition;
+    }
 
-	@SuppressWarnings("unchecked")
-	public static <T extends Model> List<T> processCursor(Class<? extends Model> type, Cursor cursor) {
-		final List<T> entities = new ArrayList<T>();
+    @SuppressWarnings("unchecked")
+    public static <T extends Model> List<T> processCursor(Class<? extends Model> type, Cursor cursor) {
+        final List<T> entities = new ArrayList<T>();
 
-		try {
-			Constructor<?> entityConstructor = type.getConstructor();
+        try {
+            Constructor<?> entityConstructor = type.getConstructor();
 
-			if (cursor.moveToFirst()) {
-				do {
-					// TODO: Investigate entity cache leak
-					T entity = (T) entityConstructor.newInstance();
-					((Model) entity).loadFromCursor(type, cursor);
-					entities.add(entity);
-				}
-				while (cursor.moveToNext());
-			}
+            if (cursor.moveToFirst()) {
+                do {
+                    // TODO: Investigate entity cache leak
+                    T entity = (T) entityConstructor.newInstance();
+                    ((Model) entity).loadFromCursor(type, cursor);
+                    entities.add(entity);
+                }
+                while (cursor.moveToNext());
+            }
 
-		}
-		catch (Exception e) {
-			Log.e("Failed to process cursor.", e);
-		}
+        }
+        catch (Exception e) {
+            Log.e("Failed to process cursor.", e);
+        }
 
-		return entities;
-	}
+        return entities;
+    }
 }

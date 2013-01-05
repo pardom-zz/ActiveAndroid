@@ -23,78 +23,78 @@ import java.util.List;
 import com.activeandroid.util.SQLiteUtils;
 
 public final class Set implements Sqlable {
-	private Update mUpdate;
+    private Update mUpdate;
 
-	private String mSet;
-	private String mWhere;
+    private String mSet;
+    private String mWhere;
 
-	private List<Object> mSetArguments;
-	private List<Object> mWhereArguments;
+    private List<Object> mSetArguments;
+    private List<Object> mWhereArguments;
 
-	public Set(Update queryBase, String set) {
-		mUpdate = queryBase;
-		mSet = set;
+    public Set(Update queryBase, String set) {
+        mUpdate = queryBase;
+        mSet = set;
 
-		mSetArguments = new ArrayList<Object>();
-		mWhereArguments = new ArrayList<Object>();
-	}
+        mSetArguments = new ArrayList<Object>();
+        mWhereArguments = new ArrayList<Object>();
+    }
 
-	public Set(Update queryBase, String set, Object... args) {
-		mUpdate = queryBase;
-		mSet = set;
+    public Set(Update queryBase, String set, Object... args) {
+        mUpdate = queryBase;
+        mSet = set;
 
-		mSetArguments = new ArrayList<Object>();
-		mWhereArguments = new ArrayList<Object>();
+        mSetArguments = new ArrayList<Object>();
+        mWhereArguments = new ArrayList<Object>();
 
-		mSetArguments.addAll(Arrays.asList(args));
-	}
+        mSetArguments.addAll(Arrays.asList(args));
+    }
 
-	public Set where(String where) {
-		mWhere = where;
-		mWhereArguments.clear();
+    public Set where(String where) {
+        mWhere = where;
+        mWhereArguments.clear();
 
-		return this;
-	}
+        return this;
+    }
 
-	public Set where(String where, Object... args) {
-		mWhere = where;
-		mWhereArguments.clear();
-		mWhereArguments.addAll(Arrays.asList(args));
+    public Set where(String where, Object... args) {
+        mWhere = where;
+        mWhereArguments.clear();
+        mWhereArguments.addAll(Arrays.asList(args));
 
-		return this;
-	}
+        return this;
+    }
 
-	@Override
-	public String toSql() {
-		String sql = "";
+    @Override
+    public String toSql() {
+        String sql = "";
 
-		sql += mUpdate.toSql();
-		sql += "SET " + mSet + " ";
-		
-		if (mWhere != null) {
-			sql += "WHERE " + mWhere + " ";
-		}
+        sql += mUpdate.toSql();
+        sql += "SET " + mSet + " ";
 
-		return sql;
-	}
+        if (mWhere != null) {
+            sql += "WHERE " + mWhere + " ";
+        }
 
-	public void execute() {
-		SQLiteUtils.execSql(toSql(), getArguments());
-	}
+        return sql;
+    }
 
-	public String[] getArguments() {
-		final int setSize = mSetArguments.size();
-		final int whereSize = mWhereArguments.size();
-		final String[] args = new String[setSize + whereSize];
+    public void execute() {
+        SQLiteUtils.execSql(mUpdate.getType(), toSql(), getArguments());
+    }
 
-		for (int i = 0; i < setSize; i++) {
-			args[i] = mSetArguments.get(i).toString();
-		}
+    public String[] getArguments() {
+        final int setSize = mSetArguments.size();
+        final int whereSize = mWhereArguments.size();
+        final String[] args = new String[setSize + whereSize];
 
-		for (int i = 0; i < whereSize; i++) {
-			args[i] = mWhereArguments.get(i).toString();
-		}
+        for (int i = 0; i < setSize; i++) {
+            args[i] = mSetArguments.get(i).toString();
+        }
 
-		return args;
-	}
+        for (int i = 0; i < whereSize; i++) {
+            args[i] = mWhereArguments.get(i).toString();
+        }
+
+        return args;
+    }
 }

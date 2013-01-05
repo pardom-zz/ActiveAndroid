@@ -22,56 +22,60 @@ import android.database.sqlite.SQLiteDatabase;
 import com.activeandroid.util.Log;
 
 public final class ActiveAndroid {
-	//////////////////////////////////////////////////////////////////////////////////////
-	// PUBLIC METHODS
-	//////////////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////
+    // PUBLIC METHODS
+    //////////////////////////////////////////////////////////////////////////////////////
 
-	public synchronized static void initialize(Application application) {
-		initialize(application, false);
-	}
+    public synchronized static void initialize(Application application) {
+        initialize(application, false);
+    }
 
-	public synchronized static void initialize(Application application, boolean loggingEnabled) {
-		setLoggingEnabled(loggingEnabled);
-		Cache.initialize(application);
-	}
+    public synchronized static void initialize(Application application, boolean loggingEnabled) {
+        setLoggingEnabled(loggingEnabled);
+        Cache.initialize(application);
+    }
 
-	public static void clearCache() {
-		Cache.clear();
-	}
+    public synchronized static void registerDbMetaData(Application application, DbMetaData metaData) {
+        Cache.initialize(application, metaData);
+    }
 
-	public static void dispose() {
-		Cache.dispose();
-	}
+    public static void clearCache() {
+        Cache.clearCache();
+    }
 
-	public static void setLoggingEnabled(boolean enabled) {
-		Log.setEnabled(enabled);
-	}
+    public static void dispose() {
+        Cache.dispose();
+    }
 
-	public synchronized static SQLiteDatabase getDatabase() {
-		return Cache.openDatabase();
-	}
+    public static void setLoggingEnabled(boolean enabled) {
+        Log.setEnabled(enabled);
+    }
 
-	public static void beginTransaction() {
-		Cache.openDatabase().beginTransaction();
-	}
+    public synchronized static SQLiteDatabase getDatabase(Class<?> type) {
+        return Cache.openDatabase(type);
+    }
 
-	public static void endTransaction() {
-		Cache.openDatabase().endTransaction();
-	}
+    public static void beginTransaction(Class<?> type) {
+        Cache.openDatabase(type).beginTransaction();
+    }
 
-	public static void setTransactionSuccessful() {
-		Cache.openDatabase().setTransactionSuccessful();
-	}
+    public static void endTransaction(Class<?> type) {
+        Cache.openDatabase(type).endTransaction();
+    }
 
-	public static boolean inTransaction() {
-		return Cache.openDatabase().inTransaction();
-	}
+    public static void setTransactionSuccessful(Class<?> type) {
+        Cache.openDatabase(type).setTransactionSuccessful();
+    }
 
-	public static void execSQL(String sql) {
-		Cache.openDatabase().execSQL(sql);
-	}
+    public static boolean inTransaction(Class<?> type) {
+        return Cache.openDatabase(type).inTransaction();
+    }
 
-	public static void execSQL(String sql, Object[] bindArgs) {
-		Cache.openDatabase().execSQL(sql, bindArgs);
-	}
+    public static void execSQL(Class<?> type, String sql) {
+        Cache.openDatabase(type).execSQL(sql);
+    }
+
+    public static void execSQL(Class<?> type, String sql, Object[] bindArgs) {
+        Cache.openDatabase(type).execSQL(sql, bindArgs);
+    }
 }

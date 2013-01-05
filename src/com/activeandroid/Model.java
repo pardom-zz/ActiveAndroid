@@ -32,241 +32,242 @@ import com.activeandroid.util.ReflectionUtils;
 
 @SuppressWarnings("unchecked")
 public abstract class Model {
-	//////////////////////////////////////////////////////////////////////////////////////
-	// PRIVATE MEMBERS
-	//////////////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////
+    // PRIVATE MEMBERS
+    //////////////////////////////////////////////////////////////////////////////////////
 
-	@Column(name = "Id")
-	private Long mId = null;
+    @Column(name = "Id")
+    private Long mId = null;
 
-	private TableInfo mTableInfo;
+    private TableInfo mTableInfo;
 
-	//////////////////////////////////////////////////////////////////////////////////////
-	// CONSTRUCTORS
-	//////////////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////
+    // CONSTRUCTORS
+    //////////////////////////////////////////////////////////////////////////////////////
 
-	public Model() {
-		mTableInfo = Cache.getTableInfo(getClass());
-		Cache.addEntity(this);
-	}
+    public Model() {
+        mTableInfo = Cache.getTableInfo(getClass());
+        Cache.addEntity(this);
+    }
 
-	//////////////////////////////////////////////////////////////////////////////////////
-	// PUBLIC METHODS
-	//////////////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////
+    // PUBLIC METHODS
+    //////////////////////////////////////////////////////////////////////////////////////
 
-	public final Long getId() {
-		return mId;
-	}
+    public final Long getId() {
+        return mId;
+    }
 
-	public final void delete() {
-		Cache.openDatabase().delete(mTableInfo.getTableName(), "Id=?", new String[] { getId().toString() });
-		Cache.removeEntity(this);
-	}
+    public final void delete() {
+        Cache.openDatabase(ReflectionUtils.getDbMetaDataClass(getClass())).delete(
+                mTableInfo.getTableName(), "Id=?", new String[] { getId().toString() });
+        Cache.removeEntity(this);
+    }
 
-	public final void save() {
-		final SQLiteDatabase db = Cache.openDatabase();
-		final ContentValues values = new ContentValues();
+    public final void save() {
+        final SQLiteDatabase db = Cache.openDatabase(ReflectionUtils.getDbMetaDataClass(getClass()));
+        final ContentValues values = new ContentValues();
 
-		for (Field field : mTableInfo.getFields()) {
-			final String fieldName = mTableInfo.getColumnName(field);
-			Class<?> fieldType = field.getType();
+        for (Field field : mTableInfo.getFields()) {
+            final String fieldName = mTableInfo.getColumnName(field);
+            Class<?> fieldType = field.getType();
 
-			field.setAccessible(true);
+            field.setAccessible(true);
 
-			try {
-				Object value = field.get(this);
+            try {
+                Object value = field.get(this);
 
-				if (value != null) {
-					final TypeSerializer typeSerializer = Cache.getParserForType(fieldType);
-					if (typeSerializer != null) {
-						// serialize data
-						value = typeSerializer.serialize(value);
-						// set new object type
-						if (value != null) {
-							fieldType = value.getClass();
-							// check that the serializer returned what it promised
-							if (!fieldType.equals(typeSerializer.getSerializedType())) {
-								Log.w(String.format("TypeSerializer returned wrong type: expected a %s but got a %s",
-										typeSerializer.getSerializedType(), fieldType));
-							}
-						}
-					}
-				}
+                if (value != null) {
+                    final TypeSerializer typeSerializer = Cache.getParserForType(fieldType);
+                    if (typeSerializer != null) {
+                        // serialize data
+                        value = typeSerializer.serialize(value);
+                        // set new object type
+                        if (value != null) {
+                            fieldType = value.getClass();
+                            // check that the serializer returned what it promised
+                            if (!fieldType.equals(typeSerializer.getSerializedType())) {
+                                Log.w(String.format("TypeSerializer returned wrong type: expected a %s but got a %s",
+                                        typeSerializer.getSerializedType(), fieldType));
+                            }
+                        }
+                    }
+                }
 
-				// TODO: Find a smarter way to do this? This if block is necessary because we
-				// can't know the type until runtime.
-				if (value == null) {
-					values.putNull(fieldName);
-				}
-				else if (fieldType.equals(Byte.class) || fieldType.equals(byte.class)) {
-					values.put(fieldName, (Byte) value);
-				}
-				else if (fieldType.equals(Short.class) || fieldType.equals(short.class)) {
-					values.put(fieldName, (Short) value);
-				}
-				else if (fieldType.equals(Integer.class) || fieldType.equals(int.class)) {
-					values.put(fieldName, (Integer) value);
-				}
-				else if (fieldType.equals(Long.class) || fieldType.equals(long.class)) {
-					values.put(fieldName, (Long) value);
-				}
-				else if (fieldType.equals(Float.class) || fieldType.equals(float.class)) {
-					values.put(fieldName, (Float) value);
-				}
-				else if (fieldType.equals(Double.class) || fieldType.equals(double.class)) {
-					values.put(fieldName, (Double) value);
-				}
-				else if (fieldType.equals(Boolean.class) || fieldType.equals(boolean.class)) {
-					values.put(fieldName, (Boolean) value);
-				}
-				else if (fieldType.equals(Character.class) || fieldType.equals(char.class)) {
-					values.put(fieldName, value.toString());
-				}
-				else if (fieldType.equals(String.class)) {
-					values.put(fieldName, value.toString());
-				}
-				else if (fieldType.equals(Byte[].class) || fieldType.equals(byte[].class)) {
-					values.put(fieldName, (byte[]) value);
-				}
-				else if (ReflectionUtils.isModel(fieldType)) {
-					values.put(fieldName, ((Model) value).getId());
-				}
-			}
-			catch (IllegalArgumentException e) {
-				Log.e(e.getClass().getName(), e);
-			}
-			catch (IllegalAccessException e) {
-				Log.e(e.getClass().getName(), e);
-			}
-		}
+                // TODO: Find a smarter way to do this? This if block is necessary because we
+                // can't know the type until runtime.
+                if (value == null) {
+                    values.putNull(fieldName);
+                }
+                else if (fieldType.equals(Byte.class) || fieldType.equals(byte.class)) {
+                    values.put(fieldName, (Byte) value);
+                }
+                else if (fieldType.equals(Short.class) || fieldType.equals(short.class)) {
+                    values.put(fieldName, (Short) value);
+                }
+                else if (fieldType.equals(Integer.class) || fieldType.equals(int.class)) {
+                    values.put(fieldName, (Integer) value);
+                }
+                else if (fieldType.equals(Long.class) || fieldType.equals(long.class)) {
+                    values.put(fieldName, (Long) value);
+                }
+                else if (fieldType.equals(Float.class) || fieldType.equals(float.class)) {
+                    values.put(fieldName, (Float) value);
+                }
+                else if (fieldType.equals(Double.class) || fieldType.equals(double.class)) {
+                    values.put(fieldName, (Double) value);
+                }
+                else if (fieldType.equals(Boolean.class) || fieldType.equals(boolean.class)) {
+                    values.put(fieldName, (Boolean) value);
+                }
+                else if (fieldType.equals(Character.class) || fieldType.equals(char.class)) {
+                    values.put(fieldName, value.toString());
+                }
+                else if (fieldType.equals(String.class)) {
+                    values.put(fieldName, value.toString());
+                }
+                else if (fieldType.equals(Byte[].class) || fieldType.equals(byte[].class)) {
+                    values.put(fieldName, (byte[]) value);
+                }
+                else if (ReflectionUtils.isModel(fieldType)) {
+                    values.put(fieldName, ((Model) value).getId());
+                }
+            }
+            catch (IllegalArgumentException e) {
+                Log.e(e.getClass().getName(), e);
+            }
+            catch (IllegalAccessException e) {
+                Log.e(e.getClass().getName(), e);
+            }
+        }
 
-		if (mId == null) {
-			mId = db.insert(mTableInfo.getTableName(), null, values);
-		}
-		else {
-			db.update(mTableInfo.getTableName(), values, "Id=" + mId, null);
-		}
-	}
+        if (mId == null) {
+            mId = db.insert(mTableInfo.getTableName(), null, values);
+        }
+        else {
+            db.update(mTableInfo.getTableName(), values, "Id=" + mId, null);
+        }
+    }
 
-	// Convenience methods
+    // Convenience methods
 
-	public static void delete(Class<? extends Model> type, long id) {
-		new Delete().from(type).where("Id=?", id).execute();
-	}
+    public static void delete(Class<? extends Model> type, long id) {
+        new Delete().from(type).where("Id=?", id).execute();
+    }
 
-	public static <T extends Model> T load(Class<? extends Model> type, long id) {
-		return new Select().from(type).where("Id=?", id).executeSingle();
-	}
+    public static <T extends Model> T load(Class<? extends Model> type, long id) {
+        return new Select().from(type).where("Id=?", id).executeSingle();
+    }
 
-	// Model population
+    // Model population
 
-	public final void loadFromCursor(Class<? extends Model> type, Cursor cursor) {
-		for (Field field : mTableInfo.getFields()) {
-			final String fieldName = mTableInfo.getColumnName(field);
-			Class<?> fieldType = field.getType();
-			final int columnIndex = cursor.getColumnIndex(fieldName);
+    public final void loadFromCursor(Class<? extends Model> type, Cursor cursor) {
+        for (Field field : mTableInfo.getFields()) {
+            final String fieldName = mTableInfo.getColumnName(field);
+            Class<?> fieldType = field.getType();
+            final int columnIndex = cursor.getColumnIndex(fieldName);
 
-			if (columnIndex < 0) {
-				continue;
-			}
+            if (columnIndex < 0) {
+                continue;
+            }
 
-			field.setAccessible(true);
+            field.setAccessible(true);
 
-			try {
-				boolean columnIsNull = cursor.isNull(columnIndex);
-				TypeSerializer typeSerializer = Cache.getParserForType(fieldType);
-				Object value = null;
+            try {
+                boolean columnIsNull = cursor.isNull(columnIndex);
+                TypeSerializer typeSerializer = Cache.getParserForType(fieldType);
+                Object value = null;
 
-				if (typeSerializer != null) {
-				  fieldType = typeSerializer.getSerializedType();
-				}
+                if (typeSerializer != null) {
+                  fieldType = typeSerializer.getSerializedType();
+                }
 
-				// TODO: Find a smarter way to do this? This if block is necessary because we
-				// can't know the type until runtime.
-				if (columnIsNull) {
-					field = null;
-				}
-				else if (fieldType.equals(Byte.class) || fieldType.equals(byte.class)) {
-					value = cursor.getInt(columnIndex);
-				}
-				else if (fieldType.equals(Short.class) || fieldType.equals(short.class)) {
-					value = cursor.getInt(columnIndex);
-				}
-				else if (fieldType.equals(Integer.class) || fieldType.equals(int.class)) {
-					value = cursor.getInt(columnIndex);
-				}
-				else if (fieldType.equals(Long.class) || fieldType.equals(long.class)) {
-					value = cursor.getLong(columnIndex);
-				}
-				else if (fieldType.equals(Float.class) || fieldType.equals(float.class)) {
-					value = cursor.getFloat(columnIndex);
-				}
-				else if (fieldType.equals(Double.class) || fieldType.equals(double.class)) {
-					value = cursor.getDouble(columnIndex);
-				}
-				else if (fieldType.equals(Boolean.class) || fieldType.equals(boolean.class)) {
-					value = cursor.getInt(columnIndex) != 0;
-				}
-				else if (fieldType.equals(Character.class) || fieldType.equals(char.class)) {
-					value = cursor.getString(columnIndex).charAt(0);
-				}
-				else if (fieldType.equals(String.class)) {
-					value = cursor.getString(columnIndex);
-				}
-				else if (fieldType.equals(Byte[].class) || fieldType.equals(byte[].class)) {
-					value = cursor.getBlob(columnIndex);
-				}
-				else if (ReflectionUtils.isModel(fieldType)) {
-					final long entityId = cursor.getLong(columnIndex);
-					final Class<? extends Model> entityType = (Class<? extends Model>) fieldType;
+                // TODO: Find a smarter way to do this? This if block is necessary because we
+                // can't know the type until runtime.
+                if (columnIsNull) {
+                    field = null;
+                }
+                else if (fieldType.equals(Byte.class) || fieldType.equals(byte.class)) {
+                    value = cursor.getInt(columnIndex);
+                }
+                else if (fieldType.equals(Short.class) || fieldType.equals(short.class)) {
+                    value = cursor.getInt(columnIndex);
+                }
+                else if (fieldType.equals(Integer.class) || fieldType.equals(int.class)) {
+                    value = cursor.getInt(columnIndex);
+                }
+                else if (fieldType.equals(Long.class) || fieldType.equals(long.class)) {
+                    value = cursor.getLong(columnIndex);
+                }
+                else if (fieldType.equals(Float.class) || fieldType.equals(float.class)) {
+                    value = cursor.getFloat(columnIndex);
+                }
+                else if (fieldType.equals(Double.class) || fieldType.equals(double.class)) {
+                    value = cursor.getDouble(columnIndex);
+                }
+                else if (fieldType.equals(Boolean.class) || fieldType.equals(boolean.class)) {
+                    value = cursor.getInt(columnIndex) != 0;
+                }
+                else if (fieldType.equals(Character.class) || fieldType.equals(char.class)) {
+                    value = cursor.getString(columnIndex).charAt(0);
+                }
+                else if (fieldType.equals(String.class)) {
+                    value = cursor.getString(columnIndex);
+                }
+                else if (fieldType.equals(Byte[].class) || fieldType.equals(byte[].class)) {
+                    value = cursor.getBlob(columnIndex);
+                }
+                else if (ReflectionUtils.isModel(fieldType)) {
+                    final long entityId = cursor.getLong(columnIndex);
+                    final Class<? extends Model> entityType = (Class<? extends Model>) fieldType;
 
-					Model entity = Cache.getEntity(entityType, entityId);
-					if (entity == null) {
-						entity = new Select().from(entityType).where("Id=?", entityId).executeSingle();
-					}
+                    Model entity = Cache.getEntity(entityType, entityId);
+                    if (entity == null) {
+                        entity = new Select().from(entityType).where("Id=?", entityId).executeSingle();
+                    }
 
-					value = entity;
-				}
+                    value = entity;
+                }
 
-				// Use a deserializer if one is available
-				if (typeSerializer != null && !columnIsNull) {
-					value = typeSerializer.deserialize(value);
-				}
+                // Use a deserializer if one is available
+                if (typeSerializer != null && !columnIsNull) {
+                    value = typeSerializer.deserialize(value);
+                }
 
-				// Set the field value
-				if (value != null) {
-					field.set(this, value);
-				}
-			}
-			catch (IllegalArgumentException e) {
-				Log.e(e.getMessage());
-			}
-			catch (IllegalAccessException e) {
-				Log.e(e.getMessage());
-			}
-			catch (SecurityException e) {
-				Log.e(e.getMessage());
-			}
-		}
-	}
+                // Set the field value
+                if (value != null) {
+                    field.set(this, value);
+                }
+            }
+            catch (IllegalArgumentException e) {
+                Log.e(e.getMessage());
+            }
+            catch (IllegalAccessException e) {
+                Log.e(e.getMessage());
+            }
+            catch (SecurityException e) {
+                Log.e(e.getMessage());
+            }
+        }
+    }
 
-	//////////////////////////////////////////////////////////////////////////////////////
-	// PROTECTED METHODS
-	//////////////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////
+    // PROTECTED METHODS
+    //////////////////////////////////////////////////////////////////////////////////////
 
-	protected final <E extends Model> List<E> getMany(Class<? extends Model> type, String foreignKey) {
-		return new Select().from(type).where(Cache.getTableName(type) + "." + foreignKey + "=?", getId()).execute();
-	}
+    protected final <E extends Model> List<E> getMany(Class<? extends Model> type, String foreignKey) {
+        return new Select().from(type).where(Cache.getTableName(type) + "." + foreignKey + "=?", getId()).execute();
+    }
 
-	//////////////////////////////////////////////////////////////////////////////////////
-	// OVERRIDEN METHODS
-	//////////////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////
+    // OVERRIDEN METHODS
+    //////////////////////////////////////////////////////////////////////////////////////
 
-	@Override
-	public boolean equals(Object obj) {
-		final Model other = (Model) obj;
+    @Override
+    public boolean equals(Object obj) {
+        final Model other = (Model) obj;
 
-		return this.mId != null && (this.mTableInfo.getTableName().equals(other.mTableInfo.getTableName()))
-				&& (this.mId.equals(other.mId));
-	}
+        return this.mId != null && (this.mTableInfo.getTableName().equals(other.mTableInfo.getTableName()))
+                && (this.mId.equals(other.mId));
+    }
 }
