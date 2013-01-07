@@ -131,6 +131,9 @@ public abstract class Model {
 				else if (ReflectionUtils.isModel(fieldType)) {
 					values.put(fieldName, ((Model) value).getId());
 				}
+				else if (ReflectionUtils.isSubclassOf(fieldType, Enum.class)){
+					values.put(fieldName, ((Enum<?>) value).name());
+				}
 			}
 			catch (IllegalArgumentException e) {
 				Log.e(e.getClass().getName(), e);
@@ -226,6 +229,11 @@ public abstract class Model {
 					}
 
 					value = entity;
+				}
+				else if (ReflectionUtils.isSubclassOf(fieldType, Enum.class)){
+					@SuppressWarnings("rawtypes")
+					final Class<? extends Enum> enumType =  (Class<? extends Enum>) fieldType;
+					value=Enum.valueOf(enumType, cursor.getString(columnIndex));
 				}
 
 				// Use a deserializer if one is available
