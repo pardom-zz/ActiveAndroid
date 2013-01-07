@@ -140,6 +140,9 @@ public final class SQLiteUtils {
 		else if (ReflectionUtils.isModel(type)) {
 			definition = name + " " + SQLiteType.INTEGER.toString();
 		}
+		else if (ReflectionUtils.isSubclassOf(type, Enum.class)) {
+			definition = name + " " + SQLiteType.TEXT.toString();
+		}
 
 		if (definition != null) {
 			if (column.length() > -1) {
