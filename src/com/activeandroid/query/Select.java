@@ -16,6 +16,8 @@ package com.activeandroid.query;
  * limitations under the License.
  */
 
+import java.util.Arrays;
+
 import android.text.TextUtils;
 
 import com.activeandroid.Model;
@@ -82,6 +84,9 @@ public final class Select implements Sqlable {
 		}
 
 		if (mColumns != null && mColumns.length > 0) {
+			if (!Arrays.asList(mColumns).contains("id") && !mDistinct)
+				sql.append("id, ");
+
 			sql.append(TextUtils.join(", ", mColumns) + " ");
 		}
 		else {
