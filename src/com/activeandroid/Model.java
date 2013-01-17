@@ -36,7 +36,9 @@ public abstract class Model {
     // PRIVATE MEMBERS
     //////////////////////////////////////////////////////////////////////////////////////
 
-    @Column(name = "Id")
+    public static final String COLUMN_ID ="Id";
+
+    @Column(name = COLUMN_ID)
     private Long mId = null;
 
     private TableInfo mTableInfo;
@@ -56,6 +58,10 @@ public abstract class Model {
 
     public final Long getId() {
         return mId;
+    }
+
+    public void setId(Long id) {
+        mId = id;
     }
 
     public final void delete() {

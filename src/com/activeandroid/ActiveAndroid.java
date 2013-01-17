@@ -47,6 +47,10 @@ public final class ActiveAndroid {
         Cache.dispose();
     }
 
+    public static void closeDatabase(Class<?> type) {
+        Cache.closeDatabase(type);
+    }
+
     public static void setLoggingEnabled(boolean enabled) {
         Log.setEnabled(enabled);
     }

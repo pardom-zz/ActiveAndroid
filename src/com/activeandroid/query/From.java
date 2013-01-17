@@ -37,6 +37,7 @@ public final class From implements Sqlable {
     private String mOrderBy;
     private String mLimit;
     private String mOffset;
+    private boolean mDesc = false;
 
     private List<Object> mArguments;
 
@@ -110,7 +111,12 @@ public final class From implements Sqlable {
     }
 
     public From orderBy(String orderBy) {
+        return orderBy(orderBy, false);
+    }
+
+    public From orderBy(String orderBy, boolean desc){
         mOrderBy = orderBy;
+        mDesc = desc;
         return this;
     }
 
@@ -165,6 +171,7 @@ public final class From implements Sqlable {
 
         if (mOrderBy != null) {
             sql += "ORDER BY " + mOrderBy + " ";
+            if (mDesc) sql += " DESC ";
         }
 
         if (mLimit != null) {
