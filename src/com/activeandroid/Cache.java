@@ -16,8 +16,10 @@ package com.activeandroid;
  * limitations under the License.
  */
 
+import java.lang.ref.SoftReference;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Hashtable;
 import java.util.Set;
 
 import android.app.Application;
@@ -26,122 +28,155 @@ import android.database.sqlite.SQLiteDatabase;
 
 import com.activeandroid.serializer.TypeSerializer;
 import com.activeandroid.util.Log;
+import com.activeandroid.util.ReflectionUtils;
 
 public final class Cache {
-	//////////////////////////////////////////////////////////////////////////////////////
-	// PRIVATE MEMBERS
-	//////////////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////
+    // PRIVATE MEMBERS
+    //////////////////////////////////////////////////////////////////////////////////////
 
-	private static Context sContext;
+    private static Context sContext;
 
-	private static ModelInfo sModelInfo;
-	private static DatabaseHelper sDatabaseHelper;
+    private static ModelInfo sModelInfo;
 
-	private static Set<Model> sEntities;
+    private static Set<SoftReference<Model>> sEntities;
 
-	private static boolean sIsInitialized = false;
+    private static Hashtable<Class<? extends DbMetaData>, DatabaseHelper> sDatabaseHelper;
 
-	//////////////////////////////////////////////////////////////////////////////////////
-	// CONSTRUCTORS
-	//////////////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////
+    // CONSTRUCTORS
+    //////////////////////////////////////////////////////////////////////////////////////
 
-	private Cache() {
-	}
+    private Cache() {
+    }
 
-	//////////////////////////////////////////////////////////////////////////////////////
-	// PUBLIC METHODS
-	//////////////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////
+    // PUBLIC METHODS
+    //////////////////////////////////////////////////////////////////////////////////////
 
-	public static synchronized void initialize(Application application) {
-		if (sIsInitialized) {
-			Log.v("ActiveAndroid already initialized.");
-			return;
-		}
+    public static synchronized void initialize(Application application) {
+        initialize(application, null);
+    }
 
-		sContext = application;
+    public static synchronized void initialize(Application application, DbMetaData metaData) {
+        DbMetaData meta = metaData;
+        if (meta == null) meta = DefaultMetaData.getInstanse(application);
 
-		sModelInfo = new ModelInfo(application);
-		sDatabaseHelper = new DatabaseHelper(sContext);
+        // initialize static variables
+        if (sContext == null) sContext = application;
+        if (sModelInfo == null) sModelInfo = new ModelInfo(application);
+        if (sDatabaseHelper == null)
+            sDatabaseHelper = new Hashtable<Class<? extends DbMetaData>, DatabaseHelper>();
+        if (sEntities == null)
+            sEntities = new HashSet<SoftReference<Model>>();
 
-		sEntities = new HashSet<Model>();
+        // if database
+        if (sDatabaseHelper.get(meta.getClass()) != null && !meta.isResettable()) {
+            Log.v("ActiveAndroid already initialized.");
+            return;
 
-		openDatabase();
+        } else if (sDatabaseHelper.get(meta.getClass()) != null) {
+            Log.v("ActiveAndroid "+meta.getClass().getSimpleName()+" already initialized. Reset by new meta data");
+            closeDatabase(meta.getClass());
+        }
 
-		sIsInitialized = true;
+        // initialize DatabaseHelper
+        sDatabaseHelper.put(meta.getClass(), new DatabaseHelper(sContext, meta));
 
-		Log.v("ActiveAndroid initialized succesfully.");
-	}
+        openDatabase(meta.getClass());
 
-	public static synchronized void clear() {
-		sEntities = new HashSet<Model>();
-		Log.v("Cache cleared.");
-	}
+        Log.v("ActiveAndroid "+ meta.getClass().getSimpleName()+" initialized succesfully.");
+    }
 
-	public static synchronized void dispose() {
-		closeDatabase();
-		
-		sEntities = null;
-		sModelInfo = null;
-		sDatabaseHelper = null;
+    public static synchronized void clearCache() {
+        sEntities.clear();
+        Log.v("Cache cleared.");
+    }
 
-		sIsInitialized = false;
+    public static synchronized void dispose() {
+        closeAllDatabase();
 
-		Log.v("ActiveAndroid disposed. Call initialize to use library.");
-	}
+        sEntities = null;
+        sModelInfo = null;
+        sDatabaseHelper = null;
 
-	// Database access
+        Log.v("ActiveAndroid disposed. Call initialize to use library.");
+    }
 
-	public static synchronized SQLiteDatabase openDatabase() {
-		return sDatabaseHelper.getWritableDatabase();
-	}
+    // Database access
 
-	public static synchronized void closeDatabase() {
-		sDatabaseHelper.close();
-	}
+    public static synchronized SQLiteDatabase openDatabase(Class<?> type) {
+        Class<? extends DbMetaData> metaDataType = ReflectionUtils.getDbMetaDataClass(type);
+        DatabaseHelper databaseHelper = sDatabaseHelper.get(metaDataType);
+        if (databaseHelper != null) return databaseHelper.getWritableDatabase();
+        throw new IllegalArgumentException("db meta" + metaDataType.getClass().getSimpleName() +" not found!");
+    }
 
-	// Context access
+    public static synchronized void closeDatabase(Class<?> type) {
+        Class<? extends DbMetaData> metaDataType = ReflectionUtils.getDbMetaDataClass(type);
+        DatabaseHelper databaseHelper = sDatabaseHelper.get(metaDataType);
+        if (databaseHelper != null) databaseHelper.close();
+    }
 
-	public static Context getContext() {
-		return sContext;
-	}
+    public static synchronized void closeAllDatabase() {
+        for (DatabaseHelper databaseHelper : sDatabaseHelper.values()) {
+            databaseHelper.close();
+        }
+    }
 
-	// Entity cache
+    // Context access
 
-	public static synchronized void addEntity(Model entity) {
-		sEntities.add(entity);
-	}
+    public static Context getContext() {
+        return sContext;
+    }
 
-	public static synchronized Model getEntity(Class<? extends Model> type, long id) {
-		for (Model entity : sEntities) {
-			if (entity != null && entity.getClass() != null && entity.getClass() == type && entity.getId() != null
-					&& entity.getId() == id) {
+    // Entity cache
 
-				return entity;
-			}
-		}
+    public static synchronized void addEntity(Model entity) {
+        sEntities.add(new SoftReference<Model>(entity));
+    }
 
-		return null;
-	}
+    public static synchronized Model getEntity(Class<? extends Model> type, long id) {
+        for (SoftReference<Model> ref: sEntities) {
+            Model entity = ref.get();
+            if (entity != null && entity.getClass() != null && entity.getClass() == type && entity.getId() != null
+                    && entity.getId() == id) {
 
-	public static synchronized void removeEntity(Model entity) {
-		sEntities.remove(entity);
-	}
+                return entity;
+            }
+        }
 
-	// Model cache
+        return null;
+    }
 
-	public static synchronized Collection<TableInfo> getTableInfos() {
-		return sModelInfo.getTableInfos();
-	}
+    public static synchronized void removeEntity(Model entity) {
+        SoftReference<Model> removedRef = null;
+        for (SoftReference<Model> ref: sEntities) {
+            Model model = ref.get();
+            if (entity == model) {
+                removedRef = ref;
+                break;
+            }
+        }
 
-	public static synchronized TableInfo getTableInfo(Class<? extends Model> type) {
-		return sModelInfo.getTableInfo(type);
-	}
+        if (removedRef != null) sEntities.remove(removedRef);
+    }
 
-	public static synchronized TypeSerializer getParserForType(Class<?> type) {
-		return sModelInfo.getTypeSerializer(type);
-	}
+    // Model cache
 
-	public static synchronized String getTableName(Class<? extends Model> type) {
-		return sModelInfo.getTableInfo(type).getTableName();
-	}
+    public static synchronized Collection<TableInfo> getTableInfos() {
+        return sModelInfo.getTableInfos();
+    }
+
+    public static synchronized TableInfo getTableInfo(Class<? extends Model> type) {
+        return sModelInfo.getTableInfo(type);
+    }
+
+    public static synchronized TypeSerializer getParserForType(Class<?> type) {
+        return sModelInfo.getTypeSerializer(type);
+    }
+
+    public static synchronized String getTableName(Class<? extends Model> type) {
+        return sModelInfo.getTableInfo(type).getTableName();
+    }
 }

@@ -20,54 +20,80 @@ import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 
+import com.activeandroid.DbMetaData;
+import com.activeandroid.DefaultMetaData;
 import com.activeandroid.Model;
+import com.activeandroid.annotation.DatabaseMetaData;
 import com.activeandroid.serializer.TypeSerializer;
 
 public final class ReflectionUtils {
-	//////////////////////////////////////////////////////////////////////////////////////
-	// PUBLIC METHODS
-	//////////////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////
+    // PUBLIC METHODS
+    //////////////////////////////////////////////////////////////////////////////////////
 
-	public static boolean isModel(Class<?> type) {
-		return isSubclassOf(type, Model.class);
-	}
+    public static boolean isModel(Class<?> type) {
+        return isSubclassOf(type, Model.class);
+    }
 
-	public static boolean isTypeSerializer(Class<?> type) {
-		return isSubclassOf(type, TypeSerializer.class);
-	}
+    public static boolean isTypeSerializer(Class<?> type) {
+        return isSubclassOf(type, TypeSerializer.class);
+    }
 
-	// Meta-data
+    public static boolean isDbMetaData(Class<?> type) {
+        return isSubclassOf(type, DbMetaData.class);
+    }
 
-	@SuppressWarnings("unchecked")
-	public static <T> T getMetaData(Context context, String name) {
-		try {
-			final ApplicationInfo ai = context.getPackageManager().getApplicationInfo(context.getPackageName(),
-					PackageManager.GET_META_DATA);
+    // Meta-data
 
-			if (ai.metaData != null) {
-				return (T) ai.metaData.get(name);
-			}
-		}
-		catch (Exception e) {
-			Log.w("Couldn't find meta-data: " + name);
-		}
+    @SuppressWarnings("unchecked")
+    public static <T> T getMetaData(Context context, String name) {
+        try {
+            final ApplicationInfo ai = context.getPackageManager().getApplicationInfo(context.getPackageName(),
+                    PackageManager.GET_META_DATA);
 
-		return null;
-	}
+            if (ai.metaData != null) {
+                return (T) ai.metaData.get(name);
+            }
+        }
+        catch (Exception e) {
+            Log.w("Couldn't find meta-data: " + name);
+        }
 
-	//////////////////////////////////////////////////////////////////////////////////////
-	// PRIVATE METHODS
-	//////////////////////////////////////////////////////////////////////////////////////
+        return null;
+    }
 
-	public static boolean isSubclassOf(Class<?> type, Class<?> superClass) {
-		if (type.getSuperclass() != null) {
-			if (type.getSuperclass().equals(superClass)) {
-				return true;
-			}
+    @SuppressWarnings("unchecked")
+    public static Class<? extends DbMetaData> getDbMetaDataClass(Class<?> type) {
+        // type is DbMetaData, return self
+        if (ReflectionUtils.isDbMetaData(type)) {
+            return (Class<? extends DbMetaData>) type;
 
-			return isSubclassOf(type.getSuperclass(), superClass);
-		}
+        // is Model, return from annotation, default is DefaultMetaData
+        } else if (ReflectionUtils.isModel(type)) {
+            final DatabaseMetaData metaDataAnnotation = type.getAnnotation(DatabaseMetaData.class);
+            return (metaDataAnnotation != null && metaDataAnnotation.metadataClass() != null)
+                    ? metaDataAnnotation.metadataClass()
+                    : DefaultMetaData.class;
 
-		return false;
-	}
+        // none of above, throw an exception.
+        } else {
+            throw new IllegalArgumentException("Unable to open database for unknow type "+type.getClass().getSimpleName());
+        }
+    }
+
+    //////////////////////////////////////////////////////////////////////////////////////
+    // PRIVATE METHODS
+    //////////////////////////////////////////////////////////////////////////////////////
+
+    public static boolean isSubclassOf(Class<?> type, Class<?> superClass) {
+        if (type.getSuperclass() != null) {
+            if (type.getSuperclass().equals(superClass)) {
+                return true;
+            }
+
+            return isSubclassOf(type.getSuperclass(), superClass);
+        }
+
+        return false;
+    }
 }
