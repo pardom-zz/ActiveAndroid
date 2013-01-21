@@ -122,6 +122,7 @@ public final class SQLiteUtils {
 				TextUtils.join(", ", definitions));
 	}
 
+	@SuppressWarnings("unchecked")
 	public static String createColumnDefinition(TableInfo tableInfo, Field field) {
 		String definition = null;
 
@@ -162,7 +163,7 @@ public final class SQLiteUtils {
 			}
 
 			if (FOREIGN_KEYS_SUPPORTED && ReflectionUtils.isModel(type)) {
-				definition += " REFERENCES " + tableInfo.getTableName() + "(Id)";
+				definition += " REFERENCES " + Cache.getTableInfo((Class<? extends Model>) type).getTableName() + "(Id)";
 				definition += " ON DELETE " + column.onDelete().toString().replace("_", " ");
 				definition += " ON UPDATE " + column.onUpdate().toString().replace("_", " ");
 			}
