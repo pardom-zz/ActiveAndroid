@@ -108,9 +108,6 @@ public final class Cache {
 	// Entity cache
 
 	public static synchronized void addEntity(Model entity) {
-		if (sEntities == null) {
-			return;
-		}
 		sEntities.add(entity);
 	}
 
@@ -137,9 +134,6 @@ public final class Cache {
 	}
 
 	public static synchronized TableInfo getTableInfo(Class<? extends Model> type) {
-		if (sModelInfo == null) {
-			return null;
-		}
 		return sModelInfo.getTableInfo(type);
 	}
 
