@@ -42,15 +42,6 @@ public abstract class Model {
 	private TableInfo mTableInfo;
 
 	//////////////////////////////////////////////////////////////////////////////////////
-	// CONSTRUCTORS
-	//////////////////////////////////////////////////////////////////////////////////////
-
-	public Model() {
-		mTableInfo = Cache.getTableInfo(getClass());
-		Cache.addEntity(this);
-	}
-
-	//////////////////////////////////////////////////////////////////////////////////////
 	// PUBLIC METHODS
 	//////////////////////////////////////////////////////////////////////////////////////
 
@@ -59,7 +50,7 @@ public abstract class Model {
 	}
 
 	public final void delete() {
-		Cache.openDatabase().delete(mTableInfo.getTableName(), "Id=?", new String[] { getId().toString() });
+		Cache.openDatabase().delete(getTableInfo().getTableName(), "Id=?", new String[] { getId().toString() });
 		Cache.removeEntity(this);
 	}
 
@@ -67,8 +58,8 @@ public abstract class Model {
 		final SQLiteDatabase db = Cache.openDatabase();
 		final ContentValues values = new ContentValues();
 
-		for (Field field : mTableInfo.getFields()) {
-			final String fieldName = mTableInfo.getColumnName(field);
+		for (Field field : getTableInfo().getFields()) {
+			final String fieldName = getTableInfo().getColumnName(field);
 			Class<?> fieldType = field.getType();
 
 			field.setAccessible(true);
@@ -144,11 +135,13 @@ public abstract class Model {
 		}
 
 		if (mId == null) {
-			mId = db.insert(mTableInfo.getTableName(), null, values);
+			mId = db.insert(getTableInfo().getTableName(), null, values);
 		}
 		else {
-			db.update(mTableInfo.getTableName(), values, "Id=" + mId, null);
+			db.update(getTableInfo().getTableName(), values, "Id=" + mId, null);
 		}
+
+		Cache.addEntity(this);
 	}
 
 	// Convenience methods
@@ -164,8 +157,8 @@ public abstract class Model {
 	// Model population
 
 	public final void loadFromCursor(Class<? extends Model> type, Cursor cursor) {
-		for (Field field : mTableInfo.getFields()) {
-			final String fieldName = mTableInfo.getColumnName(field);
+		for (Field field : getTableInfo().getFields()) {
+			final String fieldName = getTableInfo().getColumnName(field);
 			Class<?> fieldType = field.getType();
 			final int columnIndex = cursor.getColumnIndex(fieldName);
 
@@ -245,6 +238,8 @@ public abstract class Model {
 				if (value != null) {
 					field.set(this, value);
 				}
+
+				Cache.addEntity(this);
 			}
 			catch (IllegalArgumentException e) {
 				Log.e(e.getMessage());
@@ -274,7 +269,14 @@ public abstract class Model {
 	public boolean equals(Object obj) {
 		final Model other = (Model) obj;
 
-		return this.mId != null && (this.mTableInfo.getTableName().equals(other.mTableInfo.getTableName()))
+		return this.mId != null && (this.getTableInfo().getTableName().equals(other.getTableInfo().getTableName()))
 				&& (this.mId.equals(other.mId));
+	}
+
+	private TableInfo getTableInfo() {
+		if (mTableInfo == null) {
+			mTableInfo = Cache.getTableInfo(getClass());
+		}
+		return mTableInfo;
 	}
 }

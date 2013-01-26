@@ -78,6 +78,7 @@ public final class Cache {
 	}
 
 	public static synchronized void dispose() {
+		checkInitialization();
 		closeDatabase();
 		
 		sEntities = null;
@@ -92,29 +93,33 @@ public final class Cache {
 	// Database access
 
 	public static synchronized SQLiteDatabase openDatabase() {
+		if (sDatabaseHelper == null) {
+			checkInitialization();
+		}
 		return sDatabaseHelper.getWritableDatabase();
 	}
 
 	public static synchronized void closeDatabase() {
+		checkInitialization();
 		sDatabaseHelper.close();
 	}
 
 	// Context access
 
 	public static Context getContext() {
+		checkInitialization();
 		return sContext;
 	}
 
 	// Entity cache
 
 	public static synchronized void addEntity(Model entity) {
-		if (sEntities == null) {
-			return;
-		}
+		checkInitialization();
 		sEntities.add(entity);
 	}
 
 	public static synchronized Model getEntity(Class<? extends Model> type, long id) {
+		checkInitialization();
 		for (Model entity : sEntities) {
 			if (entity != null && entity.getClass() != null && entity.getClass() == type && entity.getId() != null
 					&& entity.getId() == id) {
@@ -127,27 +132,35 @@ public final class Cache {
 	}
 
 	public static synchronized void removeEntity(Model entity) {
+		checkInitialization();
 		sEntities.remove(entity);
 	}
 
 	// Model cache
 
 	public static synchronized Collection<TableInfo> getTableInfos() {
+		checkInitialization();
 		return sModelInfo.getTableInfos();
 	}
 
 	public static synchronized TableInfo getTableInfo(Class<? extends Model> type) {
-		if (sModelInfo == null) {
-			return null;
-		}
+		checkInitialization();
 		return sModelInfo.getTableInfo(type);
 	}
 
 	public static synchronized TypeSerializer getParserForType(Class<?> type) {
+		checkInitialization();
 		return sModelInfo.getTypeSerializer(type);
 	}
 
 	public static synchronized String getTableName(Class<? extends Model> type) {
+		checkInitialization();
 		return sModelInfo.getTableInfo(type).getTableName();
+	}
+
+	private static void checkInitialization() {
+		if (!sIsInitialized) {
+			throw new ActiveAndroidNotInitialized();
+		}
 	}
 }
