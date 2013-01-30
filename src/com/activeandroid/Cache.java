@@ -65,9 +65,9 @@ public final class Cache {
 
 		sEntities = new HashSet<Model>();
 
-		openDatabase();
-
 		sIsInitialized = true;
+
+		openDatabase();
 
 		Log.v("ActiveAndroid initialized succesfully.");
 	}
@@ -93,9 +93,7 @@ public final class Cache {
 	// Database access
 
 	public static synchronized SQLiteDatabase openDatabase() {
-		if (sDatabaseHelper == null) {
-			checkInitialization();
-		}
+    checkInitialization();
 		return sDatabaseHelper.getWritableDatabase();
 	}
 
