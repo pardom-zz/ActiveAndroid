@@ -209,4 +209,8 @@ public final class From implements Sqlable {
 
 		return args;
 	}
+
+	public Class<? extends Model> getModelType() {
+		return mType;
+	}
 }
