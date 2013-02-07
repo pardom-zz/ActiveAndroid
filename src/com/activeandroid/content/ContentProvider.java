@@ -1,15 +1,14 @@
 package com.activeandroid.content;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import android.app.Application;
 import android.content.ContentValues;
 import android.content.UriMatcher;
 import android.database.Cursor;
 import android.net.Uri;
+import android.util.SparseArray;
 
 import com.activeandroid.ActiveAndroid;
 import com.activeandroid.Cache;
@@ -22,7 +21,7 @@ public class ContentProvider extends android.content.ContentProvider {
 	//////////////////////////////////////////////////////////////////////////////////////
 
 	private static final UriMatcher URI_MATCHER = new UriMatcher(UriMatcher.NO_MATCH);
-	private static final Map<Integer, Class<? extends Model>> TYPE_CODES = new HashMap<Integer, Class<? extends Model>>();
+	private static final SparseArray<Class<? extends Model>> TYPE_CODES = new SparseArray<Class<? extends Model>>();
 
 	//////////////////////////////////////////////////////////////////////////////////////
 	// PRIVATE MEMBERS
