@@ -28,7 +28,7 @@ public class ContentProvider extends android.content.ContentProvider {
 	// PRIVATE MEMBERS
 	//////////////////////////////////////////////////////////////////////////////////////
 
-	private final String mAuthority = getContext().getPackageName();
+	private String mAuthority;
 
 	//////////////////////////////////////////////////////////////////////////////////////
 	// PUBLIC METHODS
@@ -36,6 +36,7 @@ public class ContentProvider extends android.content.ContentProvider {
 
 	@Override
 	public boolean onCreate() {
+	    mAuthority = getContext().getPackageName();
 		ActiveAndroid.initialize((Application) getContext().getApplicationContext());
 
 		List<TableInfo> tableInfos = new ArrayList<TableInfo>(Cache.getTableInfos());
