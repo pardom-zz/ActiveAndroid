@@ -25,16 +25,16 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import android.content.Context;
+import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
-import com.activeandroid.util.Log;
-import com.activeandroid.util.NaturalOrderComparator;
-import com.activeandroid.util.ReflectionUtils;
-import com.activeandroid.util.SQLiteUtils;
+import com.activeandroid.migration.Migration;
+import com.activeandroid.util.*;
 
 public final class DatabaseHelper extends SQLiteOpenHelper {
 	//////////////////////////////////////////////////////////////////////////////////////
@@ -75,7 +75,7 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
 		db.setTransactionSuccessful();
 		db.endTransaction();
 
-		executeMigrations(db, -1, db.getVersion());
+		executeNamedMigrations(db, -1, db.getVersion());
 	}
 
 	@Override
@@ -85,7 +85,7 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
 			Log.i("Foreign Keys supported. Enabling foreign key features.");
 		}
 
-		if (!executeMigrations(db, oldVersion, newVersion)) {
+		if (!executeNamedMigrations(db, oldVersion, newVersion)) {
 			Log.i("No migrations found. Calling onCreate.");
 			onCreate(db);
 		}
@@ -131,6 +131,30 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
 	//////////////////////////////////////////////////////////////////////////////////////
 	// PRIVATE METHODS
 	//////////////////////////////////////////////////////////////////////////////////////
+
+    private boolean executeNamedMigrations(SQLiteDatabase db, int oldVersion, int newVersion) {
+        boolean migrationExecuted = false;
+
+        List<Migration> migrations = MigrationUtils.getMigrations(Cache.getContext(), oldVersion, newVersion);
+        Collections.sort(migrations, new Comparator<Migration>() {
+            @Override
+            public int compare(Migration migration, Migration migration2) {
+                return migration.databaseVersion() - migration2.databaseVersion();
+            }
+        });
+
+        db.beginTransaction();
+
+        for (Migration migration : migrations) {
+            migration.execute(db);
+            migrationExecuted = true;
+        }
+
+        db.setTransactionSuccessful();
+        db.endTransaction();
+
+        return migrationExecuted;
+    }
 
 	private boolean executeMigrations(SQLiteDatabase db, int oldVersion, int newVersion) {
 		boolean migrationExecuted = false;
