@@ -20,6 +20,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 
 import android.database.Cursor;
@@ -30,6 +31,7 @@ import com.activeandroid.Cache;
 import com.activeandroid.Model;
 import com.activeandroid.TableInfo;
 import com.activeandroid.annotation.Column;
+import com.activeandroid.annotation.CreateIndex;
 import com.activeandroid.serializer.TypeSerializer;
 
 public final class SQLiteUtils {
@@ -120,6 +122,21 @@ public final class SQLiteUtils {
 
         return String.format("CREATE TABLE IF NOT EXISTS %s (%s);", tableInfo.getTableName(),
                 TextUtils.join(", ", definitions));
+    }
+
+    public static String createIndexDefinition(TableInfo tableInfo){
+        List<String> createIndexSql=new LinkedList<String>();
+
+        for (Field field : tableInfo.getFields()) {
+            final CreateIndex createIndex = field.getAnnotation(CreateIndex.class);
+            if (createIndex!=null) {
+                String tableName=tableInfo.getTableName();
+                String columnName=createIndex.column();
+                createIndexSql.add(String.format("Create Index %s_%s on %s (%s);",tableName,columnName,tableName,columnName));
+            }
+        }
+
+        return  TextUtils.join("", createIndexSql);
     }
 
     public static String createColumnDefinition(TableInfo tableInfo, Field field) {

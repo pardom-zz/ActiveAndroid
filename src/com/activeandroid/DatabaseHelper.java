@@ -64,7 +64,10 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
 
         for (TableInfo tableInfo : Cache.getTableInfos()) {
             db.execSQL(SQLiteUtils.createTableDefinition(tableInfo));
+            Log.d("generate index:" + SQLiteUtils.createIndexDefinition(tableInfo));
         }
+
+
 
         db.setTransactionSuccessful();
         db.endTransaction();
