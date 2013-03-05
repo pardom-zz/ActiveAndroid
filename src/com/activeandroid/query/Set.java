@@ -83,15 +83,17 @@ public final class Set implements Sqlable {
 	}
 
 	public String[] getArguments() {
+		int i = 0;
+
 		final int setSize = mSetArguments.size();
 		final int whereSize = mWhereArguments.size();
 		final String[] args = new String[setSize + whereSize];
 
-		for (int i = 0; i < setSize; i++) {
+		for (; i < setSize; i++) {
 			args[i] = mSetArguments.get(i).toString();
 		}
 
-		for (int i = 0; i < whereSize; i++) {
+		for (; i < whereSize + setSize; i++) {
 			args[i] = mWhereArguments.get(i).toString();
 		}
 
