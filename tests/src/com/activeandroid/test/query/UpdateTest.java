@@ -55,6 +55,23 @@ public class UpdateTest extends SqlableTestCase {
 		assertSqlEquals(UPDATE_PREFIX + "SET Id = 5 WHERE Id IN (?, ?, ?) ",
 				set);
 	}
+
+	public void testUpdateWhereWithSetArguments() {
+		Set set = update()
+				.set("Id = ?", 3)
+				.where("Id = ?", 1);
+		assertArrayEquals(set.getArguments(), "3", "1");
+		assertSqlEquals(UPDATE_PREFIX + "SET Id = ? WHERE Id = ? ",
+				set);
+		
+		set = update()
+				.set("Id = ?", 2)
+				.where("Id = ?", 1)
+				.where("Id IN (?, ?, ?)", 5, 4, 3);
+		assertArrayEquals(set.getArguments(), "2", "5", "4", "3");
+		assertSqlEquals(UPDATE_PREFIX + "SET Id = ? WHERE Id IN (?, ?, ?) ",
+				set);
+	}
 	
 	private Update update() {
 		return new Update(MockModel.class);
