@@ -21,6 +21,7 @@ import java.util.List;
 
 import android.content.ContentValues;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteDatabase;
 
 import com.activeandroid.annotation.Column;
@@ -56,6 +57,10 @@ public abstract class Model {
 
 	public final Long getId() {
 		return mId;
+	}
+	
+	public final void setId(Long id) {
+		this.mId = id;
 	}
 
 	public final void delete() {
@@ -143,11 +148,11 @@ public abstract class Model {
 			}
 		}
 
-		if (mId == null) {
-			mId = db.insert(mTableInfo.getTableName(), null, values);
+		try {
+			mId = db.insertOrThrow(mTableInfo.getTableName(), null, values);
 		}
-		else {
-			db.update(mTableInfo.getTableName(), values, "Id=" + mId, null);
+		catch(SQLiteConstraintException e) {
+			db.update(mTableInfo.getTableName(), values, "Id="+mId, null);
 		}
 	}
 
