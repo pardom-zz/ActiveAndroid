@@ -38,6 +38,9 @@ import com.activeandroid.util.SQLiteUtils;
 public final class DatabaseHelper extends SQLiteOpenHelper {
 
     private DbMetaData mDbMetaData;
+    public DbMetaData getDbMetaData() {
+        return mDbMetaData;
+    }
 
     //////////////////////////////////////////////////////////////////////////////////////
     // CONSTRUCTORS

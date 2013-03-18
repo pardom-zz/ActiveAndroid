@@ -71,7 +71,9 @@ public final class Cache {
             sEntities = new HashSet<SoftReference<Model>>();
 
         // if database
-        if (sDatabaseHelper.get(meta.getClass()) != null && !meta.isResettable()) {
+        if (sDatabaseHelper.get(meta.getClass()) != null
+                && !sDatabaseHelper.get(meta.getClass()).getDbMetaData().equals(metaData)
+                && !meta.isResettable()) {
             Log.v("ActiveAndroid already initialized.");
             return;
 
