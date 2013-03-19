@@ -56,7 +56,10 @@ public abstract class Model {
 	//////////////////////////////////////////////////////////////////////////////////////
 
 	public final Long getId() {
-		return mId;
+		if(mId == null)
+			return 0L;
+		else
+			return mId;
 	}
 	
 	public final void setId(Long id) {
@@ -148,8 +151,12 @@ public abstract class Model {
 			}
 		}
 
+		
 		try {
-			mId = db.insertOrThrow(mTableInfo.getTableName(), null, values);
+			if(mId == null)
+				mId = db.insert(mTableInfo.getTableName(), null, values);
+			else
+				db.insertOrThrow(mTableInfo.getTableName(), null, values);
 		}
 		catch(SQLiteConstraintException e) {
 			db.update(mTableInfo.getTableName(), values, "Id="+mId, null);
@@ -169,11 +176,11 @@ public abstract class Model {
 	// Model population
 
 	public final void loadFromCursor(Class<? extends Model> type, Cursor cursor) {
+		final int idColumnIndex = cursor.getColumnIndex("Id");
 		for (Field field : mTableInfo.getFields()) {
 			final String fieldName = mTableInfo.getColumnName(field);
 			Class<?> fieldType = field.getType();
 			final int columnIndex = cursor.getColumnIndex(fieldName);
-
 			if (columnIndex < 0) {
 				continue;
 			}
@@ -225,7 +232,7 @@ public abstract class Model {
 					value = cursor.getBlob(columnIndex);
 				}
 				else if (ReflectionUtils.isModel(fieldType)) {
-					final long entityId = cursor.getLong(columnIndex);
+					final long entityId = cursor.getLong(idColumnIndex);
 					final Class<? extends Model> entityType = (Class<? extends Model>) fieldType;
 
 					Model entity = Cache.getEntity(entityType, entityId);
