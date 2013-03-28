@@ -176,7 +176,6 @@ public abstract class Model {
 	// Model population
 
 	public final void loadFromCursor(Class<? extends Model> type, Cursor cursor) {
-		final int idColumnIndex = cursor.getColumnIndex("Id");
 		for (Field field : mTableInfo.getFields()) {
 			final String fieldName = mTableInfo.getColumnName(field);
 			Class<?> fieldType = field.getType();
@@ -232,13 +231,13 @@ public abstract class Model {
 					value = cursor.getBlob(columnIndex);
 				}
 				else if (ReflectionUtils.isModel(fieldType)) {
-					final long entityId = cursor.getLong(idColumnIndex);
+					final long entityId = cursor.getLong(columnIndex);
 					final Class<? extends Model> entityType = (Class<? extends Model>) fieldType;
 
-					Model entity = Cache.getEntity(entityType, entityId);
-					if (entity == null) {
-						entity = new Select().from(entityType).where("Id=?", entityId).executeSingle();
-					}
+					//Model entity = Cache.getEntity(entityType, entityId);
+					//if (entity == null) {
+						Model entity = new Select().from(entityType).where("Id=?", entityId).executeSingle();
+					//}
 
 					value = entity;
 				}
