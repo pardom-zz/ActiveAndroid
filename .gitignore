@@ -3,9 +3,11 @@ bin
 gen
 lint.xml
 
+
+
 #Eclipse
-.project
-.classpath
+#.project
+#.classpath
 .settings
 .checkstyle
 
