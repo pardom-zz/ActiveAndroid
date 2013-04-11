@@ -21,6 +21,7 @@ import java.util.List;
 
 import android.content.ContentValues;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteConstraintException;
 import android.database.sqlite.SQLiteDatabase;
 
 import com.activeandroid.annotation.Column;
@@ -55,7 +56,14 @@ public abstract class Model {
 	//////////////////////////////////////////////////////////////////////////////////////
 
 	public final Long getId() {
-		return mId;
+		if(mId == null)
+			return 0L;
+		else
+			return mId;
+	}
+	
+	public final void setId(Long id) {
+		this.mId = id;
 	}
 
 	public final void delete() {
@@ -143,11 +151,15 @@ public abstract class Model {
 			}
 		}
 
-		if (mId == null) {
-			mId = db.insert(mTableInfo.getTableName(), null, values);
+		
+		try {
+			if(mId == null)
+				mId = db.insert(mTableInfo.getTableName(), null, values);
+			else
+				db.insertOrThrow(mTableInfo.getTableName(), null, values);
 		}
-		else {
-			db.update(mTableInfo.getTableName(), values, "Id=" + mId, null);
+		catch(SQLiteConstraintException e) {
+			db.update(mTableInfo.getTableName(), values, "Id="+mId, null);
 		}
 	}
 
@@ -168,7 +180,6 @@ public abstract class Model {
 			final String fieldName = mTableInfo.getColumnName(field);
 			Class<?> fieldType = field.getType();
 			final int columnIndex = cursor.getColumnIndex(fieldName);
-
 			if (columnIndex < 0) {
 				continue;
 			}
@@ -223,10 +234,10 @@ public abstract class Model {
 					final long entityId = cursor.getLong(columnIndex);
 					final Class<? extends Model> entityType = (Class<? extends Model>) fieldType;
 
-					Model entity = Cache.getEntity(entityType, entityId);
-					if (entity == null) {
-						entity = new Select().from(entityType).where("Id=?", entityId).executeSingle();
-					}
+					//Model entity = Cache.getEntity(entityType, entityId);
+					//if (entity == null) {
+						Model entity = new Select().from(entityType).where("Id=?", entityId).executeSingle();
+					//}
 
 					value = entity;
 				}
