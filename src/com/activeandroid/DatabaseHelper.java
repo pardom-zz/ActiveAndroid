@@ -68,12 +68,16 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
 
 		db.beginTransaction();
 
-		for (TableInfo tableInfo : Cache.getTableInfos()) {
-			db.execSQL(SQLiteUtils.createTableDefinition(tableInfo));
-		}
+		try {
+			for (TableInfo tableInfo : Cache.getTableInfos()) {
+				db.execSQL(SQLiteUtils.createTableDefinition(tableInfo));
+			}
 
-		db.setTransactionSuccessful();
-		db.endTransaction();
+			db.setTransactionSuccessful();
+		}
+		finally {
+			db.endTransaction();
+		}
 
 		executeMigrations(db, -1, db.getVersion());
 	}
@@ -139,25 +143,27 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
 			Collections.sort(files, new NaturalOrderComparator());
 
 			db.beginTransaction();
+			try {
+				for (String file : files) {
+					try {
+						final int version = Integer.valueOf(file.replace(".sql", ""));
 
-			for (String file : files) {
-				try {
-					final int version = Integer.valueOf(file.replace(".sql", ""));
+						if (version > oldVersion && version <= newVersion) {
+							executeSqlScript(db, file);
+							migrationExecuted = true;
 
-					if (version > oldVersion && version <= newVersion) {
-						executeSqlScript(db, file);
-						migrationExecuted = true;
-
-						Log.i(file + " executed succesfully.");
+							Log.i(file + " executed succesfully.");
+						}
+					}
+					catch (NumberFormatException e) {
+						Log.w("Skipping invalidly named file: " + file, e);
 					}
 				}
-				catch (NumberFormatException e) {
-					Log.w("Skipping invalidly named file: " + file, e);
-				}
+				db.setTransactionSuccessful();
 			}
-
-			db.setTransactionSuccessful();
-			db.endTransaction();
+			finally {
+				db.endTransaction();
+			}
 		}
 		catch (IOException e) {
 			Log.e("Failed to execute migrations.", e);
