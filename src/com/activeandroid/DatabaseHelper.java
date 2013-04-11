@@ -60,6 +60,14 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
 	//////////////////////////////////////////////////////////////////////////////////////
 
 	@Override
+	public void onOpen(SQLiteDatabase db) {
+		if (SQLiteUtils.FOREIGN_KEYS_SUPPORTED) {
+			db.execSQL("PRAGMA foreign_keys=ON;");
+			Log.i("Foreign Keys supported. Enabling foreign key features.");
+		}
+	};
+
+	@Override
 	public void onCreate(SQLiteDatabase db) {
 		if (SQLiteUtils.FOREIGN_KEYS_SUPPORTED) {
 			db.execSQL("PRAGMA foreign_keys=ON;");
