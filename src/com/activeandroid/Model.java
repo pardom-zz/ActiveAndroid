@@ -59,11 +59,15 @@ public abstract class Model {
 	}
 
 	public final void delete() {
+		onDelete();
+
 		Cache.openDatabase().delete(mTableInfo.getTableName(), "Id=?", new String[] { getId().toString() });
 		Cache.removeEntity(this);
 	}
 
 	public final void save() {
+		onSave();
+
 		final SQLiteDatabase db = Cache.openDatabase();
 		final ContentValues values = new ContentValues();
 
@@ -264,6 +268,18 @@ public abstract class Model {
 
 	protected final <E extends Model> List<E> getMany(Class<? extends Model> type, String foreignKey) {
 		return new Select().from(type).where(Cache.getTableName(type) + "." + foreignKey + "=?", getId()).execute();
+	}
+
+	/**
+	 * Called before {@link save} does any work.
+	 */
+	protected void onSave(){
+	}
+
+	/**
+	 * Called before {@link delete} does any work.
+	 */
+	protected void onDelete(){
 	}
 
 	//////////////////////////////////////////////////////////////////////////////////////
