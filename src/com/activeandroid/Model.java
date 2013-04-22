@@ -131,7 +131,7 @@ public abstract class Model {
 				else if (ReflectionUtils.isModel(fieldType)) {
 					values.put(fieldName, ((Model) value).getId());
 				}
-				else if (ReflectionUtils.isSubclassOf(fieldType, Enum.class)){
+				else if (ReflectionUtils.isSubclassOf(fieldType, Enum.class)) {
 					values.put(fieldName, ((Enum<?>) value).name());
 				}
 			}
@@ -181,7 +181,7 @@ public abstract class Model {
 				Object value = null;
 
 				if (typeSerializer != null) {
-				  fieldType = typeSerializer.getSerializedType();
+					fieldType = typeSerializer.getSerializedType();
 				}
 
 				// TODO: Find a smarter way to do this? This if block is necessary because we
@@ -230,10 +230,10 @@ public abstract class Model {
 
 					value = entity;
 				}
-				else if (ReflectionUtils.isSubclassOf(fieldType, Enum.class)){
+				else if (ReflectionUtils.isSubclassOf(fieldType, Enum.class)) {
 					@SuppressWarnings("rawtypes")
-					final Class<? extends Enum> enumType =  (Class<? extends Enum>) fieldType;
-					value=Enum.valueOf(enumType, cursor.getString(columnIndex));
+					final Class<? extends Enum> enumType = (Class<? extends Enum>) fieldType;
+					value = Enum.valueOf(enumType, cursor.getString(columnIndex));
 				}
 
 				// Use a deserializer if one is available
