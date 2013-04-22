@@ -61,46 +61,21 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
 
 	@Override
 	public void onOpen(SQLiteDatabase db) {
-		if (SQLiteUtils.FOREIGN_KEYS_SUPPORTED) {
-			db.execSQL("PRAGMA foreign_keys=ON;");
-			Log.i("Foreign Keys supported. Enabling foreign key features.");
-		}
+		executePragmas(db);
 	};
 
 	@Override
 	public void onCreate(SQLiteDatabase db) {
-		if (SQLiteUtils.FOREIGN_KEYS_SUPPORTED) {
-			db.execSQL("PRAGMA foreign_keys=ON;");
-			Log.i("Foreign Keys supported. Enabling foreign key features.");
-		}
-
-		db.beginTransaction();
-
-		try {
-			for (TableInfo tableInfo : Cache.getTableInfos()) {
-				db.execSQL(SQLiteUtils.createTableDefinition(tableInfo));
-			}
-
-			db.setTransactionSuccessful();
-		}
-		finally {
-			db.endTransaction();
-		}
-
+		executePragmas(db);
+		executeCreate(db);
 		executeMigrations(db, -1, db.getVersion());
 	}
 
 	@Override
 	public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-		if (SQLiteUtils.FOREIGN_KEYS_SUPPORTED) {
-			db.execSQL("PRAGMA foreign_keys=ON;");
-			Log.i("Foreign Keys supported. Enabling foreign key features.");
-		}
-
-		if (!executeMigrations(db, oldVersion, newVersion)) {
-			Log.i("No migrations found. Calling onCreate.");
-			onCreate(db);
-		}
+		executePragmas(db);
+		executeCreate(db);
+		executeMigrations(db, oldVersion, newVersion);
 	}
 
 	//////////////////////////////////////////////////////////////////////////////////////
@@ -143,6 +118,26 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
 	//////////////////////////////////////////////////////////////////////////////////////
 	// PRIVATE METHODS
 	//////////////////////////////////////////////////////////////////////////////////////
+
+	private void executePragmas(SQLiteDatabase db) {
+		if (SQLiteUtils.FOREIGN_KEYS_SUPPORTED) {
+			db.execSQL("PRAGMA foreign_keys=ON;");
+			Log.i("Foreign Keys supported. Enabling foreign key features.");
+		}
+	}
+
+	private void executeCreate(SQLiteDatabase db) {
+		db.beginTransaction();
+		try {
+			for (TableInfo tableInfo : Cache.getTableInfos()) {
+				db.execSQL(SQLiteUtils.createTableDefinition(tableInfo));
+			}
+			db.setTransactionSuccessful();
+		}
+		finally {
+			db.endTransaction();
+		}
+	}
 
 	private boolean executeMigrations(SQLiteDatabase db, int oldVersion, int newVersion) {
 		boolean migrationExecuted = false;
