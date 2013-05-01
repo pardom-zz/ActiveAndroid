@@ -22,6 +22,8 @@ import java.util.List;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.os.Parcel;
+import android.os.Parcelable;
 
 import com.activeandroid.annotation.Column;
 import com.activeandroid.query.Delete;
@@ -31,7 +33,7 @@ import com.activeandroid.util.Log;
 import com.activeandroid.util.ReflectionUtils;
 
 @SuppressWarnings("unchecked")
-public abstract class Model {
+public abstract class Model implements Parcelable {
 	//////////////////////////////////////////////////////////////////////////////////////
 	// PRIVATE MEMBERS
 	//////////////////////////////////////////////////////////////////////////////////////
@@ -277,4 +279,30 @@ public abstract class Model {
 		return this.mId != null && (this.mTableInfo.getTableName().equals(other.mTableInfo.getTableName()))
 				&& (this.mId.equals(other.mId));
 	}
+	
+	//////////////////////////////////////////////////////////////////////////////////////
+	// PARCELABLE
+	//////////////////////////////////////////////////////////////////////////////////////
+
+	public int describeContents() {
+		return 0;
+	}
+	
+	 public void writeToParcel(Parcel out, int flags) {
+         out.writeLong(getId());
+         out.writeSerializable(getClass());
+     }
+
+     public static final Parcelable.Creator<Model> CREATOR
+             = new Parcelable.Creator<Model>() {
+         public Model createFromParcel(Parcel in) {
+        	 long id = in.readLong();
+        	 Class<Model> modelClass = (Class<Model>) in.readSerializable();
+             return Model.load(modelClass, id);
+         }
+
+         public Model[] newArray(int size) {
+             return new Model[size];
+         }
+     };
 }
