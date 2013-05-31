@@ -30,4 +30,5 @@ proguard-project.txt
 
 #Other
 .DS_Store
+dist/
 tmp
