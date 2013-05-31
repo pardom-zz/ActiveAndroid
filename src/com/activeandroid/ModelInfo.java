@@ -105,8 +105,8 @@ final class ModelInfo {
 
 			while (resources.hasMoreElements()) {
 				String path = resources.nextElement().getFile();
-				if (path.contains("bin")) {
-					paths.add(path);
+				if (path.contains("bin") || path.contains("classes")) {
+						paths.add(path);
 				}
 			}
 		}
