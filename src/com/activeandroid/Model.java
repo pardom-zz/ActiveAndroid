@@ -278,6 +278,11 @@ public abstract class Model {
 	//////////////////////////////////////////////////////////////////////////////////////
 
 	@Override
+	public String toString() {
+		return mTableInfo.getTableName() + "@" + getId();
+	}
+
+	@Override
 	public boolean equals(Object obj) {
 		final Model other = (Model) obj;
 
