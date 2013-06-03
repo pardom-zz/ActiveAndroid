@@ -26,13 +26,21 @@ public final class ActiveAndroid {
 	// PUBLIC METHODS
 	//////////////////////////////////////////////////////////////////////////////////////
 
-	public synchronized static void initialize(Application application) {
-		initialize(application, false);
+	public static void initialize(Application application) {
+		initialize(application, Cache.DEFAULT_CACHE_SIZE, false);
 	}
 
-	public synchronized static void initialize(Application application, boolean loggingEnabled) {
+	public static void initialize(Application application, int cacheSize) {
+		initialize(application, cacheSize, false);
+	}
+
+	public static void initialize(Application application, boolean loggingEnabled) {
+		initialize(application, Cache.DEFAULT_CACHE_SIZE, loggingEnabled);
+	}
+
+	public static void initialize(Application application, int cacheSize, boolean loggingEnabled) {
 		setLoggingEnabled(loggingEnabled);
-		Cache.initialize(application);
+		Cache.initialize(application, cacheSize);
 	}
 
 	public static void clearCache() {
@@ -47,7 +55,7 @@ public final class ActiveAndroid {
 		Log.setEnabled(enabled);
 	}
 
-	public synchronized static SQLiteDatabase getDatabase() {
+	public static SQLiteDatabase getDatabase() {
 		return Cache.openDatabase();
 	}
 
