@@ -184,9 +184,8 @@ public final class SQLiteUtils {
 
 			if (cursor.moveToFirst()) {
 				do {
-					// TODO: Investigate entity cache leak
 					T entity = (T) entityConstructor.newInstance();
-					((Model) entity).loadFromCursor(type, cursor);
+					entity.loadFromCursor(cursor);
 					entities.add(entity);
 				}
 				while (cursor.moveToNext());
