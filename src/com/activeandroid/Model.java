@@ -24,6 +24,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
 import com.activeandroid.annotation.Column;
+import com.activeandroid.content.ContentProvider;
 import com.activeandroid.query.Delete;
 import com.activeandroid.query.Select;
 import com.activeandroid.serializer.TypeSerializer;
@@ -61,6 +62,9 @@ public abstract class Model {
 	public final void delete() {
 		Cache.openDatabase().delete(mTableInfo.getTableName(), "Id=?", new String[] { getId().toString() });
 		Cache.removeEntity(this);
+
+		Cache.getContext().getContentResolver()
+				.notifyChange(ContentProvider.createUri(mTableInfo.getType(), mId), null);
 	}
 
 	public final void save() {
@@ -149,6 +153,9 @@ public abstract class Model {
 		else {
 			db.update(mTableInfo.getTableName(), values, "Id=" + mId, null);
 		}
+
+		Cache.getContext().getContentResolver()
+				.notifyChange(ContentProvider.createUri(mTableInfo.getType(), mId), null);
 	}
 
 	// Convenience methods

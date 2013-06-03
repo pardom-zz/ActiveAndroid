@@ -27,7 +27,8 @@ public class ContentProvider extends android.content.ContentProvider {
 	// PRIVATE MEMBERS
 	//////////////////////////////////////////////////////////////////////////////////////
 
-	private String mAuthority;
+	private static String sAuthority;
+	private static SparseArray<String> sMimeTypeCache = new SparseArray<String>();
 
 	//////////////////////////////////////////////////////////////////////////////////////
 	// PUBLIC METHODS
@@ -35,15 +36,23 @@ public class ContentProvider extends android.content.ContentProvider {
 
 	@Override
 	public boolean onCreate() {
-	    mAuthority = getContext().getPackageName();
 		ActiveAndroid.initialize((Application) getContext().getApplicationContext());
+		sAuthority = getAuthority();
 
-		List<TableInfo> tableInfos = new ArrayList<TableInfo>(Cache.getTableInfos());
-		for (int i = 0; i < tableInfos.size(); i++) {
-			TableInfo tableInfo = tableInfos.get(i);
+		final List<TableInfo> tableInfos = new ArrayList<TableInfo>(Cache.getTableInfos());
+		final int size = tableInfos.size();
+		for (int i = 0; i < size; i++) {
+			final TableInfo tableInfo = tableInfos.get(i);
+			final int tableKey = (i * 2) + 1;
+			final int itemKey = (i * 2) + 2;
 
-			URI_MATCHER.addURI(mAuthority, tableInfo.getTableName().toLowerCase(), i);
-			TYPE_CODES.put(i, tableInfo.getType());
+			// content://<authority>/<table>
+			URI_MATCHER.addURI(sAuthority, tableInfo.getTableName().toLowerCase(), tableKey);
+			TYPE_CODES.put(tableKey, tableInfo.getType());
+
+			// content://<authority>/<table>/<id>
+			URI_MATCHER.addURI(sAuthority, tableInfo.getTableName().toLowerCase() + "/#", itemKey);
+			TYPE_CODES.put(itemKey, tableInfo.getType());
 		}
 
 		return true;
@@ -51,7 +60,32 @@ public class ContentProvider extends android.content.ContentProvider {
 
 	@Override
 	public String getType(Uri uri) {
-		return null;
+		final int match = URI_MATCHER.match(uri);
+
+		String cachedMimeType = sMimeTypeCache.get(match);
+		if (cachedMimeType != null) {
+			return cachedMimeType;
+		}
+
+		final Class<? extends Model> type = getModelType(uri);
+		final boolean single = ((match % 2) == 0);
+
+		StringBuilder mimeType = new StringBuilder();
+		mimeType.append("vnd");
+		mimeType.append(".");
+		mimeType.append(sAuthority);
+		mimeType.append(".");
+		mimeType.append(single ? "item" : "dir");
+		mimeType.append("/");
+		mimeType.append("vnd");
+		mimeType.append(".");
+		mimeType.append(sAuthority);
+		mimeType.append(".");
+		mimeType.append(Cache.getTableName(type));
+
+		sMimeTypeCache.append(match, mimeType.toString());
+
+		return mimeType.toString();
 	}
 
 	// SQLite methods
@@ -99,6 +133,33 @@ public class ContentProvider extends android.content.ContentProvider {
 	}
 
 	//////////////////////////////////////////////////////////////////////////////////////
+	// PUBLIC METHODS
+	//////////////////////////////////////////////////////////////////////////////////////
+
+	public static Uri createUri(Class<? extends Model> type, Long id) {
+		StringBuilder uri = new StringBuilder();
+		uri.append("content://");
+		uri.append(sAuthority);
+		uri.append("/");
+		uri.append(Cache.getTableName(type).toLowerCase());
+
+		if (id != null) {
+			uri.append("/");
+			uri.append(id.toString());
+		}
+
+		return Uri.parse(uri.toString());
+	}
+
+	//////////////////////////////////////////////////////////////////////////////////////
+	// PROTECTED METHODS
+	//////////////////////////////////////////////////////////////////////////////////////
+
+	protected String getAuthority() {
+		return getContext().getPackageName();
+	}
+
+	//////////////////////////////////////////////////////////////////////////////////////
 	// PRIVATE METHODS
 	//////////////////////////////////////////////////////////////////////////////////////
 
@@ -109,10 +170,6 @@ public class ContentProvider extends android.content.ContentProvider {
 		}
 
 		return null;
-	}
-
-	private Uri createUri(Class<? extends Model> type, Long id) {
-		return Uri.parse("content://" + mAuthority + "/" + Cache.getTableName(type).toLowerCase() + "/" + id);
 	}
 
 	private void notifyChange(Uri uri) {
