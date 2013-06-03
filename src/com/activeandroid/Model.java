@@ -254,13 +254,13 @@ public abstract class Model {
 				}
 			}
 			catch (IllegalArgumentException e) {
-				Log.e(e.getMessage());
+                Log.e(e.getClass().getName(), e);
 			}
 			catch (IllegalAccessException e) {
-				Log.e(e.getMessage());
+                Log.e(e.getClass().getName(), e);
 			}
 			catch (SecurityException e) {
-				Log.e(e.getMessage());
+                Log.e(e.getClass().getName(), e);
 			}
 		}
 	}
