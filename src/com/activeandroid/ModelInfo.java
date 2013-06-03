@@ -19,19 +19,13 @@ package com.activeandroid;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import android.app.Application;
 
 import com.activeandroid.serializer.TypeSerializer;
 import com.activeandroid.util.Log;
 import com.activeandroid.util.ReflectionUtils;
-
 import dalvik.system.DexFile;
 
 final class ModelInfo {
@@ -54,7 +48,7 @@ final class ModelInfo {
 			scanForModel(application);
 		}
 		catch (IOException e) {
-			Log.e("Couln't open source path.", e);
+			Log.e("Couldn't open source path.", e);
 		}
 
 		Log.i("ModelInfo loaded.");
@@ -106,7 +100,7 @@ final class ModelInfo {
 			while (resources.hasMoreElements()) {
 				String path = resources.nextElement().getFile();
 				if (path.contains("bin") || path.contains("classes")) {
-						paths.add(path);
+					paths.add(path);
 				}
 			}
 		}
