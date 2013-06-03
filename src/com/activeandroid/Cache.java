@@ -83,7 +83,6 @@ public final class Cache {
 
 	public static synchronized void clear() {
 		sEntities.evictAll();
-		;
 		Log.v("Cache cleared.");
 	}
 
