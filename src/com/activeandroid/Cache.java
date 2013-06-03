@@ -72,6 +72,10 @@ public final class Cache {
 		sModelInfo = new ModelInfo(application);
 		sDatabaseHelper = new DatabaseHelper(sContext);
 
+        // TODO: It would be nice to override sizeOf here and calculate the memory
+        // actually used, however at this point it seems like the reflection
+        // required would be too costly to be of any benefit. We'll just set a max
+        // object size instead.
 		sEntities = new LruCache<String, Model>(cacheSize);
 
 		openDatabase();
