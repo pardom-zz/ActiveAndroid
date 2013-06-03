@@ -20,9 +20,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import android.text.TextUtils;
+
 import com.activeandroid.Cache;
 import com.activeandroid.Model;
 import com.activeandroid.query.Join.JoinType;
+import com.activeandroid.util.Log;
 import com.activeandroid.util.SQLiteUtils;
 
 public final class From implements Sqlable {
@@ -173,6 +176,12 @@ public final class From implements Sqlable {
 
 		if (mOffset != null) {
 			sql += "OFFSET " + mOffset + " ";
+		}
+
+		// Don't wast time building the string
+		// unless we're going to log it.
+		if (Log.isEnabled()) {
+			Log.v(sql + " " + TextUtils.join(",", getArguments()));
 		}
 
 		return sql.trim();
