@@ -57,10 +57,6 @@ public final class Cache {
 	// PUBLIC METHODS
 	//////////////////////////////////////////////////////////////////////////////////////
 
-	public static synchronized void initialize(Application application) {
-		initialize(application, DEFAULT_CACHE_SIZE);
-	}
-
 	public static synchronized void initialize(Application application, int cacheSize) {
 		if (sIsInitialized) {
 			Log.v("ActiveAndroid already initialized.");

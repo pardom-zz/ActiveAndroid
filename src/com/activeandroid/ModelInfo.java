@@ -22,33 +22,50 @@ import java.net.URL;
 import java.util.*;
 
 import android.app.Application;
+import android.content.Context;
+import android.text.TextUtils;
 
+import com.activeandroid.serializer.CalendarSerializer;
+import com.activeandroid.serializer.SqlDateSerializer;
 import com.activeandroid.serializer.TypeSerializer;
+import com.activeandroid.serializer.UtilDateSerializer;
 import com.activeandroid.util.Log;
 import com.activeandroid.util.ReflectionUtils;
 import dalvik.system.DexFile;
 
 final class ModelInfo {
 	//////////////////////////////////////////////////////////////////////////////////////
+	// PRIVATE CONSTANTS
+	//////////////////////////////////////////////////////////////////////////////////////
+
+	private final static String AA_MODELS = "AA_MODELS";
+	private final static String AA_SERIALIZERS = "AA_SERIALIZERS";
+
+	//////////////////////////////////////////////////////////////////////////////////////
 	// PRIVATE METHODS
 	//////////////////////////////////////////////////////////////////////////////////////
 
-	private Map<Class<? extends Model>, TableInfo> mTableInfos;
-	private Map<Class<?>, TypeSerializer> mTypeSerializers;
+	private Map<Class<? extends Model>, TableInfo> mTableInfos = new HashMap<Class<? extends Model>, TableInfo>();
+	private Map<Class<?>, TypeSerializer> mTypeSerializers = new HashMap<Class<?>, TypeSerializer>() {
+		{
+			put(Calendar.class, new CalendarSerializer());
+			put(java.sql.Date.class, new SqlDateSerializer());
+			put(java.util.Date.class, new UtilDateSerializer());
+		}
+	};
 
 	//////////////////////////////////////////////////////////////////////////////////////
 	// CONSTRUCTORS
 	//////////////////////////////////////////////////////////////////////////////////////
 
 	public ModelInfo(Application application) {
-		mTableInfos = new HashMap<Class<? extends Model>, TableInfo>();
-		mTypeSerializers = new HashMap<Class<?>, TypeSerializer>();
-
-		try {
-			scanForModel(application);
-		}
-		catch (IOException e) {
-			Log.e("Couldn't open source path.", e);
+		if (!loadModelFromMetaData(application)) {
+			try {
+				scanForModel(application);
+			}
+			catch (IOException e) {
+				Log.e("Couldn't open source path.", e);
+			}
 		}
 
 		Log.i("ModelInfo loaded.");
@@ -78,6 +95,67 @@ final class ModelInfo {
 	//////////////////////////////////////////////////////////////////////////////////////
 	// PRIVATE METHODS
 	//////////////////////////////////////////////////////////////////////////////////////
+
+	private boolean loadModelFromMetaData(Application application) {
+		final String modelList = ReflectionUtils.getMetaData(application, AA_MODELS);
+		final String serializerList = ReflectionUtils.getMetaData(application, AA_SERIALIZERS);
+
+		if (!TextUtils.isEmpty(modelList)) {
+			loadModelList(application, modelList.split(","));
+		}
+
+		if (!TextUtils.isEmpty(serializerList)) {
+			loadSerializerList(application, serializerList.split(","));
+		}
+
+		return mTableInfos.size() > 0;
+	}
+
+	private void loadModelList(Context context, String[] models) {
+		final ClassLoader classLoader = context.getClass().getClassLoader();
+		for (String model : models) {
+			model = ensureFullClassName(context, model);
+
+			try {
+				Class modelClass = Class.forName(model, false, classLoader);
+				mTableInfos.put(modelClass, new TableInfo(modelClass));
+			}
+			catch (ClassNotFoundException e) {
+				Log.e("Couldn't create class.", e);
+			}
+		}
+	}
+
+	private void loadSerializerList(Context context, String[] serializers) {
+		final ClassLoader classLoader = context.getClass().getClassLoader();
+		for (String serializer : serializers) {
+			serializer = ensureFullClassName(context, serializer);
+
+			try {
+				Class serializerClass = Class.forName(serializer, false, classLoader);
+				TypeSerializer typeSerializer = (TypeSerializer) serializerClass.newInstance();
+				mTypeSerializers.put(typeSerializer.getDeserializedType(), typeSerializer);
+			}
+			catch (ClassNotFoundException e) {
+				Log.e("Couldn't create class.", e);
+			}
+			catch (InstantiationException e) {
+				Log.e("Couldn't instantiate TypeSerializer.", e);
+			}
+			catch (IllegalAccessException e) {
+				Log.e("IllegalAccessException", e);
+			}
+		}
+	}
+
+	private String ensureFullClassName(Context context, String name) {
+		String packageName = context.getPackageName();
+		if (name.startsWith(packageName)) {
+			return name.trim();
+		}
+
+		return packageName + name.trim();
+	}
 
 	private void scanForModel(Application application) throws IOException {
 		String packageName = application.getPackageName();
