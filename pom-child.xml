@@ -51,6 +51,11 @@
             <version>${platform.version}</version>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>com.google.android</groupId>
+            <artifactId>support-v4</artifactId>
+            <version>${platform.support-version}</version>
+        </dependency>
     </dependencies>
 
     <build>
