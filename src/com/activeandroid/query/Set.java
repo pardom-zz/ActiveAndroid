@@ -92,7 +92,7 @@ public final class Set implements Sqlable {
 		}
 
 		for (int i = 0; i < whereSize; i++) {
-			args[i] = mWhereArguments.get(i).toString();
+			args[i+setSize] = mWhereArguments.get(i).toString();
 		}
 
 		return args;
