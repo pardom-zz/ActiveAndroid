@@ -16,6 +16,8 @@ package com.activeandroid.test.query;
  * limitations under the License.
  */
 
+import static com.activeandroid.Model.Columns.ID;
+
 import com.activeandroid.query.Set;
 import com.activeandroid.query.Update;
 import com.activeandroid.test.MockModel;
@@ -28,31 +30,31 @@ public class UpdateTest extends SqlableTestCase {
 	}
 	
 	public void testUpdateSet() {
-		assertSqlEquals(UPDATE_PREFIX + "SET Id = 5 ",
-				update().set("Id = 5"));
+		assertSqlEquals(UPDATE_PREFIX + "SET " + ID + " = 5 ",
+				update().set(ID + " = 5"));
 	}
 	
 	public void testUpdateWhereNoArguments() {
-		assertSqlEquals(UPDATE_PREFIX + "SET Id = 5 WHERE Id = 1 ",
+		assertSqlEquals(UPDATE_PREFIX + "SET " + ID + " = 5 WHERE " + ID + " = 1 ",
 				update()
-					.set("Id = 5")
-					.where("Id = 1"));
+					.set(ID + " = 5")
+					.where(ID + " = 1"));
 	}
 	
 	public void testUpdateWhereWithArguments() {
 		Set set = update()
-				.set("Id = 5")
-				.where("Id = ?", 1);
+				.set(ID + " = 5")
+				.where(ID + " = ?", 1);
 		assertArrayEquals(set.getArguments(), "1");
-		assertSqlEquals(UPDATE_PREFIX + "SET Id = 5 WHERE Id = ? ",
+		assertSqlEquals(UPDATE_PREFIX + "SET " + ID + " = 5 WHERE " + ID + " = ? ",
 				set);
 		
 		set = update()
-				.set("Id = 5")
-				.where("Id = ?", 1)
-				.where("Id IN (?, ?, ?)", 5, 4, 3);
+				.set(ID + " = 5")
+				.where(ID + " = ?", 1)
+				.where(ID + " IN (?, ?, ?)", 5, 4, 3);
 		assertArrayEquals(set.getArguments(), "5", "4", "3");
-		assertSqlEquals(UPDATE_PREFIX + "SET Id = 5 WHERE Id IN (?, ?, ?) ",
+		assertSqlEquals(UPDATE_PREFIX + "SET " + ID + " = 5 WHERE " + ID + " IN (?, ?, ?) ",
 				set);
 	}
 	
