@@ -16,6 +16,8 @@ package com.activeandroid.test.query;
  * limitations under the License.
  */
 
+import static com.activeandroid.Model.Columns.ID;
+
 import com.activeandroid.Model;
 import com.activeandroid.annotation.Table;
 import com.activeandroid.query.From;
@@ -52,53 +54,53 @@ public class FromTest extends SqlableTestCase {
 	}
 	
 	public void testOrderBy() {
-		assertSqlEquals(SELECT_PREFIX + "ORDER BY Id DESC",
-				from().orderBy("Id DESC"));
+		assertSqlEquals(SELECT_PREFIX + "ORDER BY " + ID + " DESC",
+				from().orderBy(ID + " DESC"));
 	}
 	
 	public void testWhereNoArguments() {
-		assertSqlEquals(SELECT_PREFIX + "WHERE Id = 5",
-				from().where("Id = 5"));
+		assertSqlEquals(SELECT_PREFIX + "WHERE " + ID + " = 5",
+				from().where(ID + " = 5"));
 		
-		assertSqlEquals(SELECT_PREFIX + "WHERE Id = 5",
-				from().where("Id = 1").where("Id = 2").where("Id = 5"));
+		assertSqlEquals(SELECT_PREFIX + "WHERE " + ID + " = 5",
+				from().where(ID + " = 1").where("" + ID + " = 2").where("" + ID + " = 5"));
 	}
 	
 	public void testWhereWithArguments() {
-		From query = from().where("Id = ?", 5);
+		From query = from().where(ID + " = ?", 5);
 		assertArrayEquals(query.getArguments(), "5");
-		assertSqlEquals(SELECT_PREFIX + "WHERE Id = ?",
+		assertSqlEquals(SELECT_PREFIX + "WHERE " + ID + " = ?",
 				query);
 		
-		query = from().where("Id > ? AND Id < ?", 5, 10);
+		query = from().where(ID + " > ? AND " + ID + " < ?", 5, 10);
 		assertArrayEquals(query.getArguments(), "5", "10");
-		assertSqlEquals(SELECT_PREFIX + "WHERE Id > ? AND Id < ?",
+		assertSqlEquals(SELECT_PREFIX + "WHERE " + ID + " > ? AND " + ID + " < ?",
 				query);
 		
 		query = from()
-				.where("Id != ?", 10)
-				.where("Id IN (?, ?, ?)", 5, 10, 15)
-				.where("Id > ? AND Id < ?", 5, 10);
+				.where(ID + " != ?", 10)
+				.where(ID + " IN (?, ?, ?)", 5, 10, 15)
+				.where(ID + " > ? AND " + ID + " < ?", 5, 10);
 		assertArrayEquals(query.getArguments(), "5", "10");
-		assertSqlEquals(SELECT_PREFIX + "WHERE Id > ? AND Id < ?",
+		assertSqlEquals(SELECT_PREFIX + "WHERE " + ID + " > ? AND " + ID + " < ?",
 				query);
 	}
 	
 	public void testSingleJoin() {
-		assertSqlEquals(SELECT_PREFIX + "JOIN JoinModel ON MockModel.Id = JoinModel.Id",
-				from().join(JoinModel.class).on("MockModel.Id = JoinModel.Id"));
+		assertSqlEquals(SELECT_PREFIX + "JOIN JoinModel ON MockModel." + ID + " = JoinModel." + ID + "",
+				from().join(JoinModel.class).on("MockModel." + ID + " = JoinModel." + ID + ""));
 		
-		assertSqlEquals(SELECT_PREFIX + "AS a JOIN JoinModel AS b ON a.Id = b.Id",
-				from().as("a").join(JoinModel.class).as("b").on("a.Id = b.Id"));
+		assertSqlEquals(SELECT_PREFIX + "AS a JOIN JoinModel AS b ON a." + ID + " = b." + ID + "",
+				from().as("a").join(JoinModel.class).as("b").on("a." + ID + " = b." + ID + ""));
 		
-		assertSqlEquals(SELECT_PREFIX + "JOIN JoinModel USING (Id, other)",
-				from().join(JoinModel.class).using("Id", "other"));
+		assertSqlEquals(SELECT_PREFIX + "JOIN JoinModel USING (" + ID + ", other)",
+				from().join(JoinModel.class).using(ID + "", "other"));
 	}
 	
 	public void testJoins() {
-		assertSqlEquals(SELECT_PREFIX + "JOIN JoinModel ON Id JOIN JoinModel2 ON Id",
-				from().join(JoinModel.class).on("Id")
-				.join(JoinModel2.class).on("Id"));
+		assertSqlEquals(SELECT_PREFIX + "JOIN JoinModel ON " + ID + " JOIN JoinModel2 ON " + ID + "",
+				from().join(JoinModel.class).on(ID + "")
+				.join(JoinModel2.class).on(ID + ""));
 	}
 	
 	public void testJoinTypes() {
@@ -111,43 +113,43 @@ public class FromTest extends SqlableTestCase {
 	}
 	
 	public void testGroupByHaving() {
-		assertSqlEquals(SELECT_PREFIX + "GROUP BY Id",
-				from().groupBy("Id"));
-		assertSqlEquals(SELECT_PREFIX + "GROUP BY Id HAVING Id = 1",
-				from().groupBy("Id").having("Id = 1"));
-		assertSqlEquals(SELECT_PREFIX + "GROUP BY Id HAVING Id = 1",
-				from().having("Id = 1").groupBy("Id"));
+		assertSqlEquals(SELECT_PREFIX + "GROUP BY " + ID + "",
+				from().groupBy(ID + ""));
+		assertSqlEquals(SELECT_PREFIX + "GROUP BY " + ID + " HAVING " + ID + " = 1",
+				from().groupBy(ID + "").having("" + ID + " = 1"));
+		assertSqlEquals(SELECT_PREFIX + "GROUP BY " + ID + " HAVING " + ID + " = 1",
+				from().having(ID + " = 1").groupBy("" + ID + ""));
 	}
 	
 	public void testAll() {
-		final String expectedSql = SELECT_PREFIX + "AS a JOIN JoinModel USING (Id) WHERE Id > 5 GROUP BY Id HAVING Id < 10 LIMIT 5 OFFSET 10";
+		final String expectedSql = SELECT_PREFIX + "AS a JOIN JoinModel USING (" + ID + ") WHERE " + ID + " > 5 GROUP BY " + ID + " HAVING " + ID + " < 10 LIMIT 5 OFFSET 10";
 		
 		// Try a few different orderings, shouldn't change the output
 		assertSqlEquals(expectedSql,
 				from()
 					.as("a")
-					.where("Id > 5")
-					.join(JoinModel.class).using("Id")
-					.groupBy("Id")
-					.having("Id < 10")
+					.where(ID + " > 5")
+					.join(JoinModel.class).using(ID + "")
+					.groupBy(ID + "")
+					.having(ID + " < 10")
 					.limit(5)
 					.offset(10));
 		assertSqlEquals(expectedSql,
 				from()
 					.offset(10)
-					.having("Id < 10")
-					.join(JoinModel.class).using("Id")
+					.having(ID + " < 10")
+					.join(JoinModel.class).using(ID + "")
 					.limit(5)
 					.as("a")
-					.where("Id > 5")
-					.groupBy("Id"));
+					.where(ID + " > 5")
+					.groupBy(ID + ""));
 		assertSqlEquals(expectedSql,
 				from()
-					.join(JoinModel.class).using("Id")
+					.join(JoinModel.class).using(ID + "")
 					.offset(10)
-					.having("Id < 10")
-					.where("Id > 5")
-					.groupBy("Id")
+					.having(ID + " < 10")
+					.where(ID + " > 5")
+					.groupBy(ID + "")
 					.limit(5)
 					.as("a"));
 	}
