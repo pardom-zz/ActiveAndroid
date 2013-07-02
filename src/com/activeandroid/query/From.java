@@ -141,50 +141,42 @@ public final class From implements Sqlable {
 
 	@Override
 	public String toSql() {
-		String sql = "";
-
-		sql += mQueryBase.toSql();
-		sql += "FROM " + Cache.getTableName(mType) + " ";
-
-		if (mAlias != null) {
-			sql += "AS " + mAlias + " ";
-		}
-
-		for (Join join : mJoins) {
-			sql += join.toSql();
-		}
-
-		if (mWhere != null) {
-			sql += "WHERE " + mWhere + " ";
-		}
-
-		if (mGroupBy != null) {
-			sql += "GROUP BY " + mGroupBy + " ";
-		}
-
-		if (mHaving != null) {
-			sql += "HAVING " + mHaving + " ";
-		}
-
-		if (mOrderBy != null) {
-			sql += "ORDER BY " + mOrderBy + " ";
-		}
-
-		if (mLimit != null) {
-			sql += "LIMIT " + mLimit + " ";
-		}
-
-		if (mOffset != null) {
-			sql += "OFFSET " + mOffset + " ";
-		}
+		StringBuilder sqlBuilder = new StringBuilder();
+		
+		sqlBuilder.append(mQueryBase.toSql());
+		sqlBuilder.append("FROM ");
+		sqlBuilder.append(Cache.getTableName(mType)).append(" ");
+		
+		if(mAlias != null)
+			sqlBuilder.append("AS ").append(mAlias).append(" ");
+		
+		for(Join join : mJoins)
+			sqlBuilder.append(join.toSql());
+		
+		if(mWhere != null)
+			sqlBuilder.append("WHERE ").append(mWhere).append(" ");
+		
+		if(mGroupBy != null)
+			sqlBuilder.append("GROUP BY ").append(mGroupBy).append(" ");
+		
+		if(mHaving != null)
+			sqlBuilder.append("HAVING ").append(mHaving).append(" ");
+		
+		if(mOrderBy != null)
+			sqlBuilder.append("ORDER BY ").append(mOrderBy).append(" ");
+		
+		if(mLimit != null)
+			sqlBuilder.append("LIMIT ").append(" ");
+		
+		if(mOffset != null)
+			sqlBuilder.append("OFFSET ").append(mOffset).append(" ");
 
 		// Don't wast time building the string
 		// unless we're going to log it.
-		if (Log.isEnabled()) {
-			Log.v(sql + " " + TextUtils.join(",", getArguments()));
-		}
+		if (Log.isEnabled())
+			Log.v(sqlBuilder.toString() + " " + TextUtils.join(",", getArguments()));
 
-		return sql.trim();
+		return sqlBuilder.toString().trim();
 	}
 
 	public <T extends Model> List<T> execute() {
