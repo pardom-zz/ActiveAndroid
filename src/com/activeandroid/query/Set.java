@@ -16,11 +16,11 @@ package com.activeandroid.query;
  * limitations under the License.
  */
 
+import com.activeandroid.util.SQLiteUtils;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
-import com.activeandroid.util.SQLiteUtils;
 
 public final class Set implements Sqlable {
 	private Update mUpdate;
@@ -66,15 +66,19 @@ public final class Set implements Sqlable {
 
 	@Override
 	public String toSql() {
-		StringBuilder sqlBuilder = new StringBuilder();
-		
-		sqlBuilder.append(mUpdate.toSql());
-		sqlBuilder.append("SET ").append(mSet).append(" ");
-		
-		if(mWhere != null)
-			sqlBuilder.append("WHERE ").append(mWhere).append(" ");
+		StringBuilder sql = new StringBuilder();
+		sql.append(mUpdate.toSql());
+		sql.append("SET ");
+		sql.append(mSet);
+		sql.append(" ");
 
-		return sqlBuilder.toString();
+		if (mWhere != null) {
+			sql.append("WHERE ");
+			sql.append(mWhere);
+			sql.append(" ");
+		}
+
+		return sql.toString();
 	}
 
 	public void execute() {
@@ -91,7 +95,7 @@ public final class Set implements Sqlable {
 		}
 
 		for (int i = 0; i < whereSize; i++) {
-			args[i+setSize] = mWhereArguments.get(i).toString();
+			args[i + setSize] = mWhereArguments.get(i).toString();
 		}
 
 		return args;

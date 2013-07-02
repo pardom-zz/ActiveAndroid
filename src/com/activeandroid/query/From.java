@@ -16,17 +16,16 @@ package com.activeandroid.query;
  * limitations under the License.
  */
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
 import android.text.TextUtils;
-
 import com.activeandroid.Cache;
 import com.activeandroid.Model;
 import com.activeandroid.query.Join.JoinType;
 import com.activeandroid.util.Log;
 import com.activeandroid.util.SQLiteUtils;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public final class From implements Sqlable {
 	private Sqlable mQueryBase;
@@ -141,42 +140,63 @@ public final class From implements Sqlable {
 
 	@Override
 	public String toSql() {
-		StringBuilder sqlBuilder = new StringBuilder();
-		
-		sqlBuilder.append(mQueryBase.toSql());
-		sqlBuilder.append("FROM ");
-		sqlBuilder.append(Cache.getTableName(mType)).append(" ");
-		
-		if(mAlias != null)
-			sqlBuilder.append("AS ").append(mAlias).append(" ");
-		
-		for(Join join : mJoins)
-			sqlBuilder.append(join.toSql());
-		
-		if(mWhere != null)
-			sqlBuilder.append("WHERE ").append(mWhere).append(" ");
-		
-		if(mGroupBy != null)
-			sqlBuilder.append("GROUP BY ").append(mGroupBy).append(" ");
-		
-		if(mHaving != null)
-			sqlBuilder.append("HAVING ").append(mHaving).append(" ");
-		
-		if(mOrderBy != null)
-			sqlBuilder.append("ORDER BY ").append(mOrderBy).append(" ");
-		
-		if(mLimit != null)
-			sqlBuilder.append("LIMIT ").append(" ");
-		
-		if(mOffset != null)
-			sqlBuilder.append("OFFSET ").append(mOffset).append(" ");
+		StringBuilder sql = new StringBuilder();
+		sql.append(mQueryBase.toSql());
+		sql.append("FROM ");
+		sql.append(Cache.getTableName(mType)).append(" ");
+
+		if (mAlias != null) {
+			sql.append("AS ");
+			sql.append(mAlias);
+			sql.append(" ");
+		}
+
+		for (Join join : mJoins) {
+			sql.append(join.toSql());
+		}
+
+		if (mWhere != null) {
+			sql.append("WHERE ");
+			sql.append(mWhere);
+			sql.append(" ");
+		}
+
+		if (mGroupBy != null) {
+			sql.append("GROUP BY ");
+			sql.append(mGroupBy);
+			sql.append(" ");
+		}
+
+		if (mHaving != null) {
+			sql.append("HAVING ");
+			sql.append(mHaving);
+			sql.append(" ");
+		}
+
+		if (mOrderBy != null) {
+			sql.append("ORDER BY ");
+			sql.append(mOrderBy);
+			sql.append(" ");
+		}
+
+		if (mLimit != null) {
+			sql.append("LIMIT ");
+			sql.append(" ");
+		}
+
+		if (mOffset != null) {
+			sql.append("OFFSET ");
+			sql.append(mOffset);
+			sql.append(" ");
+		}
 
 		// Don't wast time building the string
 		// unless we're going to log it.
-		if (Log.isEnabled())
-			Log.v(sqlBuilder.toString() + " " + TextUtils.join(",", getArguments()));
+		if (Log.isEnabled()) {
+			Log.v(sql.toString() + " " + TextUtils.join(",", getArguments()));
+		}
 
-		return sqlBuilder.toString().trim();
+		return sql.toString().trim();
 	}
 
 	public <T extends Model> List<T> execute() {
