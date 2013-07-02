@@ -174,7 +174,7 @@ public final class From implements Sqlable {
 		// Don't wast time building the string
 		// unless we're going to log it.
 		if (Log.isEnabled())
-			Log.v(sqlBuilder.append(" ").append(TextUtils.join(",", getArguments())).toString());
+			Log.v(sqlBuilder.toString() + " " + TextUtils.join(",", getArguments()));
 
 		return sqlBuilder.toString().trim();
 	}
