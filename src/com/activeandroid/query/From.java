@@ -181,6 +181,7 @@ public final class From implements Sqlable {
 
 		if (mLimit != null) {
 			sql.append("LIMIT ");
+			sql.append(mLimit);
 			sql.append(" ");
 		}
 
