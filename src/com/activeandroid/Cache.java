@@ -116,16 +116,24 @@ public final class Cache {
 
 	// Entity cache
 
+	public static String getIdentifier(Class<? extends Model> type, Long id) {
+		return getTableName(type) + "@" + id;
+	}
+
+	public static String getIdentifier(Model entity) {
+		return getIdentifier(entity.getClass(), entity.getId());
+	}
+
 	public static synchronized void addEntity(Model entity) {
-		sEntities.put(entity.toString(), entity);
+		sEntities.put(getIdentifier(entity), entity);
 	}
 
 	public static synchronized Model getEntity(Class<? extends Model> type, long id) {
-		return sEntities.get(getTableName(type) + "@" + id);
+		return sEntities.get(getIdentifier(type, id));
 	}
 
 	public static synchronized void removeEntity(Model entity) {
-		sEntities.remove(entity.toString());
+		sEntities.remove(getIdentifier(entity));
 	}
 
 	// Model cache
