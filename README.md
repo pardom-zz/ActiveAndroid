@@ -1,3 +1,4 @@
+[![Stories in Ready](http://badge.waffle.io/pardom/ActiveAndroid.png)](http://waffle.io/pardom/ActiveAndroid)  
 # ActiveAndroid
 
 ActiveAndroid is an active record style ORM ([object relational mapper](http://en.wikipedia.org/wiki/Object-relational_mapping)). What does that mean exactly? Well, ActiveAndroid allows you to save and retrieve SQLite database records without ever writing a single SQL statement. Each database record is wrapped neatly into a class with methods like _save()_ and _delete()_.
