@@ -1,4 +1,5 @@
 apply plugin: 'java'
+sourceCompatibility = 1.6
 
 sourceSets {
 	main {
