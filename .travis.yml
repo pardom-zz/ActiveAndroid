@@ -1,5 +1,5 @@
 language: java
-jdk: oraclejdk7
+jdk: oraclejdk6
 
 before_install:
   # Gradle
