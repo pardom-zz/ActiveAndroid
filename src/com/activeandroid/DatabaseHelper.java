@@ -47,21 +47,33 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
 	private final static String MIGRATION_PATH = "migrations";
 
 	//////////////////////////////////////////////////////////////////////////////////////
+	// PRIVATE MEMBERS
+	//////////////////////////////////////////////////////////////////////////////////////
+
+	private static boolean sDoInitialUpgrade = false;
+
+	//////////////////////////////////////////////////////////////////////////////////////
 	// CONSTRUCTORS
 	//////////////////////////////////////////////////////////////////////////////////////
 
 	public DatabaseHelper(Context context) {
 		super(context, getDbName(context), null, getDbVersion(context));
-		copyAttachedDatabase(context);
+		sDoInitialUpgrade = copyAttachedDatabase(context);
 	}
 
 	//////////////////////////////////////////////////////////////////////////////////////
-	// OVERRIDEN METHODS
+	// OVERRIDES
 	//////////////////////////////////////////////////////////////////////////////////////
 
 	@Override
 	public void onOpen(SQLiteDatabase db) {
-		executePragmas(db);
+		if (sDoInitialUpgrade) {
+			sDoInitialUpgrade = false;
+			onUpgrade(db, -1, db.getVersion());
+		}
+		else {
+			executePragmas(db);
+		}
 	};
 
 	@Override
@@ -82,13 +94,13 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
 	// PUBLIC METHODS
 	//////////////////////////////////////////////////////////////////////////////////////
 
-	public void copyAttachedDatabase(Context context) {
+	public boolean copyAttachedDatabase(Context context) {
 		String dbName = getDbName(context);
 		final File dbPath = context.getDatabasePath(dbName);
 
 		// If the database already exists, return
 		if (dbPath.exists()) {
-			return;
+			return false;
 		}
 
 		// Make sure we have a path to the file
@@ -109,10 +121,14 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
 			output.flush();
 			output.close();
 			inputStream.close();
+
+			return true;
 		}
 		catch (IOException e) {
 			Log.e("Failed to open file", e);
 		}
+
+		return false;
 	}
 
 	//////////////////////////////////////////////////////////////////////////////////////
@@ -199,6 +215,7 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
 		String aaName = ReflectionUtils.getMetaData(context, AA_DB_NAME);
 
 		if (aaName == null) {
+			Log.i("AA_DB_NAME not found. Defaulting name to 'Application.db'.");
 			aaName = "Application.db";
 		}
 
@@ -209,6 +226,7 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
 		Integer aaVersion = ReflectionUtils.getMetaData(context, AA_DB_VERSION);
 
 		if (aaVersion == null || aaVersion == 0) {
+			Log.i("AA_DB_VERSION not found. Defaulting version to 1.");
 			aaVersion = 1;
 		}
 
