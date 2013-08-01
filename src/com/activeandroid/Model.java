@@ -16,9 +16,6 @@ package com.activeandroid;
  * limitations under the License.
  */
 
-import java.lang.reflect.Field;
-import java.util.List;
-
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -30,6 +27,9 @@ import com.activeandroid.query.Select;
 import com.activeandroid.serializer.TypeSerializer;
 import com.activeandroid.util.Log;
 import com.activeandroid.util.ReflectionUtils;
+
+import java.lang.reflect.Field;
+import java.util.List;
 
 @SuppressWarnings("unchecked")
 public abstract class Model {
@@ -48,7 +48,6 @@ public abstract class Model {
 
 	public Model() {
 		mTableInfo = Cache.getTableInfo(getClass());
-		Cache.addEntity(this);
 	}
 
 	//////////////////////////////////////////////////////////////////////////////////////
@@ -254,14 +253,18 @@ public abstract class Model {
 				}
 			}
 			catch (IllegalArgumentException e) {
-                Log.e(e.getClass().getName(), e);
+				Log.e(e.getClass().getName(), e);
 			}
 			catch (IllegalAccessException e) {
-                Log.e(e.getClass().getName(), e);
+				Log.e(e.getClass().getName(), e);
 			}
 			catch (SecurityException e) {
-                Log.e(e.getClass().getName(), e);
+				Log.e(e.getClass().getName(), e);
 			}
+		}
+
+		if (mId != null) {
+			Cache.addEntity(this);
 		}
 	}
 
