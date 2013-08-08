@@ -40,6 +40,8 @@ public abstract class Model {
 	@Column(name = "Id")
 	private Long mId = null;
 
+	private boolean mIsChanged;
+
 	private TableInfo mTableInfo;
 
 	//////////////////////////////////////////////////////////////////////////////////////
@@ -58,12 +60,18 @@ public abstract class Model {
 		return mId;
 	}
 
+	public final boolean isChanged() {
+		return this.mIsChanged;
+	}
+
 	public final void delete() {
 		Cache.openDatabase().delete(mTableInfo.getTableName(), "Id=?", new String[] { getId().toString() });
 		Cache.removeEntity(this);
 
 		Cache.getContext().getContentResolver()
 				.notifyChange(ContentProvider.createUri(mTableInfo.getType(), mId), null);
+
+		this.onDeleted();
 	}
 
 	public final void save() {
@@ -155,6 +163,8 @@ public abstract class Model {
 
 		Cache.getContext().getContentResolver()
 				.notifyChange(ContentProvider.createUri(mTableInfo.getType(), mId), null);
+
+		this.onSaved();
 	}
 
 	// Convenience methods
@@ -274,6 +284,18 @@ public abstract class Model {
 
 	protected final <T extends Model> List<T> getMany(Class<T> type, String foreignKey) {
 		return new Select().from(type).where(Cache.getTableName(type) + "." + foreignKey + "=?", getId()).execute();
+	}
+
+	protected void markAsChanged() {
+		this.mIsChanged = true;
+	}
+
+	protected void onSaved() {
+		this.mIsChanged = false;
+	}
+
+	protected void onDeleted() {
+
 	}
 
 	//////////////////////////////////////////////////////////////////////////////////////
