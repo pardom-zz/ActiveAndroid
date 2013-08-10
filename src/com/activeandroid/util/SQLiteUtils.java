@@ -16,12 +16,6 @@ package com.activeandroid.util;
  * limitations under the License.
  */
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-
 import android.database.Cursor;
 import android.os.Build;
 import android.text.TextUtils;
@@ -31,6 +25,12 @@ import com.activeandroid.Model;
 import com.activeandroid.TableInfo;
 import com.activeandroid.annotation.Column;
 import com.activeandroid.serializer.TypeSerializer;
+
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 public final class SQLiteUtils {
 	//////////////////////////////////////////////////////////////////////////////////////
@@ -198,9 +198,13 @@ public final class SQLiteUtils {
 
 			if (cursor.moveToFirst()) {
 				do {
-					T entity = (T) entityConstructor.newInstance();
+					Model entity = Cache.getEntity(type, cursor.getLong(cursor.getColumnIndex("Id")));
+					if (entity == null) {
+						entity = (T) entityConstructor.newInstance();
+					}
+
 					entity.loadFromCursor(cursor);
-					entities.add(entity);
+					entities.add((T) entity);
 				}
 				while (cursor.moveToNext());
 			}
