@@ -291,21 +291,20 @@ public abstract class Model {
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj instanceof Model) {
+		if (obj instanceof Model && this.mId != null) {
 			final Model other = (Model) obj;
 
-			return ((this.mId != null && this.mId.equals(other.mId)) //ids not null and match
-							|| (this.mId == null && other.mId == null)) // or both ids are null
+			return this.mId.equals(other.mId)							
 							&& (this.mTableInfo.getTableName().equals(other.mTableInfo.getTableName()));
 		} else {
-			return false;
+			return this == obj;
 		}
 	}
 
 	@Override
 	public int hashCode() {
 		int hash = HASH_PRIME;
-		hash += mId == null ? 0 : HASH_PRIME * mId.hashCode();
+		hash += HASH_PRIME * (mId == null ? super.hashCode() : mId.hashCode()); //if id is null, use Object.hashCode()
 		hash += HASH_PRIME * mTableInfo.getTableName().hashCode();
 		return hash; //To change body of generated methods, choose Tools | Templates.
 	}

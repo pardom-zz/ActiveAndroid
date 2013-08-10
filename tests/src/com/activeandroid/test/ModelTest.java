@@ -35,6 +35,7 @@ public class ModelTest extends ActiveAndroidTestCase {
 		MockModel model = new MockModel();
 
 		assertFalse(model.equals("Dummy"));
+		assertFalse(model.equals(null));
 	}
 
 	/**
@@ -48,15 +49,16 @@ public class ModelTest extends ActiveAndroidTestCase {
 	}
 
 	/**
-	 * Equals should not consider two new objects of the same
-	 * class non-equal.
+	 * A new object does not have PK assigned yet,
+	 * therefore by default it is equal only to itself.
 	 */	
 	public void testEqualsOnNew() {
 		MockModel model1 = new MockModel();
 		MockModel model2 = new MockModel();
 
-		assertTrue(model1.equals(model2));
-		assertTrue(model2.equals(model1));
+		assertFalse(model1.equals(model2));
+		assertFalse(model2.equals(model1));
+		assertTrue(model1.equals(model1));//equal only to itself
 	}
 
 	/**
@@ -65,12 +67,18 @@ public class ModelTest extends ActiveAndroidTestCase {
 	public void testEqualsDifferentRows() {
 		MockModel model1 = new MockModel();
 		MockModel model2 = new MockModel();
+		MockModel model3;
 
 		model1.save();
 		model2.save();
+		model3 = Model.load(MockModel.class, model1.getId());
 
 		assertFalse(model1.equals(model2));
 		assertFalse(model2.equals(model1));
+		assertTrue(model1.equals(model3));
+		assertTrue(model1.equals(model3));
+		assertFalse(model3.equals(model2));
+		assertFalse(model2.equals(model3));
 	}
 
 	/**
@@ -82,14 +90,14 @@ public class ModelTest extends ActiveAndroidTestCase {
 		Model m2 = new MockModel();
 		Model m3 = new AnotherMockModel();
 
-		assertEquals(m1.hashCode(), m2.hashCode());
+		assertFalse(m1.hashCode() == m2.hashCode()); // hashes for unsaved models must not match
 		set.add(m1);
 		set.add(m2);
-		assertEquals(1, set.size());
+		assertEquals(2, set.size()); //try in a set
 
 		assertFalse(m1.hashCode() == m3.hashCode());
 		set.add(m3);
-		assertEquals(2, set.size());
+		assertEquals(3, set.size());
 	}
 
 	/**
@@ -99,13 +107,17 @@ public class ModelTest extends ActiveAndroidTestCase {
 		Set<Model> set = new HashSet<Model>();
 		Model m1 = new MockModel();
 		Model m2 = new MockModel();
+		Model m3;
 
 		m1.save();
 		m2.save();
+		m3 = Model.load(MockModel.class, m1.getId());
 
+		assertEquals(m1.hashCode(), m3.hashCode());
 		assertFalse(m1.hashCode() == m2.hashCode());
 		set.add(m1);
 		set.add(m2);
+		set.add(m3);
 		assertEquals(2, set.size());
 	}
 
