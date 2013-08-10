@@ -33,6 +33,10 @@ import com.activeandroid.util.ReflectionUtils;
 
 @SuppressWarnings("unchecked")
 public abstract class Model {
+
+	/** Prime number used for hashcode() implementation. */
+	private static final int HASH_PRIME = 739;
+
 	//////////////////////////////////////////////////////////////////////////////////////
 	// PRIVATE MEMBERS
 	//////////////////////////////////////////////////////////////////////////////////////
@@ -284,9 +288,22 @@ public abstract class Model {
 
 	@Override
 	public boolean equals(Object obj) {
-		final Model other = (Model) obj;
+		if (obj instanceof Model) {
+			final Model other = (Model) obj;
 
-		return this.mId != null && (this.mTableInfo.getTableName().equals(other.mTableInfo.getTableName()))
-				&& (this.mId.equals(other.mId));
+			return ((this.mId != null && this.mId.equals(other.mId)) //ids not null and match
+							|| (this.mId == null && other.mId == null)) // or both ids are null
+							&& (this.mTableInfo.getTableName().equals(other.mTableInfo.getTableName()));
+		} else {
+			return false;
+		}
+	}
+
+	@Override
+	public int hashCode() {
+		int hash = HASH_PRIME;
+		hash += mId == null ? 0 : HASH_PRIME * mId.hashCode();
+		hash += HASH_PRIME * mTableInfo.getTableName().hashCode();
+		return hash; //To change body of generated methods, choose Tools | Templates.
 	}
 }
