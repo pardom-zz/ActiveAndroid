@@ -75,7 +75,7 @@ public class Configuration {
 	}
 
 	public boolean isValid() {
-		return mModelClasses.size() > 0;
+		return mModelClasses != null && mModelClasses.size() > 0;
 	}
 
 	//////////////////////////////////////////////////////////////////////////////////////
