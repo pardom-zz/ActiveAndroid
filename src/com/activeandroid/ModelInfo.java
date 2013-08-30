@@ -55,10 +55,10 @@ final class ModelInfo {
 	// CONSTRUCTORS
 	//////////////////////////////////////////////////////////////////////////////////////
 
-	public ModelInfo(Context context, Configuration configuration) {
+	public ModelInfo(Configuration configuration) {
 		if (!loadModelFromMetaData(configuration)) {
 			try {
-				scanForModel(context);
+				scanForModel(configuration.getContext());
 			}
 			catch (IOException e) {
 				Log.e("Couldn't open source path.", e);

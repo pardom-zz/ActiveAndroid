@@ -46,9 +46,9 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
 	// CONSTRUCTORS
 	//////////////////////////////////////////////////////////////////////////////////////
 
-	public DatabaseHelper(Context context, Configuration configuration) {
-		super(context, configuration.getDatabaseName(), null, configuration.getDatabaseVersion());
-		copyAttachedDatabase(context, configuration.getDatabaseName());
+	public DatabaseHelper(Configuration configuration) {
+		super(configuration.getContext(), configuration.getDatabaseName(), null, configuration.getDatabaseVersion());
+		copyAttachedDatabase(configuration.getContext(), configuration.getDatabaseName());
 	}
 
 	//////////////////////////////////////////////////////////////////////////////////////

@@ -31,6 +31,7 @@ public class Configuration {
 	// PRIVATE MEMBERS
 	//////////////////////////////////////////////////////////////////////////////////////
 
+	private Context mContext;
 	private String mDatabaseName;
 	private int mDatabaseVersion;
 	private List<Class<? extends Model>> mModelClasses;
@@ -41,12 +42,17 @@ public class Configuration {
 	// CONSTRUCTORS
 	//////////////////////////////////////////////////////////////////////////////////////
 
-	private Configuration() {
+	private Configuration(Context context) {
+		mContext = context;
 	}
 
 	//////////////////////////////////////////////////////////////////////////////////////
 	// PUBLIC METHODS
 	//////////////////////////////////////////////////////////////////////////////////////
+
+	public Context getContext() {
+		return mContext;
+	}
 
 	public String getDatabaseName() {
 		return mDatabaseName;
@@ -106,7 +112,7 @@ public class Configuration {
 		//////////////////////////////////////////////////////////////////////////////////////
 
 		public Builder(Context context) {
-			mContext = context;
+			mContext = context.getApplicationContext();
 			mCacheSize = DEFAULT_CACHE_SIZE;
 		}
 
@@ -176,7 +182,7 @@ public class Configuration {
 		}
 
 		public Configuration create() {
-			Configuration configuration = new Configuration();
+			Configuration configuration = new Configuration(mContext);
 			configuration.mCacheSize = mCacheSize;
 
 			// Get database name from meta-data

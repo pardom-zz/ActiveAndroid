@@ -56,15 +56,15 @@ public final class Cache {
 	// PUBLIC METHODS
 	//////////////////////////////////////////////////////////////////////////////////////
 
-	public static synchronized void initialize(Context context, Configuration configuration) {
+	public static synchronized void initialize(Configuration configuration) {
 		if (sIsInitialized) {
 			Log.v("ActiveAndroid already initialized.");
 			return;
 		}
 
-		sContext = context.getApplicationContext();
-		sModelInfo = new ModelInfo(sContext, configuration);
-		sDatabaseHelper = new DatabaseHelper(sContext, configuration);
+		sContext = configuration.getContext();
+		sModelInfo = new ModelInfo(configuration);
+		sDatabaseHelper = new DatabaseHelper(configuration);
 
 		// TODO: It would be nice to override sizeOf here and calculate the memory
 		// actually used, however at this point it seems like the reflection

@@ -27,27 +27,21 @@ public final class ActiveAndroid {
 	//////////////////////////////////////////////////////////////////////////////////////
 
 	public static void initialize(Context context) {
-		initialize(context, null, false);
+		initialize(new Configuration.Builder(context).create());
 	}
 
-	public static void initialize(Context context, Configuration configuration) {
-		initialize(context, configuration, false);
+	public static void initialize(Configuration configuration) {
+		initialize(configuration, false);
 	}
 
 	public static void initialize(Context context, boolean loggingEnabled) {
-		initialize(context, null, loggingEnabled);
+		initialize(new Configuration.Builder(context).create(), loggingEnabled);
 	}
 
-	public static void initialize(Context context, Configuration configuration, boolean loggingEnabled) {
+	public static void initialize(Configuration configuration, boolean loggingEnabled) {
 		// Set logging enabled first
 		setLoggingEnabled(loggingEnabled);
-
-		// Create default configuration if null
-		if (configuration == null) {
-			configuration = new Configuration.Builder(context).create();
-		}
-
-		Cache.initialize(context, configuration);
+		Cache.initialize(configuration);
 	}
 
 	public static void clearCache() {
