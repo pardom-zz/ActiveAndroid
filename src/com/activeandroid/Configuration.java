@@ -114,56 +114,65 @@ public class Configuration {
 		// PUBLIC METHODS
 		//////////////////////////////////////////////////////////////////////////////////////
 
-		public void setCacheSize(int cacheSize) {
+		public Builder setCacheSize(int cacheSize) {
 			mCacheSize = cacheSize;
+			return this;
 		}
 
-		public void setDatabaseName(String databaseName) {
+		public Builder setDatabaseName(String databaseName) {
 			mDatabaseName = databaseName;
+			return this;
 		}
 
-		public void setDatabaseVersion(int databaseVersion) {
+		public Builder setDatabaseVersion(int databaseVersion) {
 			mDatabaseVersion = databaseVersion;
+			return this;
 		}
 
-		public void addModelClass(Class<? extends Model> modelClass) {
+		public Builder addModelClass(Class<? extends Model> modelClass) {
 			if (mModelClasses == null) {
 				mModelClasses = new ArrayList<Class<? extends Model>>();
 			}
 
 			mModelClasses.add(modelClass);
+			return this;
 		}
 
-		public void addModelClasses(Class<? extends Model>... modelClasses) {
+		public Builder addModelClasses(Class<? extends Model>... modelClasses) {
 			if (mModelClasses == null) {
 				mModelClasses = new ArrayList<Class<? extends Model>>();
 			}
 
 			mModelClasses.addAll(Arrays.asList(modelClasses));
+			return this;
 		}
 
-		public void setModelClasses(Class<? extends Model>... modelClasses) {
+		public Builder setModelClasses(Class<? extends Model>... modelClasses) {
 			mModelClasses = Arrays.asList(modelClasses);
+			return this;
 		}
 
-		public void addTypeSerializer(Class<? extends TypeSerializer> typeSerializer) {
+		public Builder addTypeSerializer(Class<? extends TypeSerializer> typeSerializer) {
 			if (mTypeSerializers == null) {
 				mTypeSerializers = new ArrayList<Class<? extends TypeSerializer>>();
 			}
 
 			mTypeSerializers.add(typeSerializer);
+			return this;
 		}
 
-		public void addTypeSerializers(Class<? extends TypeSerializer>... typeSerializers) {
+		public Builder addTypeSerializers(Class<? extends TypeSerializer>... typeSerializers) {
 			if (mTypeSerializers == null) {
 				mTypeSerializers = new ArrayList<Class<? extends TypeSerializer>>();
 			}
 
 			mTypeSerializers.addAll(Arrays.asList(typeSerializers));
+			return this;
 		}
 
-		public void setTypeSerializers(Class<? extends TypeSerializer>... typeSerializers) {
+		public Builder setTypeSerializers(Class<? extends TypeSerializer>... typeSerializers) {
 			mTypeSerializers = Arrays.asList(typeSerializers);
+			return this;
 		}
 
 		public Configuration create() {
