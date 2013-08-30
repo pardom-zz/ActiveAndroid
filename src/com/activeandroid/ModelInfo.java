@@ -93,19 +93,25 @@ final class ModelInfo {
 			return false;
 		}
 
-		for (Class<? extends Model> model : configuration.getModelClasses()) {
-			mTableInfos.put(model, new TableInfo(model));
+		final List<Class<? extends Model>> models = configuration.getModelClasses();
+		if (models != null) {
+			for (Class<? extends Model> model : models) {
+				mTableInfos.put(model, new TableInfo(model));
+			}
 		}
 
-		for (Class<? extends TypeSerializer> typeSerializer : configuration.getTypeSerializers()) {
-			try {
-				mTypeSerializers.put(typeSerializer, typeSerializer.newInstance());
-			}
-			catch (InstantiationException e) {
-				Log.e("Couldn't instantiate TypeSerializer.", e);
-			}
-			catch (IllegalAccessException e) {
-				Log.e("IllegalAccessException", e);
+		final List<Class<? extends TypeSerializer>> typeSerializers = configuration.getTypeSerializers();
+		if (typeSerializers != null) {
+			for (Class<? extends TypeSerializer> typeSerializer : typeSerializers) {
+				try {
+					mTypeSerializers.put(typeSerializer, typeSerializer.newInstance());
+				}
+				catch (InstantiationException e) {
+					Log.e("Couldn't instantiate TypeSerializer.", e);
+				}
+				catch (IllegalAccessException e) {
+					Log.e("IllegalAccessException", e);
+				}
 			}
 		}
 
