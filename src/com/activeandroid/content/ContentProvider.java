@@ -3,7 +3,6 @@ package com.activeandroid.content;
 import java.util.ArrayList;
 import java.util.List;
 
-import android.app.Application;
 import android.content.ContentValues;
 import android.content.UriMatcher;
 import android.database.Cursor;
@@ -12,6 +11,7 @@ import android.util.SparseArray;
 
 import com.activeandroid.ActiveAndroid;
 import com.activeandroid.Cache;
+import com.activeandroid.Configuration;
 import com.activeandroid.Model;
 import com.activeandroid.TableInfo;
 
@@ -36,7 +36,7 @@ public class ContentProvider extends android.content.ContentProvider {
 
 	@Override
 	public boolean onCreate() {
-		ActiveAndroid.initialize((Application) getContext().getApplicationContext());
+		ActiveAndroid.initialize(getConfiguration());
 		sAuthority = getAuthority();
 
 		final List<TableInfo> tableInfos = new ArrayList<TableInfo>(Cache.getTableInfos());
@@ -92,8 +92,8 @@ public class ContentProvider extends android.content.ContentProvider {
 
 	@Override
 	public Uri insert(Uri uri, ContentValues values) {
-		Class<? extends Model> type = getModelType(uri);
-		Long id = Cache.openDatabase().insert(Cache.getTableName(type), null, values);
+		final Class<? extends Model> type = getModelType(uri);
+		final Long id = Cache.openDatabase().insert(Cache.getTableName(type), null, values);
 
 		if (id != null && id > 0) {
 			Uri retUri = createUri(type, id);
@@ -107,8 +107,8 @@ public class ContentProvider extends android.content.ContentProvider {
 
 	@Override
 	public int update(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
-		Class<? extends Model> type = getModelType(uri);
-		int count = Cache.openDatabase().update(Cache.getTableName(type), values, selection, selectionArgs);
+		final Class<? extends Model> type = getModelType(uri);
+		final int count = Cache.openDatabase().update(Cache.getTableName(type), values, selection, selectionArgs);
 
 		notifyChange(uri);
 
@@ -117,8 +117,8 @@ public class ContentProvider extends android.content.ContentProvider {
 
 	@Override
 	public int delete(Uri uri, String selection, String[] selectionArgs) {
-		Class<? extends Model> type = getModelType(uri);
-		int count = Cache.openDatabase().delete(Cache.getTableName(type), selection, selectionArgs);
+		final Class<? extends Model> type = getModelType(uri);
+		final int count = Cache.openDatabase().delete(Cache.getTableName(type), selection, selectionArgs);
 
 		notifyChange(uri);
 
@@ -127,10 +127,18 @@ public class ContentProvider extends android.content.ContentProvider {
 
 	@Override
 	public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
-		Class<? extends Model> type = getModelType(uri);
-		Cursor cursor = Cache.openDatabase().query(Cache.getTableName(type), projection, selection, selectionArgs, null, null,
+		final Class<? extends Model> type = getModelType(uri);
+		final Cursor cursor = Cache.openDatabase().query(
+				Cache.getTableName(type),
+				projection,
+				selection,
+				selectionArgs,
+				null,
+				null,
 				sortOrder);
+
 		cursor.setNotificationUri(getContext().getContentResolver(), uri);
+
 		return cursor;
 	}
 
@@ -139,7 +147,7 @@ public class ContentProvider extends android.content.ContentProvider {
 	//////////////////////////////////////////////////////////////////////////////////////
 
 	public static Uri createUri(Class<? extends Model> type, Long id) {
-		StringBuilder uri = new StringBuilder();
+		final StringBuilder uri = new StringBuilder();
 		uri.append("content://");
 		uri.append(sAuthority);
 		uri.append("/");
@@ -161,12 +169,16 @@ public class ContentProvider extends android.content.ContentProvider {
 		return getContext().getPackageName();
 	}
 
+	protected Configuration getConfiguration() {
+		return new Configuration.Builder(getContext()).create();
+	}
+
 	//////////////////////////////////////////////////////////////////////////////////////
 	// PRIVATE METHODS
 	//////////////////////////////////////////////////////////////////////////////////////
 
 	private Class<? extends Model> getModelType(Uri uri) {
-		int code = URI_MATCHER.match(uri);
+		final int code = URI_MATCHER.match(uri);
 		if (code != UriMatcher.NO_MATCH) {
 			return TYPE_CODES.get(code);
 		}
