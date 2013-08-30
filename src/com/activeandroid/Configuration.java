@@ -207,7 +207,9 @@ public class Configuration {
 			}
 			else {
 				final String modelList = ReflectionUtils.getMetaData(mContext, AA_MODELS);
-				configuration.mModelClasses = loadModelList(modelList.split(","));
+				if (modelList != null) {
+					configuration.mModelClasses = loadModelList(modelList.split(","));
+				}
 			}
 
 			// Get type serializer classes from meta-data
@@ -216,7 +218,9 @@ public class Configuration {
 			}
 			else {
 				final String serializerList = ReflectionUtils.getMetaData(mContext, AA_SERIALIZERS);
-				configuration.mTypeSerializers = loadSerializerList(serializerList.split(","));
+				if (serializerList != null) {
+					configuration.mTypeSerializers = loadSerializerList(serializerList.split(","));
+				}
 			}
 
 			return configuration;
