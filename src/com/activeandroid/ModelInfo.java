@@ -123,7 +123,7 @@ final class ModelInfo {
 		String sourcePath = context.getApplicationInfo().sourceDir;
 		List<String> paths = new ArrayList<String>();
 
-		if (sourcePath != null && new File(sourcePath).isDirectory()) {
+		if (sourcePath != null && !(new File(sourcePath).isDirectory())) {
 			DexFile dexfile = new DexFile(sourcePath);
 			Enumeration<String> entries = dexfile.entries();
 
