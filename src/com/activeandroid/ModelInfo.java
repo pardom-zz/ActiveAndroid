@@ -104,7 +104,8 @@ final class ModelInfo {
 		if (typeSerializers != null) {
 			for (Class<? extends TypeSerializer> typeSerializer : typeSerializers) {
 				try {
-					mTypeSerializers.put(typeSerializer, typeSerializer.newInstance());
+					TypeSerializer instance = typeSerializer.newInstance();
+					mTypeSerializers.put(instance.getDeserializedType(), instance);
 				}
 				catch (InstantiationException e) {
 					Log.e("Couldn't instantiate TypeSerializer.", e);
@@ -188,8 +189,8 @@ final class ModelInfo {
 					mTableInfos.put(modelClass, new TableInfo(modelClass));
 				}
 				else if (ReflectionUtils.isTypeSerializer(discoveredClass)) {
-					TypeSerializer typeSerializer = (TypeSerializer) discoveredClass.newInstance();
-					mTypeSerializers.put(typeSerializer.getDeserializedType(), typeSerializer);
+					TypeSerializer instance = (TypeSerializer) discoveredClass.newInstance();
+					mTypeSerializers.put(instance.getDeserializedType(), instance);
 				}
 			}
 			catch (ClassNotFoundException e) {
