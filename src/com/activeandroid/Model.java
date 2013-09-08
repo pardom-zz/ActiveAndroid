@@ -45,10 +45,18 @@ public abstract class Model {
 	//////////////////////////////////////////////////////////////////////////////////////
 	// CONSTRUCTORS
 	//////////////////////////////////////////////////////////////////////////////////////
-
+	
 	public Model() {
-		mTableInfo = Cache.getTableInfo(getClass());
-	}
+        	this(true);
+        }
+
+    	public Model(boolean instanciatedOnAndroid) {
+        	// to allow for model entities to be constructed where android context is not available,
+        	// without ending on a RuntimeException
+        	if (instanciatedOnAndroid) {
+            		mTableInfo = Cache.getTableInfo(getClass());
+        	}
+    	}
 
 	//////////////////////////////////////////////////////////////////////////////////////
 	// PUBLIC METHODS
