@@ -40,6 +40,11 @@ public final class Update implements Sqlable {
 
 	@Override
 	public String toSql() {
-		return "UPDATE " + Cache.getTableName(mType) + " ";
+		StringBuilder sql = new StringBuilder();
+		sql.append("UPDATE ");
+		sql.append(Cache.getTableName(mType));
+		sql.append(" ");
+
+		return sql.toString();
 	}
 }
