@@ -37,6 +37,7 @@ public final class TableInfo {
 
 	private Class<? extends Model> mType;
 	private String mTableName;
+	private String mIdName = Table.DEFAULT_ID_NAME;
 
 	private Map<Field, String> mColumnNames = new LinkedHashMap<Field, String>();
 
@@ -50,6 +51,7 @@ public final class TableInfo {
 		final Table tableAnnotation = type.getAnnotation(Table.class);
 		if (tableAnnotation != null) {
 			mTableName = tableAnnotation.name();
+			mIdName = tableAnnotation.id();
 		}
 		else {
 			mTableName = type.getSimpleName();
@@ -57,16 +59,17 @@ public final class TableInfo {
 
 		List<Field> fields = new LinkedList<Field>(ReflectionUtils.getDeclaredColumnFields(type));
 		Collections.reverse(fields);
-		
+
 		for (Field field : fields) {
 			final Column columnAnnotation = field.getAnnotation(Column.class);
 			String columnName = columnAnnotation.name();
 			if (TextUtils.isEmpty(columnName)) {
 				columnName = field.getName();
 			}
-			
+
 			mColumnNames.put(field, columnName);
 		}
+
 	}
 
 	//////////////////////////////////////////////////////////////////////////////////////
@@ -79,6 +82,10 @@ public final class TableInfo {
 
 	public String getTableName() {
 		return mTableName;
+	}
+
+	public String getIdName() {
+		return mIdName;
 	}
 
 	public Collection<Field> getFields() {

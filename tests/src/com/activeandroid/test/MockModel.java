@@ -19,6 +19,6 @@ package com.activeandroid.test;
 import com.activeandroid.Model;
 import com.activeandroid.annotation.Table;
 
-@Table(name = "MockModel")
+@Table(name = "MockModel", id = "Id")
 public class MockModel extends Model {
 }
