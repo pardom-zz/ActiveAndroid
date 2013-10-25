@@ -152,30 +152,31 @@ public final class SQLiteUtils {
 		}
 
 		if (!TextUtils.isEmpty(definition)) {
-			if (column.length() > -1) {
-				definition.append("(");
-				definition.append(column.length());
-				definition.append(")");
-			}
 
-			if (name.equals("Id")) {
+			if (name.equals(tableInfo.getIdName())) {
 				definition.append(" PRIMARY KEY AUTOINCREMENT");
-			}
+			}else if(column!=null){
+				if (column.length() > -1) {
+					definition.append("(");
+					definition.append(column.length());
+					definition.append(")");
+				}
 
-			if (column.notNull()) {
-				definition.append(" NOT NULL ON CONFLICT ");
-				definition.append(column.onNullConflict().toString());
-			}
+				if (column.notNull()) {
+					definition.append(" NOT NULL ON CONFLICT ");
+					definition.append(column.onNullConflict().toString());
+				}
 
-			if (column.unique()) {
-				definition.append(" UNIQUE ON CONFLICT ");
-				definition.append(column.onUniqueConflict().toString());
+				if (column.unique()) {
+					definition.append(" UNIQUE ON CONFLICT ");
+					definition.append(column.onUniqueConflict().toString());
+				}
 			}
 
 			if (FOREIGN_KEYS_SUPPORTED && ReflectionUtils.isModel(type)) {
 				definition.append(" REFERENCES ");
 				definition.append(Cache.getTableInfo((Class<? extends Model>) type).getTableName());
-				definition.append("(Id)");
+				definition.append("("+tableInfo.getIdName()+")");
 				definition.append(" ON DELETE ");
 				definition.append(column.onDelete().toString().replace("_", " "));
 				definition.append(" ON UPDATE ");
@@ -191,6 +192,8 @@ public final class SQLiteUtils {
 
 	@SuppressWarnings("unchecked")
 	public static <T extends Model> List<T> processCursor(Class<? extends Model> type, Cursor cursor) {
+		TableInfo tableInfo = Cache.getTableInfo(type);
+		String idName = tableInfo.getIdName();
 		final List<T> entities = new ArrayList<T>();
 
 		try {
@@ -198,7 +201,7 @@ public final class SQLiteUtils {
 
 			if (cursor.moveToFirst()) {
 				do {
-					Model entity = Cache.getEntity(type, cursor.getLong(cursor.getColumnIndex("Id")));
+					Model entity = Cache.getEntity(type, cursor.getLong(cursor.getColumnIndex(idName)));
 					if (entity == null) {
 						entity = (T) entityConstructor.newInstance();
 					}

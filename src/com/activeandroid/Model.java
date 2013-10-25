@@ -20,7 +20,6 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
-import com.activeandroid.annotation.Column;
 import com.activeandroid.content.ContentProvider;
 import com.activeandroid.query.Delete;
 import com.activeandroid.query.Select;
@@ -37,17 +36,17 @@ public abstract class Model {
 	// PRIVATE MEMBERS
 	//////////////////////////////////////////////////////////////////////////////////////
 
-	@Column(name = "Id")
 	private Long mId = null;
 
-	private TableInfo mTableInfo;
-
+	private final TableInfo mTableInfo;
+	private final String idName;
 	//////////////////////////////////////////////////////////////////////////////////////
 	// CONSTRUCTORS
 	//////////////////////////////////////////////////////////////////////////////////////
 
 	public Model() {
 		mTableInfo = Cache.getTableInfo(getClass());
+		idName = mTableInfo.getIdName();
 	}
 
 	//////////////////////////////////////////////////////////////////////////////////////
@@ -59,7 +58,7 @@ public abstract class Model {
 	}
 
 	public final void delete() {
-		Cache.openDatabase().delete(mTableInfo.getTableName(), "Id=?", new String[] { getId().toString() });
+		Cache.openDatabase().delete(mTableInfo.getTableName(), idName+"=?", new String[] { getId().toString() });
 		Cache.removeEntity(this);
 
 		Cache.getContext().getContentResolver()
@@ -150,7 +149,7 @@ public abstract class Model {
 			mId = db.insert(mTableInfo.getTableName(), null, values);
 		}
 		else {
-			db.update(mTableInfo.getTableName(), values, "Id=" + mId, null);
+			db.update(mTableInfo.getTableName(), values, idName+"=" + mId, null);
 		}
 
 		Cache.getContext().getContentResolver()
@@ -160,11 +159,13 @@ public abstract class Model {
 	// Convenience methods
 
 	public static void delete(Class<? extends Model> type, long id) {
-		new Delete().from(type).where("Id=?", id).execute();
+		TableInfo tableInfo = Cache.getTableInfo(type);
+		new Delete().from(type).where(tableInfo.getIdName()+"=?", id).execute();
 	}
 
 	public static <T extends Model> T load(Class<T> type, long id) {
-		return new Select().from(type).where("Id=?", id).executeSingle();
+		TableInfo tableInfo = Cache.getTableInfo(type);
+		return new Select().from(type).where(tableInfo.getIdName()+"=?", id).executeSingle();
 	}
 
 	// Model population
@@ -231,7 +232,7 @@ public abstract class Model {
 
 					Model entity = Cache.getEntity(entityType, entityId);
 					if (entity == null) {
-						entity = new Select().from(entityType).where("Id=?", entityId).executeSingle();
+						entity = new Select().from(entityType).where(idName+"=?", entityId).executeSingle();
 					}
 
 					value = entity;

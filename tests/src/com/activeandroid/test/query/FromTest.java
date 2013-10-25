@@ -156,11 +156,11 @@ public class FromTest extends SqlableTestCase {
 		return new Select().all().from(MockModel.class);
 	}
 	
-	@Table(name = "JoinModel")
+	@Table(name = "JoinModel", id = "Id")
 	private static class JoinModel extends Model {
 	}
 	
-	@Table(name = "JoinModel2")
+	@Table(name = "JoinModel2", id = "Id")
 	private static class JoinModel2 extends Model {
 	}
 }

@@ -35,6 +35,7 @@ public final class TableInfo {
 
 	private Class<? extends Model> mType;
 	private String mTableName;
+	private String mIdName = Table.DEFAULT_ID_NAME;
 
 	private Map<Field, String> mColumnNames = new HashMap<Field, String>();
 
@@ -48,20 +49,22 @@ public final class TableInfo {
 		final Table tableAnnotation = type.getAnnotation(Table.class);
 		if (tableAnnotation != null) {
 			mTableName = tableAnnotation.name();
+			mIdName = tableAnnotation.id();
 		}
 		else {
 			mTableName = type.getSimpleName();
 		}
 
+		Field idField = getIdField(type);
+		mColumnNames.put(idField, mIdName);
 		List<Field> fields = new ArrayList<Field>(Arrays.asList(type.getDeclaredFields()));
-		fields.add(getIdField(type));
-
 		for (Field field : fields) {
 			if (field.isAnnotationPresent(Column.class)) {
 				final Column columnAnnotation = field.getAnnotation(Column.class);
 				mColumnNames.put(field, columnAnnotation.name());
 			}
 		}
+
 	}
 
 	//////////////////////////////////////////////////////////////////////////////////////
@@ -74,6 +77,10 @@ public final class TableInfo {
 
 	public String getTableName() {
 		return mTableName;
+	}
+
+	public String getIdName() {
+		return mIdName;
 	}
 
 	public Collection<Field> getFields() {
