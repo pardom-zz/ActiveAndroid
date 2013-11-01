@@ -254,8 +254,6 @@ public class Configuration {
 			final List<Class<? extends Model>> modelClasses = new ArrayList<Class<? extends Model>>();
 			final ClassLoader classLoader = mContext.getClass().getClassLoader();
 			for (String model : models) {
-				model = ensurePackageInName(model);
-
 				try {
 					Class modelClass = Class.forName(model, false, classLoader);
 					if (ReflectionUtils.isModel(modelClass)) {
@@ -274,8 +272,6 @@ public class Configuration {
 			final List<Class<? extends TypeSerializer>> typeSerializers = new ArrayList<Class<? extends TypeSerializer>>();
 			final ClassLoader classLoader = mContext.getClass().getClassLoader();
 			for (String serializer : serializers) {
-				serializer = ensurePackageInName(serializer);
-
 				try {
 					Class serializerClass = Class.forName(serializer, false, classLoader);
 					if (ReflectionUtils.isTypeSerializer(serializerClass)) {
@@ -290,13 +286,5 @@ public class Configuration {
 			return typeSerializers;
 		}
 
-		private String ensurePackageInName(String name) {
-			String packageName = mContext.getPackageName();
-			if (name.startsWith(packageName)) {
-				return name.trim();
-			}
-
-			return packageName + name.trim();
-		}
 	}
 }
