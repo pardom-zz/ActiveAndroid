@@ -255,7 +255,7 @@ public class Configuration {
 			final ClassLoader classLoader = mContext.getClass().getClassLoader();
 			for (String model : models) {
 				try {
-					Class modelClass = Class.forName(model, false, classLoader);
+					Class modelClass = Class.forName(model.trim(), false, classLoader);
 					if (ReflectionUtils.isModel(modelClass)) {
 						modelClasses.add(modelClass);
 					}
@@ -273,7 +273,7 @@ public class Configuration {
 			final ClassLoader classLoader = mContext.getClass().getClassLoader();
 			for (String serializer : serializers) {
 				try {
-					Class serializerClass = Class.forName(serializer, false, classLoader);
+					Class serializerClass = Class.forName(serializer.trim(), false, classLoader);
 					if (ReflectionUtils.isTypeSerializer(serializerClass)) {
 						typeSerializers.add(serializerClass);
 					}
