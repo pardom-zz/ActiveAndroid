@@ -77,11 +77,21 @@ final class ModelInfo {
 	}
 
 	public TableInfo getTableInfo(Class<? extends Model> type) {
-		return mTableInfos.get(type);
+		TableInfo info = mTableInfos.get(type);
+		if (info == null) {
+			throw new RuntimeException("Failed to find table info for '" + type
+					+ "'. Did you define the class correctly in AndroidManifest meta-data tag?");
+		}
+		return info;
 	}
 
 	public TypeSerializer getTypeSerializer(Class<?> type) {
-		return mTypeSerializers.get(type);
+		TypeSerializer typeS = mTypeSerializers.get(type);
+		if (typeS == null) {
+			throw new RuntimeException("Failed to find serializer info for '" + type
+					+ "'. Did you define the class correctly in AndroidManifest meta-data tag?");
+		}
+		return typeS;
 	}
 
 	//////////////////////////////////////////////////////////////////////////////////////
