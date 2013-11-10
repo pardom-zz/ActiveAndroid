@@ -210,6 +210,16 @@ public final class SQLiteUtils {
 			}
 
 		}
+		catch (NoSuchMethodException e) {
+			throw new RuntimeException(
+                "Your model " + type.getName() + " does not define a default " +
+                "constructor. The default constructor is required for " +
+                "now in ActiveAndroid models, as the process to " +
+                "populate the ORM model is : " +
+                "1. instantiate default model " +
+                "2. populate fields"
+            );
+		}
 		catch (Exception e) {
 			Log.e("Failed to process cursor.", e);
 		}
