@@ -23,6 +23,9 @@ import android.content.pm.PackageManager;
 import com.activeandroid.Model;
 import com.activeandroid.serializer.TypeSerializer;
 
+import java.lang.reflect.Field;
+import java.util.List;
+
 public final class ReflectionUtils {
 	//////////////////////////////////////////////////////////////////////////////////////
 	// PUBLIC METHODS
@@ -70,4 +73,14 @@ public final class ReflectionUtils {
 
 		return false;
 	}
+
+    public static List<Field> getAllFields(List<Field> outFields, Class<?> inClass) {
+        for (Field field : inClass.getDeclaredFields()) {
+            outFields.add(field);
+        }
+        if (inClass.getSuperclass() != null && !inClass.getSuperclass().equals(Model.class)) {
+            outFields = getAllFields(outFields, inClass.getSuperclass());
+        }
+        return outFields;
+    }
 }
