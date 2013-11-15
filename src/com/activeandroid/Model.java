@@ -28,6 +28,7 @@ import com.activeandroid.serializer.TypeSerializer;
 import com.activeandroid.util.Log;
 import com.activeandroid.util.ReflectionUtils;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.util.List;
 
@@ -147,10 +148,12 @@ public abstract class Model {
 		}
 
 		if (mId == null) {
-			mId = db.insert(mTableInfo.getTableName(), null, values);
+			if (!ActiveAndroid.inContentProvider()) mId = db.insert(mTableInfo.getTableName(), null, values);
+			else mId = android.content.ContentUris.parseId(Cache.getContext().getContentResolver().insert(ContentProvider.createUri(mTableInfo.getType(), null), values));
 		}
 		else {
-			db.update(mTableInfo.getTableName(), values, "Id=" + mId, null);
+			if (!ActiveAndroid.inContentProvider()) db.update(mTableInfo.getTableName(), values, "Id=" + mId, null);
+			else Cache.getContext().getContentResolver().update(ContentProvider.createUri(mTableInfo.getType(), null), values, "Id=" + mId, null);
 		}
 
 		Cache.getContext().getContentResolver()
@@ -163,8 +166,37 @@ public abstract class Model {
 		new Delete().from(type).where("Id=?", id).execute();
 	}
 
-	public static <T extends Model> T load(Class<T> type, long id) {
+	public static <T extends Model> T loadByActiveAndroid(Class<T> type, long id) {
 		return new Select().from(type).where("Id=?", id).executeSingle();
+	}
+
+	public static <T extends Model> T loadByContentProvider(Class<T> type, long id) {
+		String[] projection = {};
+		for (Field field : Cache.getTableInfo(type).getFields()) {
+			final String fieldName = Cache.getTableInfo(type).getColumnName(field);
+			java.util.Arrays.fill(projection, fieldName);
+		}
+		Cursor c = Cache.getContext().getContentResolver().query(ContentProvider.createUri(type, null), projection, "Id=" + id, null, null);
+		Model entity = null;
+
+		try {
+			Constructor<?> entityConstructor = type.getConstructor();
+
+			if (c != null && c.moveToFirst()) {
+				entity = (T) entityConstructor.newInstance();
+				entity.loadFromCursor(c);
+			}
+		}
+		catch (Exception e) {
+			Log.e("Failed to process cursor.", e);
+		}
+
+		return (T) entity;
+	}
+
+	public static <T extends Model> T load(Class<T> type, long id) {
+		if (ActiveAndroid.inContentProvider()) return loadByContentProvider(type, id);
+		else return loadByActiveAndroid(type, id);
 	}
 
 	// Model population
