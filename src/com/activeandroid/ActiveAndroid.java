@@ -22,6 +22,9 @@ import android.database.sqlite.SQLiteDatabase;
 import com.activeandroid.util.Log;
 
 public final class ActiveAndroid {
+
+	private static boolean sInContentProvider = false;
+
 	//////////////////////////////////////////////////////////////////////////////////////
 	// PUBLIC METHODS
 	//////////////////////////////////////////////////////////////////////////////////////
@@ -82,5 +85,17 @@ public final class ActiveAndroid {
 
 	public static void execSQL(String sql, Object[] bindArgs) {
 		Cache.openDatabase().execSQL(sql, bindArgs);
+	}
+
+	public static void beginContentProvider() {
+		sInContentProvider = true;
+	}
+
+	public static void endContentProvider() {
+		sInContentProvider = false;
+	}
+
+	public static boolean inContentProvider() {
+		return sInContentProvider;
 	}
 }
