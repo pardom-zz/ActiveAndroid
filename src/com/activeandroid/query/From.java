@@ -16,13 +16,17 @@ package com.activeandroid.query;
  * limitations under the License.
  */
 
+import android.database.Cursor;
 import android.text.TextUtils;
+import com.activeandroid.ActiveAndroid;
 import com.activeandroid.Cache;
 import com.activeandroid.Model;
+import com.activeandroid.content.ContentProvider;
 import com.activeandroid.query.Join.JoinType;
 import com.activeandroid.util.Log;
 import com.activeandroid.util.SQLiteUtils;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -202,15 +206,36 @@ public final class From implements Sqlable {
 
 	public <T extends Model> List<T> execute() {
 		if (mQueryBase instanceof Select) {
-			return SQLiteUtils.rawQuery(mType, toSql(), getArguments());
+			if (!ActiveAndroid.inContentProvider()) {
+				return SQLiteUtils.rawQuery(mType, toSql(), getArguments());
+			} else {
+				if (mGroupBy != null || mHaving != null || mLimit != null)
+					throw new IllegalArgumentException(String.format("Query not support by ContentProvider"));
+
+				String[] projection = {};
+				for (Field field : Cache.getTableInfo(mType).getFields()) {
+					final String fieldName = Cache.getTableInfo(mType).getColumnName(field);
+					java.util.Arrays.fill(projection, fieldName);
+				}
+				Cursor c = Cache.getContext().getContentResolver().query(ContentProvider.createUri(mType, null), projection, mWhere, getArguments(), mOrderBy);
+				List<T> entities = com.activeandroid.util.SQLiteUtils.processCursor(mType, c);
+				if (c != null) c.close();
+				return entities;
+			}
 		}
 		else {
-			SQLiteUtils.execSql(toSql(), getArguments());
+			if (!ActiveAndroid.inContentProvider()) SQLiteUtils.execSql(toSql(), getArguments());
+			else Cache.getContext().getContentResolver().delete(ContentProvider.createUri(mType, null), mWhere, getArguments());
 			return null;
 		}
 	}
 
 	public <T extends Model> T executeSingle() {
+		if (ActiveAndroid.inContentProvider()) {
+			List<T> list = execute();
+			if (list != null && !list.isEmpty()) return list.get(0);
+			else return null;
+		}
 		if (mQueryBase instanceof Select) {
 			limit(1);
 			return SQLiteUtils.rawQuerySingle(mType, toSql(), getArguments());
