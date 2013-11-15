@@ -65,6 +65,7 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
 		executePragmas(db);
 		executeCreate(db);
 		executeMigrations(db, -1, db.getVersion());
+		executeCreateIndex(db);
 	}
 
 	@Override
@@ -118,6 +119,20 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
 		if (SQLiteUtils.FOREIGN_KEYS_SUPPORTED) {
 			db.execSQL("PRAGMA foreign_keys=ON;");
 			Log.i("Foreign Keys supported. Enabling foreign key features.");
+		}
+	}
+
+	private void executeCreateIndex(SQLiteDatabase db) {
+		db.beginTransaction();
+		try {
+			for (TableInfo tableInfo : Cache.getTableInfos()) {
+				String s = SQLiteUtils.createIndexDefinition(tableInfo);
+				if (!android.text.TextUtils.isEmpty(s)) db.execSQL(s);
+			}
+			db.setTransactionSuccessful();
+		}
+		finally {
+			db.endTransaction();
 		}
 	}
 
