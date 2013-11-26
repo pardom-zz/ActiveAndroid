@@ -42,6 +42,12 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
 
 	public final static String MIGRATION_PATH = "migrations";
 
+    //////////////////////////////////////////////////////////////////////////////////////
+    // PRIVATE VARIABLES
+    //////////////////////////////////////////////////////////////////////////////////////
+
+    private int mDatabaseVersion;
+
 	//////////////////////////////////////////////////////////////////////////////////////
 	// CONSTRUCTORS
 	//////////////////////////////////////////////////////////////////////////////////////
@@ -49,6 +55,7 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
 	public DatabaseHelper(Configuration configuration) {
 		super(configuration.getContext(), configuration.getDatabaseName(), null, configuration.getDatabaseVersion());
 		copyAttachedDatabase(configuration.getContext(), configuration.getDatabaseName());
+        mDatabaseVersion = configuration.getDatabaseVersion();
 	}
 
 	//////////////////////////////////////////////////////////////////////////////////////
@@ -64,7 +71,7 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
 	public void onCreate(SQLiteDatabase db) {
 		executePragmas(db);
 		executeCreate(db);
-		executeMigrations(db, -1, db.getVersion());
+		executeMigrations(db, -1, mDatabaseVersion);
 	}
 
 	@Override
@@ -175,9 +182,18 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
 			final InputStream input = Cache.getContext().getAssets().open(MIGRATION_PATH + "/" + file);
 			final BufferedReader reader = new BufferedReader(new InputStreamReader(input));
 			String line = null;
+            String insert = "";
 
 			while ((line = reader.readLine()) != null) {
-				db.execSQL(line.replace(";", ""));
+                if(line.endsWith(";")){
+                    insert += line;
+
+
+                    db.execSQL(insert.replace(";", ""));
+                    insert = "";
+                }else{
+                    insert += line + "\n";
+                }
 			}
 		}
 		catch (IOException e) {
