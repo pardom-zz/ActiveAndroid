@@ -182,9 +182,18 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
 			final InputStream input = Cache.getContext().getAssets().open(MIGRATION_PATH + "/" + file);
 			final BufferedReader reader = new BufferedReader(new InputStreamReader(input));
 			String line = null;
+            String insert = "";
 
 			while ((line = reader.readLine()) != null) {
-				db.execSQL(line.replace(";", ""));
+                if(line.endsWith(";")){
+                    insert += line;
+
+
+                    db.execSQL(insert.replace(";", ""));
+                    insert = "";
+                }else{
+                    insert += line + "\n";
+                }
 			}
 		}
 		catch (IOException e) {
