@@ -164,7 +164,7 @@ public abstract class Model {
 	}
 
 	public static <T extends Model> T load(Class<T> type, long id) {
-		return new Select().from(type).where("Id=?", id).executeSingle();
+		return (T) new Select().from(type).where("Id=?", id).executeSingle();
 	}
 
 	// Model population
