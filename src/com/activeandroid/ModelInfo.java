@@ -29,6 +29,7 @@ import java.util.Map;
 
 import android.content.Context;
 
+import com.activeandroid.annotation.Ignore;
 import com.activeandroid.serializer.CalendarSerializer;
 import com.activeandroid.serializer.SqlDateSerializer;
 import com.activeandroid.serializer.TypeSerializer;
@@ -183,12 +184,12 @@ final class ModelInfo {
 
 			try {
 				Class<?> discoveredClass = Class.forName(className, false, classLoader);
-				if (ReflectionUtils.isModel(discoveredClass)) {
+				if (ReflectionUtils.isModel(discoveredClass) && !discoveredClass.isAnnotationPresent(Ignore.class)) {
 					@SuppressWarnings("unchecked")
 					Class<? extends Model> modelClass = (Class<? extends Model>) discoveredClass;
 					mTableInfos.put(modelClass, new TableInfo(modelClass));
 				}
-				else if (ReflectionUtils.isTypeSerializer(discoveredClass)) {
+				else if (ReflectionUtils.isTypeSerializer(discoveredClass) && !discoveredClass.isAnnotationPresent(Ignore.class)) {
 					TypeSerializer instance = (TypeSerializer) discoveredClass.newInstance();
 					mTypeSerializers.put(instance.getDeserializedType(), instance);
 				}
