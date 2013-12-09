@@ -67,7 +67,7 @@ public final class TableInfo {
 			if (field.isAnnotationPresent(Column.class)) {
 				final Column columnAnnotation = field.getAnnotation(Column.class);
                 String fieldName;
-                if(columnAnnotation.name().equals("")){
+                if(!columnAnnotation.name().equals("")){
                     fieldName = columnAnnotation.name();
                 } else{
                     fieldName = field.getName();

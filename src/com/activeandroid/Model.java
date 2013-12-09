@@ -71,7 +71,7 @@ public abstract class Model {
 		final ContentValues values = new ContentValues();
 
 		for (Field field : mTableInfo.getFields()) {
-			final String fieldName = mTableInfo.getColumn   Name(field);
+			final String fieldName = mTableInfo.getColumnName(field);
 			Class<?> fieldType = field.getType();
 
 			field.setAccessible(true);
