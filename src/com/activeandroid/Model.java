@@ -21,12 +21,14 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
 import com.activeandroid.annotation.Column;
+import com.activeandroid.annotation.PrimaryKey;
 import com.activeandroid.content.ContentProvider;
 import com.activeandroid.query.Delete;
 import com.activeandroid.query.Select;
 import com.activeandroid.serializer.TypeSerializer;
 import com.activeandroid.util.Log;
 import com.activeandroid.util.ReflectionUtils;
+import com.activeandroid.util.SQLiteUtils;
 
 import java.lang.reflect.Field;
 import java.util.List;
@@ -146,16 +148,32 @@ public abstract class Model {
 			}
 		}
 
-		if (mId == null) {
-			mId = db.insert(mTableInfo.getTableName(), null, values);
-		}
-		else {
-			db.update(mTableInfo.getTableName(), values, "Id=" + mId, null);
+        if(!exists()){
+		    long mId = db.insert(mTableInfo.getTableName(), null, values);
+
+            for(Field field : mTableInfo.getPrimaryKeys()){
+                if(field.isAnnotationPresent(PrimaryKey.class) &&
+                        field.getAnnotation(PrimaryKey.class).type().equals(PrimaryKey.Type.AUTO_INCREMENT)){
+                    field.setAccessible(true);
+                    try {
+                        field.set(this, mId);
+                    } catch (Throwable e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            }
+        } else {
+			db.update(mTableInfo.getTableName(), values, SQLiteUtils.getWhereStatement(this, mTableInfo), null);
 		}
 
 		Cache.getContext().getContentResolver()
 				.notifyChange(ContentProvider.createUri(mTableInfo.getType(), mId), null);
 	}
+
+    public boolean exists(){
+        Model model = new Select().from(getClass()).where(SQLiteUtils.getWhereStatement(this, mTableInfo)).executeSingle();
+        return model!=null;
+    }
 
 	// Convenience methods
 

@@ -21,11 +21,15 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
 import com.activeandroid.annotation.Column;
+import com.activeandroid.annotation.ForeignKey;
+import com.activeandroid.annotation.PrimaryKey;
 import com.activeandroid.annotation.Table;
+import com.activeandroid.exception.PrimaryKeyNotFoundException;
 import com.activeandroid.util.Log;
 import com.activeandroid.util.ReflectionUtils;
 
@@ -38,6 +42,8 @@ public final class TableInfo {
 	private String mTableName;
 
 	private Map<Field, String> mColumnNames = new HashMap<Field, String>();
+    private LinkedList<Field> mPrimaryKeys;
+    private LinkedList<Field> mForeignKeys = new LinkedList<Field>();
 
 	//////////////////////////////////////////////////////////////////////////////////////
 	// CONSTRUCTORS
@@ -74,7 +80,20 @@ public final class TableInfo {
                 }
 				mColumnNames.put(field, fieldName);
 			}
+
+            if(field.isAnnotationPresent(PrimaryKey.class) &&
+                    field.getAnnotation(PrimaryKey.class).type().equals(PrimaryKey.Type.DEFAULT)){
+                mPrimaryKeys.add(field);
+            }
+
+            if(field.isAnnotationPresent(ForeignKey.class)){
+                mForeignKeys.add(field);
+            }
 		}
+
+        if(mPrimaryKeys.isEmpty()){
+            throw new PrimaryKeyNotFoundException("Table: " + mTableName + " must define a primary key");
+        }
 	}
 
 	//////////////////////////////////////////////////////////////////////////////////////
@@ -116,4 +135,12 @@ public final class TableInfo {
 
 		return null;
 	}
+
+    public LinkedList<Field> getForeignKeys() {
+        return mForeignKeys;
+    }
+
+    public LinkedList<Field> getPrimaryKeys() {
+        return mPrimaryKeys;
+    }
 }

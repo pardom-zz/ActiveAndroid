@@ -17,6 +17,7 @@ package com.activeandroid.util;
  */
 
 import android.database.Cursor;
+import android.database.DatabaseUtils;
 import android.os.Build;
 import android.text.TextUtils;
 
@@ -24,6 +25,8 @@ import com.activeandroid.Cache;
 import com.activeandroid.Model;
 import com.activeandroid.TableInfo;
 import com.activeandroid.annotation.Column;
+import com.activeandroid.annotation.ForeignKey;
+import com.activeandroid.annotation.PrimaryKey;
 import com.activeandroid.serializer.TypeSerializer;
 
 import java.lang.reflect.Constructor;
@@ -118,6 +121,34 @@ public final class SQLiteUtils {
 			}
 		}
 
+        List<Field> primaryColumns = tableInfo.getPrimaryKeys();
+        List<Field> foreignColumns = tableInfo.getForeignKeys();
+        if(!primaryColumns.isEmpty()){
+            StringBuilder builder = new StringBuilder("PRIMARY KEY(");
+
+
+            for(int i  =0 ; i< primaryColumns.size(); i++){
+                builder.append(tableInfo.getColumnName(primaryColumns.get(i)));
+                if(i< primaryColumns.size()-1){
+                    builder.append(", ");
+                }
+            }
+
+            builder.append(")");
+
+            definitions.add(builder.toString());
+        }
+
+        for(int i = 0; i < foreignColumns.size(); i++){
+            final Field column = foreignColumns.get(i);
+            ForeignKey foreignKey = column.getAnnotation(ForeignKey.class);
+            StringBuilder forDef = new StringBuilder("FOREIGN KEY(");
+            forDef.append(tableInfo.getColumnName(column)).append(") REFERENCES ").append(foreignKey.value());
+
+            definitions.add(forDef.toString());
+        }
+
+
 		return String.format("CREATE TABLE IF NOT EXISTS %s (%s);", tableInfo.getTableName(),
 				TextUtils.join(", ", definitions));
 	}
@@ -158,8 +189,11 @@ public final class SQLiteUtils {
 				definition.append(")");
 			}
 
-			if (name.equals("Id")) {
-				definition.append(" PRIMARY KEY AUTOINCREMENT");
+			if (field.isAnnotationPresent(PrimaryKey.class)) {
+                PrimaryKey primaryKey = field.getAnnotation(PrimaryKey.class);
+                if(primaryKey.type().equals(PrimaryKey.Type.AUTO_INCREMENT)){
+				    definition.append(" PRIMARY KEY AUTOINCREMENT");
+                }
 			}
 
 			if (column.notNull()) {
@@ -170,16 +204,6 @@ public final class SQLiteUtils {
 			if (column.unique()) {
 				definition.append(" UNIQUE ON CONFLICT ");
 				definition.append(column.onUniqueConflict().toString());
-			}
-
-			if (FOREIGN_KEYS_SUPPORTED && ReflectionUtils.isModel(type)) {
-				definition.append(" REFERENCES ");
-				definition.append(Cache.getTableInfo((Class<? extends Model>) type).getTableName());
-				definition.append("(Id)");
-				definition.append(" ON DELETE ");
-				definition.append(column.onDelete().toString().replace("_", " "));
-				definition.append(" ON UPDATE ");
-				definition.append(column.onUpdate().toString().replace("_", " "));
 			}
 		}
 		else {
@@ -216,4 +240,48 @@ public final class SQLiteUtils {
 
 		return entities;
 	}
+
+    public static String getWhereStatement(Model model, TableInfo tableInfo){
+        List<Field> fields = new ArrayList<Field>();
+        ArrayList<Field> primaryColumn = new ArrayList<Field>();
+        fields = ReflectionUtils.getAllFields(fields, model.getClass());
+
+        for(Field field : fields){
+            if(field.isAnnotationPresent(PrimaryKey.class)){
+                primaryColumn.add(field);
+            }
+        }
+
+        final StringBuilder where = new StringBuilder();
+        for(int i = 0 ; i < primaryColumn.size(); i++){
+            final Field field = primaryColumn.get(i);
+            where.append(tableInfo.getColumnName(field));
+            where.append("=?");
+
+            if(i < primaryColumn.size()-1){
+                where.append(" AND ");
+            }
+        }
+
+        String sql = where.toString();
+
+        for(int i = 0; i < primaryColumn.size(); i++){
+            final Field field = primaryColumn.get(i);
+            field.setAccessible(true);
+            try {
+                Object object = field.get(model);
+                if(object instanceof Number){
+                    sql = sql.replaceFirst("\\?", object.toString());
+                } else {
+                    String escaped = DatabaseUtils.sqlEscapeString(object.toString());
+
+                    sql = sql.replaceFirst("\\?", escaped);
+                }
+            } catch (Throwable e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return sql;
+    }
+
 }
