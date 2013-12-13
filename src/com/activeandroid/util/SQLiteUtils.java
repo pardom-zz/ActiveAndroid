@@ -222,11 +222,7 @@ public final class SQLiteUtils {
 
 			if (cursor.moveToFirst()) {
 				do {
-					Model entity = Cache.getEntity(type, cursor.getLong(cursor.getColumnIndex("Id")));
-					if (entity == null) {
-						entity = (T) entityConstructor.newInstance();
-					}
-
+					Model entity = (T) entityConstructor.newInstance();
 					entity.loadFromCursor(cursor);
 					entities.add((T) entity);
 				}

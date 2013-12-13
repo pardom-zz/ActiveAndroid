@@ -42,7 +42,7 @@ public final class TableInfo {
 	private String mTableName;
 
 	private Map<Field, String> mColumnNames = new HashMap<Field, String>();
-    private LinkedList<Field> mPrimaryKeys;
+    private LinkedList<Field> mPrimaryKeys = new LinkedList<Field>();
     private LinkedList<Field> mForeignKeys = new LinkedList<Field>();
 
 	//////////////////////////////////////////////////////////////////////////////////////

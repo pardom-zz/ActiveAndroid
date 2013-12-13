@@ -20,7 +20,6 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
-import com.activeandroid.annotation.Column;
 import com.activeandroid.annotation.PrimaryKey;
 import com.activeandroid.content.ContentProvider;
 import com.activeandroid.query.Delete;
@@ -39,9 +38,6 @@ public abstract class Model {
 	// PRIVATE MEMBERS
 	//////////////////////////////////////////////////////////////////////////////////////
 
-	@Column(name = "Id")
-	private Long mId = null;
-
 	private TableInfo mTableInfo;
 
 	//////////////////////////////////////////////////////////////////////////////////////
@@ -52,20 +48,24 @@ public abstract class Model {
 		mTableInfo = Cache.getTableInfo(getClass());
 	}
 
+    private long mId;
+
 	//////////////////////////////////////////////////////////////////////////////////////
 	// PUBLIC METHODS
 	//////////////////////////////////////////////////////////////////////////////////////
 
-	public final Long getId() {
-		return mId;
-	}
+    /**
+     * Use This method to return the values of your primary key
+     * @return
+     */
+	public abstract String getId();
 
 	public final void delete() {
-		Cache.openDatabase().delete(mTableInfo.getTableName(), "Id=?", new String[] { getId().toString() });
+		Cache.openDatabase().delete(mTableInfo.getTableName(), SQLiteUtils.getWhereStatement(this, mTableInfo), null);
 		Cache.removeEntity(this);
 
 		Cache.getContext().getContentResolver()
-				.notifyChange(ContentProvider.createUri(mTableInfo.getType(), mId), null);
+				.notifyChange(ContentProvider.createUri(mTableInfo.getType(), getId()), null);
 	}
 
 	public final void save() {
@@ -149,7 +149,7 @@ public abstract class Model {
 		}
 
         if(!exists()){
-		    long mId = db.insert(mTableInfo.getTableName(), null, values);
+		     mId = db.insert(mTableInfo.getTableName(), null, values);
 
             for(Field field : mTableInfo.getPrimaryKeys()){
                 if(field.isAnnotationPresent(PrimaryKey.class) &&
@@ -163,11 +163,11 @@ public abstract class Model {
                 }
             }
         } else {
-			db.update(mTableInfo.getTableName(), values, SQLiteUtils.getWhereStatement(this, mTableInfo), null);
+			mId = db.update(mTableInfo.getTableName(), values, SQLiteUtils.getWhereStatement(this, mTableInfo), null);
 		}
 
 		Cache.getContext().getContentResolver()
-				.notifyChange(ContentProvider.createUri(mTableInfo.getType(), mId), null);
+				.notifyChange(ContentProvider.createUri(mTableInfo.getType(), getId()), null);
 	}
 
     public boolean exists(){
@@ -243,17 +243,6 @@ public abstract class Model {
 				else if (fieldType.equals(Byte[].class) || fieldType.equals(byte[].class)) {
 					value = cursor.getBlob(columnIndex);
 				}
-				else if (ReflectionUtils.isModel(fieldType)) {
-					final long entityId = cursor.getLong(columnIndex);
-					final Class<? extends Model> entityType = (Class<? extends Model>) fieldType;
-
-					Model entity = Cache.getEntity(entityType, entityId);
-					if (entity == null) {
-						entity = new Select().from(entityType).where("Id=?", entityId).executeSingle();
-					}
-
-					value = entity;
-				}
 				else if (ReflectionUtils.isSubclassOf(fieldType, Enum.class)) {
 					@SuppressWarnings("rawtypes")
 					final Class<? extends Enum> enumType = (Class<? extends Enum>) fieldType;
@@ -281,7 +270,7 @@ public abstract class Model {
 			}
 		}
 
-		if (mId != null) {
+		if (getId() != null) {
 			Cache.addEntity(this);
 		}
 	}
@@ -303,11 +292,7 @@ public abstract class Model {
 		return mTableInfo.getTableName() + "@" + getId();
 	}
 
-	@Override
-	public boolean equals(Object obj) {
-		final Model other = (Model) obj;
-
-		return this.mId != null && (this.mTableInfo.getTableName().equals(other.mTableInfo.getTableName()))
-				&& (this.mId.equals(other.mId));
-	}
+    public long getRowId(){
+        return mId;
+    }
 }
