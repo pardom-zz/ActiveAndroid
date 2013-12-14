@@ -17,17 +17,23 @@ package com.activeandroid.app;
  */
 
 import com.activeandroid.ActiveAndroid;
+import com.activeandroid.runtime.DBRequestQueue;
 
 public class Application extends android.app.Application {
 	@Override
 	public void onCreate() {
 		super.onCreate();
 		ActiveAndroid.initialize(this);
+
+        //Start the DB request queue
+        DBRequestQueue.getSharedInstance();
 	}
 	
 	@Override
 	public void onTerminate() {
 		super.onTerminate();
+
+        DBRequestQueue.getSharedInstance().quit();
 		ActiveAndroid.dispose();
 	}
 }
