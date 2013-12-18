@@ -175,6 +175,16 @@ public abstract class Model {
         return model!=null;
     }
 
+    /**
+     * Checks to see if object exists, if so, deletes it then updates itself
+     */
+    public <OBJECT_CLASS extends Model> void saveById(){
+        if(exists()){
+            delete();
+        }
+        save();
+    }
+
 	// Convenience methods
 
 	public static void delete(Class<? extends Model> type, long id) {
@@ -279,9 +289,13 @@ public abstract class Model {
 	// PROTECTED METHODS
 	//////////////////////////////////////////////////////////////////////////////////////
 
-	protected final <T extends Model> List<T> getMany(Class<T> type, String foreignKey) {
-		return new Select().from(type).where(Cache.getTableName(type) + "." + foreignKey + "=?", getId()).execute();
-	}
+    protected final <T extends Model> List<T> getManyFromField(Class<T> type,Object field, String foreignKey){
+        return new Select().from(type).where(Cache.getTableName(type) + "." + foreignKey + "=?", field).execute();
+    }
+
+    protected final <T extends Model> List<T> getManyFromFieldWithSort(Class<T> type,Object field, String foreignKey, String sort){
+        return new Select().from(type).orderBy(sort).where(Cache.getTableName(type) + "." + foreignKey + "=?", field).execute();
+    }
 
 	//////////////////////////////////////////////////////////////////////////////////////
 	// OVERRIDEN METHODS

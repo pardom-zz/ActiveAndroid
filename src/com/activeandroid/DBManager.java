@@ -324,15 +324,10 @@ public abstract class DBManager<OBJECT_CLASS extends Model> {
     public boolean fetchObject(final Object uid, final ObjectReceiver<OBJECT_CLASS> objectReceiver){
         OBJECT_CLASS object = getObjectById(uid);
         if(object==null){
-            processOnBackground(new DBRequest(DBRequest.PRIORITY_HIGH, "fetch") {
+            processOnForeground(new Runnable() {
                 @Override
                 public void run() {
-                    processOnForeground(new Runnable() {
-                        @Override
-                        public void run() {
-                            requestObject(uid, objectReceiver);
-                        }
-                    });
+                    requestObject(uid, objectReceiver);
                 }
             });
             return false;
@@ -348,4 +343,8 @@ public abstract class DBManager<OBJECT_CLASS extends Model> {
      * @param objectReceiver
      */
     public abstract void requestObject(final Object uid, final ObjectReceiver<OBJECT_CLASS> objectReceiver);
+
+    public Class<OBJECT_CLASS> getObjectClass() {
+        return mObjectClass;
+    }
 }
