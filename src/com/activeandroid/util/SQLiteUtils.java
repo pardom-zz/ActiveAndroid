@@ -24,6 +24,7 @@ import com.activeandroid.Cache;
 import com.activeandroid.Model;
 import com.activeandroid.TableInfo;
 import com.activeandroid.annotation.Column;
+import com.activeandroid.annotation.Column.ConflictAction;
 import com.activeandroid.serializer.TypeSerializer;
 
 import java.lang.reflect.Constructor;
@@ -31,6 +32,7 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 
 public final class SQLiteUtils {
 	//////////////////////////////////////////////////////////////////////////////////////
@@ -77,6 +79,13 @@ public final class SQLiteUtils {
 	};
 
 	//////////////////////////////////////////////////////////////////////////////////////
+	// PRIVATE MEMBERS
+	//////////////////////////////////////////////////////////////////////////////////////
+
+	private static HashMap<String, List<String>> sUniqueGroupMap;
+	private static HashMap<String, ConflictAction> sOnUniqueConflictsMap;
+
+	//////////////////////////////////////////////////////////////////////////////////////
 	// PUBLIC METHODS
 	//////////////////////////////////////////////////////////////////////////////////////
 
@@ -107,6 +116,58 @@ public final class SQLiteUtils {
 	}
 
 	// Database creation
+
+	public static ArrayList<String> createUniqueDefinition(TableInfo tableInfo) {
+		final ArrayList<String> definitions = new ArrayList<String>();
+		sUniqueGroupMap = new HashMap<String, List<String>>();
+		sOnUniqueConflictsMap = new HashMap<String, ConflictAction>();
+
+		for (Field field : tableInfo.getFields()) {
+			createUniqueColumnDefinition(tableInfo, field);
+		}
+
+		if (sUniqueGroupMap.isEmpty()) {
+			return definitions;
+		}
+
+		Set<String> keySet = sUniqueGroupMap.keySet();
+		for (String key : keySet) {
+			List<String> group = sUniqueGroupMap.get(key);
+			ConflictAction conflictAction = sOnUniqueConflictsMap.get(key);
+
+			definitions.add(String.format("UNIQUE (%s) ON CONFLICT %s",
+					TextUtils.join(", ", group), conflictAction.toString()));
+		}
+
+		return definitions;
+	}
+
+	public static void createUniqueColumnDefinition(TableInfo tableInfo, Field field) {
+		final String name = tableInfo.getColumnName(field);
+		final Column column = field.getAnnotation(Column.class);
+
+		String[] groups = column.uniqueGroups();
+		ConflictAction[] conflictActions = column.onUniqueConflicts();
+		if (groups.length != conflictActions.length)
+			return;
+
+		for (int i = 0; i < groups.length; i++) {
+			String group = groups[i];
+			ConflictAction conflictAction = conflictActions[i];
+
+			if (group.isEmpty())
+				continue;
+
+			List<String> list = sUniqueGroupMap.get(group);
+			if (list == null) {
+				list = new ArrayList<String>();
+			}
+			list.add(name);
+
+			sUniqueGroupMap.put(group, list);
+			sOnUniqueConflictsMap.put(group, conflictAction);
+		}
+	}
 
 	public static String createIndexDefinition(TableInfo tableInfo) {
 		final ArrayList<String> definitions = new ArrayList<String>();
@@ -149,6 +210,8 @@ public final class SQLiteUtils {
 				definitions.add(definition);
 			}
 		}
+
+		definitions.addAll(createUniqueDefinition(tableInfo));
 
 		return String.format("CREATE TABLE IF NOT EXISTS %s (%s);", tableInfo.getTableName(),
 				TextUtils.join(", ", definitions));

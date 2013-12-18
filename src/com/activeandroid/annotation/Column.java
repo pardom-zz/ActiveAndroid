@@ -48,5 +48,28 @@ public @interface Column {
 
 	public ConflictAction onUniqueConflict() default ConflictAction.FAIL;
 
+	/*
+	 * If set uniqueGroups = {"group_name"}, we will create a table constraint with group.
+	 *
+	 * Example:
+	 *
+	 * @Table(name = "table_name")
+	 * public class Table extends Model {
+	 *     @Column(name = "member1", uniqueGroups = {"group1"}, onUniqueConflicts = {ConflictAction.FAIL})
+	 *     public String member1;
+	 *
+	 *     @Column(name = "member2", uniqueGroups = {"group1", "group2"}, onUniqueConflicts = {ConflictAction.FAIL, ConflictAction.IGNORE})
+	 *     public String member2;
+	 *
+	 *     @Column(name = "member3", uniqueGroups = {"group2"}, onUniqueConflicts = {ConflictAction.IGNORE})
+	 *     public String member3;
+	 * }
+	 *
+	 * CREATE TABLE table_name (..., UNIQUE (member1, member2) ON CONFLICT FAIL, UNIQUE (member2, member3) ON CONFLICT IGNORE)
+	 */
+	public String[] uniqueGroups() default {};
+
+	public ConflictAction[] onUniqueConflicts() default {};
+
 	public boolean index() default false;
 }
