@@ -170,12 +170,15 @@ public abstract class Model {
 	// Model population
 
 	public final void loadFromCursor(Cursor cursor) {
+		int sizeOfColumnNotFound = 0;
+
 		for (Field field : mTableInfo.getFields()) {
 			final String fieldName = mTableInfo.getColumnName(field);
 			Class<?> fieldType = field.getType();
 			final int columnIndex = cursor.getColumnIndex(fieldName);
 
 			if (columnIndex < 0) {
+				sizeOfColumnNotFound++;
 				continue;
 			}
 
@@ -263,7 +266,7 @@ public abstract class Model {
 			}
 		}
 
-		if (mId != null) {
+		if (mId != null && sizeOfColumnNotFound == 0) {
 			Cache.addEntity(this);
 		}
 	}
