@@ -27,6 +27,8 @@ public abstract class DBManager<OBJECT_CLASS extends Model> {
 
     protected Class<OBJECT_CLASS> mObjectClass;
 
+    private String mIdField = "uid";
+
     /**
      * Runs all of the UI threaded requests
      */
@@ -38,6 +40,11 @@ public abstract class DBManager<OBJECT_CLASS extends Model> {
      */
     public DBManager(Class<OBJECT_CLASS> classClass){
         mObjectClass = classClass;
+    }
+
+    public DBManager(Class<OBJECT_CLASS> classClass, String idField){
+        mObjectClass = classClass;
+        mIdField = idField;
     }
 
     /**
@@ -60,7 +67,7 @@ public abstract class DBManager<OBJECT_CLASS extends Model> {
      * Runs UI operations in the handler
      * @param runnable
      */
-    protected void processOnForeground(Runnable runnable){
+    protected synchronized void processOnForeground(Runnable runnable){
         mRequestHandler.post(runnable);
     }
 
@@ -265,7 +272,7 @@ public abstract class DBManager<OBJECT_CLASS extends Model> {
      * @return
      */
     public OBJECT_CLASS getObjectById(Object uid){
-        return getObjectByColumnValue("uid", uid);
+        return getObjectByColumnValue(mIdField, uid);
     }
 
     /**
