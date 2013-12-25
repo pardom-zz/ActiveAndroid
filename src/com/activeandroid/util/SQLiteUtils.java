@@ -237,6 +237,44 @@ public final class SQLiteUtils {
 		return entities;
 	}
 
+    /**
+     * Returns the where statement with primary keys with no values
+     * @param tableInfo
+     * @return
+     */
+    public static String getWhereStatement(Class<? extends Model> modelClass, TableInfo tableInfo){
+        List<Field> fields = new ArrayList<Field>();
+        ArrayList<Field> primaryColumn = new ArrayList<Field>();
+        fields = ReflectionUtils.getAllFields(fields, modelClass);
+
+        for(Field field : fields){
+            if(field.isAnnotationPresent(PrimaryKey.class)){
+                primaryColumn.add(field);
+            }
+        }
+
+        final StringBuilder where = new StringBuilder();
+        for(int i = 0 ; i < primaryColumn.size(); i++){
+            final Field field = primaryColumn.get(i);
+            where.append(tableInfo.getColumnName(field));
+            where.append("=?");
+
+            if(i < primaryColumn.size()-1){
+                where.append(" AND ");
+            }
+        }
+
+        String sql = where.toString();
+
+        return sql;
+    }
+
+    /**
+     * Returns the where statement with primary keys and values filled in
+     * @param model
+     * @param tableInfo
+     * @return
+     */
     public static String getWhereStatement(Model model, TableInfo tableInfo){
         List<Field> fields = new ArrayList<Field>();
         ArrayList<Field> primaryColumn = new ArrayList<Field>();

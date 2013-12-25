@@ -8,6 +8,7 @@ import com.activeandroid.receiver.CollectionReceiver;
 import com.activeandroid.receiver.ObjectReceiver;
 import com.activeandroid.runtime.DBRequest;
 import com.activeandroid.runtime.DBRequestQueue;
+import com.activeandroid.util.SQLiteUtils;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -27,8 +28,6 @@ public abstract class DBManager<OBJECT_CLASS extends Model> {
 
     protected Class<OBJECT_CLASS> mObjectClass;
 
-    private String mIdField = "uid";
-
     /**
      * Runs all of the UI threaded requests
      */
@@ -40,11 +39,6 @@ public abstract class DBManager<OBJECT_CLASS extends Model> {
      */
     public DBManager(Class<OBJECT_CLASS> classClass){
         mObjectClass = classClass;
-    }
-
-    public DBManager(Class<OBJECT_CLASS> classClass, String idField){
-        mObjectClass = classClass;
-        mIdField = idField;
     }
 
     /**
@@ -267,12 +261,12 @@ public abstract class DBManager<OBJECT_CLASS extends Model> {
     }
 
     /**
-     * If object has column uid defined, this will get the object
+     * This will get the where statement for this object, the amount of ids passed must match the primary key column size
      * @param uid
      * @return
      */
-    public OBJECT_CLASS getObjectById(Object uid){
-        return getObjectByColumnValue(mIdField, uid);
+    public OBJECT_CLASS getObjectById(Object...ids){
+        return new Select().from(mObjectClass).where(SQLiteUtils.getWhereStatement(mObjectClass, Cache.getTableInfo(mObjectClass)), ids).executeSingle();
     }
 
     /**
@@ -324,17 +318,18 @@ public abstract class DBManager<OBJECT_CLASS extends Model> {
 
     /**
      * Will return the object if its within the DB, if not, it will call upon an object requester to get the data from the API
-     * @param uid
+     *
      * @param objectReceiver
+     * @param uid
      * @return true if the object exists in the DB, otherwise its on a BG thread
      */
-    public boolean fetchObject(final Object uid, final ObjectReceiver<OBJECT_CLASS> objectReceiver){
+    public boolean fetchObject(final ObjectReceiver<OBJECT_CLASS> objectReceiver, final Object... uid){
         OBJECT_CLASS object = getObjectById(uid);
         if(object==null){
             processOnForeground(new Runnable() {
                 @Override
                 public void run() {
-                    requestObject(uid, objectReceiver);
+                    requestObject(objectReceiver);
                 }
             });
             return false;
@@ -346,10 +341,10 @@ public abstract class DBManager<OBJECT_CLASS extends Model> {
 
     /**
      * Implement this method to perform a request if the object does not exist in the DB
-     * @param uid
      * @param objectReceiver
+     * @param uid
      */
-    public abstract void requestObject(final Object uid, final ObjectReceiver<OBJECT_CLASS> objectReceiver);
+    public abstract void requestObject(final ObjectReceiver<OBJECT_CLASS> objectReceiver, final Object... uid);
 
     public Class<OBJECT_CLASS> getObjectClass() {
         return mObjectClass;
