@@ -55,7 +55,8 @@ public abstract class Model {
 	//////////////////////////////////////////////////////////////////////////////////////
 
     /**
-     * Use This method to return the values of your primary key
+     * Use This method to return the values of your primary key, must be separated by comma delimiter in order of declaration
+     * Also each object thats instance of {@link java.lang.Number} must be DataBaseUtils.sqlEscapeString(object.toString)
      * @return
      */
 	public abstract String getId();
@@ -252,6 +253,17 @@ public abstract class Model {
 				}
 				else if (fieldType.equals(Byte[].class) || fieldType.equals(byte[].class)) {
 					value = cursor.getBlob(columnIndex);
+				}
+				else if (ReflectionUtils.isModel(fieldType)) {
+					final String entityId = cursor.getString(columnIndex);
+					final Class<? extends Model> entityType = (Class<? extends Model>) fieldType;
+
+					Model entity = Cache.getEntity(entityType, entityId);
+					if (entity == null) {
+						entity = new Select().from(entityType).where(SQLiteUtils.getWhereFromEntityId(entityType, entityId)).executeSingle();
+					}
+
+					value = entity;
 				}
 				else if (ReflectionUtils.isSubclassOf(fieldType, Enum.class)) {
 					@SuppressWarnings("rawtypes")

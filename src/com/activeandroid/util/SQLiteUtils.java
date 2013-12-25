@@ -318,4 +318,13 @@ public final class SQLiteUtils {
         return sql;
     }
 
+    public static String getWhereFromEntityId(Class<? extends Model> model, String entityId){
+        String[] primaries = entityId.split(",");
+        String whereString = getWhereStatement(model, Cache.getTableInfo(model));
+        for(String primary: primaries){
+            whereString = whereString.replaceFirst("\\?", primary);
+        }
+        return whereString;
+    }
+
 }
