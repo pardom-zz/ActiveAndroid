@@ -1,4 +1,4 @@
-package com.activeandroid.receiver;
+package com.activeandroid.interfaces;
 
 /**
  * Created by andrewgrosner

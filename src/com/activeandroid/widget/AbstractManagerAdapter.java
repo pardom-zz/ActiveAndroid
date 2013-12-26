@@ -1,16 +1,10 @@
 package com.activeandroid.widget;
 
-import android.database.Cursor;
-import android.view.View;
-import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 
-import com.activeandroid.Cache;
-import com.activeandroid.DBManager;
+import com.activeandroid.manager.DBManager;
 import com.activeandroid.Model;
-import com.activeandroid.query.From;
-import com.activeandroid.receiver.CollectionReceiver;
-import com.activeandroid.util.Log;
+import com.activeandroid.interfaces.CollectionReceiver;
 
 import java.util.List;
 
