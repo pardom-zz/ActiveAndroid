@@ -329,7 +329,7 @@ public abstract class DBManager<OBJECT_CLASS extends Model> {
             processOnForeground(new Runnable() {
                 @Override
                 public void run() {
-                    requestObject(objectReceiver);
+                    requestObject(objectReceiver, uid);
                 }
             });
             return false;

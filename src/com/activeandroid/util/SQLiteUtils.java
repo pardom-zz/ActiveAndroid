@@ -27,6 +27,7 @@ import com.activeandroid.TableInfo;
 import com.activeandroid.annotation.Column;
 import com.activeandroid.annotation.ForeignKey;
 import com.activeandroid.annotation.PrimaryKey;
+import com.activeandroid.exception.PrimaryKeyCannotBeNullException;
 import com.activeandroid.serializer.TypeSerializer;
 
 import java.lang.reflect.Constructor;
@@ -304,7 +305,9 @@ public final class SQLiteUtils {
             field.setAccessible(true);
             try {
                 Object object = field.get(model);
-                if(object instanceof Number){
+                if(object==null){
+                    throw new PrimaryKeyCannotBeNullException("The primary key: " + field.getName() + " cannot be null.");
+                } else if(object instanceof Number){
                     sql = sql.replaceFirst("\\?", object.toString());
                 } else {
                     String escaped = DatabaseUtils.sqlEscapeString(object.toString());

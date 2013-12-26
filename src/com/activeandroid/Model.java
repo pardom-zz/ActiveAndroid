@@ -20,6 +20,7 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
+import com.activeandroid.annotation.ForeignKey;
 import com.activeandroid.annotation.PrimaryKey;
 import com.activeandroid.content.ContentProvider;
 import com.activeandroid.query.Delete;
@@ -74,7 +75,7 @@ public abstract class Model {
 		final ContentValues values = new ContentValues();
 
 		for (Field field : mTableInfo.getFields()) {
-			final String fieldName = mTableInfo.getColumnName(field);
+			String fieldName = mTableInfo.getColumnName(field);
 			Class<?> fieldType = field.getType();
 
 			field.setAccessible(true);
@@ -134,7 +135,11 @@ public abstract class Model {
 				else if (fieldType.equals(Byte[].class) || fieldType.equals(byte[].class)) {
 					values.put(fieldName, (byte[]) value);
 				}
-				else if (ReflectionUtils.isModel(fieldType)) {
+				else if (field.isAnnotationPresent(ForeignKey.class) && ReflectionUtils.isModel(fieldType)) {
+                    ForeignKey key = field.getAnnotation(ForeignKey.class);
+                    if(!key.value().equals("")){
+                        fieldName = field.getAnnotation(ForeignKey.class).value();
+                    }
 					values.put(fieldName, ((Model) value).getId());
 				}
 				else if (ReflectionUtils.isSubclassOf(fieldType, Enum.class)) {
@@ -254,7 +259,7 @@ public abstract class Model {
 				else if (fieldType.equals(Byte[].class) || fieldType.equals(byte[].class)) {
 					value = cursor.getBlob(columnIndex);
 				}
-				else if (ReflectionUtils.isModel(fieldType)) {
+				else if (field.isAnnotationPresent(ForeignKey.class) && ReflectionUtils.isModel(fieldType)) {
 					final String entityId = cursor.getString(columnIndex);
 					final Class<? extends Model> entityType = (Class<? extends Model>) fieldType;
 
