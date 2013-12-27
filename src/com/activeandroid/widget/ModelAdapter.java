@@ -48,7 +48,7 @@ public class ModelAdapter<T extends Model> extends ArrayAdapter<T> {
 		T item = getItem(position);
 
 		if (item != null) {
-			return item.getId();
+			return item.id;
 		}
 		else {
 			return -1;
