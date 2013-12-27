@@ -47,4 +47,6 @@ public @interface Column {
 	public boolean unique() default false;
 
 	public ConflictAction onUniqueConflict() default ConflictAction.FAIL;
+
+	public boolean index() default false;
 }
