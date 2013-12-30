@@ -138,7 +138,7 @@ public abstract class Model {
 				else if (field.isAnnotationPresent(ForeignKey.class) && ReflectionUtils.isModel(fieldType)) {
                     ForeignKey key = field.getAnnotation(ForeignKey.class);
                     if(!key.name().equals("")){
-                        fieldName = field.getAnnotation(ForeignKey.class).name();
+                        fieldName = field.getAnnotation(ForeignKey.class).n ame();
                     }
 					values.put(fieldName, ((Model) value).getId());
 				}

@@ -32,6 +32,8 @@ import com.activeandroid.serializer.TypeSerializer;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -284,11 +286,7 @@ public final class SQLiteUtils {
         ArrayList<Field> primaryColumn = new ArrayList<Field>();
         fields = ReflectionUtils.getAllFields(fields, model.getClass());
 
-        for(Field field : fields){
-            if(field.isAnnotationPresent(PrimaryKey.class)){
-                primaryColumn.add(field);
-            }
-        }
+
 
         final StringBuilder where = new StringBuilder();
         for(int i = 0 ; i < primaryColumn.size(); i++){
@@ -327,9 +325,35 @@ public final class SQLiteUtils {
     public static String getWhereFromEntityId(Class<? extends Model> model, String entityId){
         String[] primaries = entityId.split(",");
         String whereString = getWhereStatement(model, Cache.getTableInfo(model));
-        for(String primary: primaries){
-            whereString = whereString.replaceFirst("\\?", primary);
+
+        List<Field> fields = new ArrayList<Field>();
+        fields = ReflectionUtils.getAllFields(fields, model);
+
+        ArrayList<Field> primaryColumn = new ArrayList<Field>();
+        for(Field field : fields){
+            if(field.isAnnotationPresent(PrimaryKey.class)){
+                primaryColumn.add(field);
+            }
+        }   
+
+
+        for(int i = 0; i < primaries.length; i++){
+            final Field field = primaryColumn.get(i);
+            field.setAccessible(true);
+            try {
+                Type type = ((ParameterizedType)field.getType().getGenericSuperclass()).getActualTypeArguments()[0];
+                if(type instanceof Number){
+                    whereString = whereString.replaceFirst("\\?", primaries[i]);
+                } else {
+                    String escaped = DatabaseUtils.sqlEscapeString(primaries[i]);
+
+                    whereString = whereString.replaceFirst("\\?", escaped);
+                }
+            } catch (Throwable e) {
+                throw new RuntimeException(e);
+            }
         }
+
         return whereString;
     }
 
