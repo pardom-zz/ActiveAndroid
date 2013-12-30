@@ -267,7 +267,7 @@ public abstract class DBManager<OBJECT_CLASS extends Model> {
     }
 
     /**
-     * Returns a single object with the specified column value.
+     * Returns a single object with the specified column name.
      * Useful for getting objects with a specific primary key
      * @param column
      * @param uid
@@ -278,7 +278,7 @@ public abstract class DBManager<OBJECT_CLASS extends Model> {
     }
 
     /**
-     * Returns all objects with the specified column value
+     * Returns all objects with the specified column name
      * @param column
      * @param value
      * @return

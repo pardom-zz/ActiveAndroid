@@ -137,8 +137,8 @@ public abstract class Model {
 				}
 				else if (field.isAnnotationPresent(ForeignKey.class) && ReflectionUtils.isModel(fieldType)) {
                     ForeignKey key = field.getAnnotation(ForeignKey.class);
-                    if(!key.value().equals("")){
-                        fieldName = field.getAnnotation(ForeignKey.class).value();
+                    if(!key.name().equals("")){
+                        fieldName = field.getAnnotation(ForeignKey.class).name();
                     }
 					values.put(fieldName, ((Model) value).getId());
 				}
@@ -281,7 +281,7 @@ public abstract class Model {
 					value = typeSerializer.deserialize(value);
 				}
 
-				// Set the field value
+				// Set the field name
 				if (value != null) {
 					field.set(this, value);
 				}

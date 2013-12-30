@@ -143,8 +143,11 @@ public final class SQLiteUtils {
         for(int i = 0; i < foreignColumns.size(); i++){
             final Field column = foreignColumns.get(i);
             ForeignKey foreignKey = column.getAnnotation(ForeignKey.class);
+
             StringBuilder forDef = new StringBuilder("FOREIGN KEY(");
-            forDef.append(tableInfo.getColumnName(column)).append(") REFERENCES ").append(foreignKey.value());
+            forDef.append(tableInfo.getColumnName(column)).append(") REFERENCES ")
+                    .append(Cache.getTableName((Class<? extends Model>) column.getType()))
+                    .append("(").append(foreignKey.foreignColumn()).append(")");
 
             definitions.add(forDef.toString());
         }
