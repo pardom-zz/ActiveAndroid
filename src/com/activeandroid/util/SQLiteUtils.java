@@ -344,13 +344,11 @@ public final class SQLiteUtils {
             final Field field = primaryColumn.get(i);
             field.setAccessible(true);
             try {
-                Type type = ((ParameterizedType)field.getGenericType()).getActualTypeArguments()[0];
-                if(type instanceof Number){
-                    whereString = whereString.replaceFirst("\\?", primaries[i]);
-                } else {
+                if(field.getType().isAssignableFrom(String.class)){
                     String escaped = DatabaseUtils.sqlEscapeString(primaries[i]);
-
                     whereString = whereString.replaceFirst("\\?", escaped);
+                } else {
+                    whereString = whereString.replaceFirst("\\?", primaries[i]);
                 }
             } catch (Throwable e) {
                 throw new RuntimeException(e);
