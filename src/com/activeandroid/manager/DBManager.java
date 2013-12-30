@@ -74,13 +74,6 @@ public abstract class DBManager<OBJECT_CLASS extends Model> {
      * @param inObject - object of the class defined by the manager
      */
     public OBJECT_CLASS add(OBJECT_CLASS inObject){
-        try{
-            if(inObject.exists()){
-                inObject.delete();
-            }
-        }catch (NullPointerException n){
-
-        }
         inObject.save();
         return inObject;
     }
