@@ -286,7 +286,11 @@ public final class SQLiteUtils {
         ArrayList<Field> primaryColumn = new ArrayList<Field>();
         fields = ReflectionUtils.getAllFields(fields, model.getClass());
 
-
+        for(Field field : fields){
+            if(field.isAnnotationPresent(PrimaryKey.class)){
+                primaryColumn.add(field);
+            }
+        }
 
         final StringBuilder where = new StringBuilder();
         for(int i = 0 ; i < primaryColumn.size(); i++){
