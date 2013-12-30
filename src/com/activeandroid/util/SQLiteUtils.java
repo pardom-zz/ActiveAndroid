@@ -344,7 +344,7 @@ public final class SQLiteUtils {
             final Field field = primaryColumn.get(i);
             field.setAccessible(true);
             try {
-                Type type = ((ParameterizedType)field.getType().getGenericSuperclass()).getActualTypeArguments()[0];
+                Type type = ((ParameterizedType)field.getGenericType()).getActualTypeArguments()[0];
                 if(type instanceof Number){
                     whereString = whereString.replaceFirst("\\?", primaries[i]);
                 } else {
