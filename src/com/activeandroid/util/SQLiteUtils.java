@@ -334,8 +334,7 @@ public final class SQLiteUtils {
             if(field.isAnnotationPresent(PrimaryKey.class)){
                 primaryColumn.add(field);
             }
-        }   
-
+        }
 
         for(int i = 0; i < primaries.length; i++){
             final Field field = primaryColumn.get(i);
