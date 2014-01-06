@@ -38,7 +38,11 @@ public abstract class Model {
 	//////////////////////////////////////////////////////////////////////////////////////
 
 	@Column(name = "Id")
-	private Long mId = null;
+	public Long id = null;
+
+    // This is the ID, that is currently stored in the database. By keeping the id redundant,
+    // it is possible to change the Id of an entity.
+    private Long mPersistedId = null;
 
 	private TableInfo mTableInfo;
 
@@ -54,16 +58,20 @@ public abstract class Model {
 	// PUBLIC METHODS
 	//////////////////////////////////////////////////////////////////////////////////////
 
-	public final Long getId() {
-		return mId;
-	}
+    public final Long getId() {
+        return id;
+    }
+
+    public final Long getPersistedId() {
+        return mPersistedId;
+    }
 
 	public final void delete() {
-		Cache.openDatabase().delete(mTableInfo.getTableName(), "Id=?", new String[] { getId().toString() });
+		Cache.openDatabase().delete(mTableInfo.getTableName(), "Id=?", new String[]{mPersistedId.toString()});
 		Cache.removeEntity(this);
 
 		Cache.getContext().getContentResolver()
-				.notifyChange(ContentProvider.createUri(mTableInfo.getType(), mId), null);
+				.notifyChange(ContentProvider.createUri(mTableInfo.getType(), mPersistedId), null);
 	}
 
 	public final void save() {
@@ -132,7 +140,7 @@ public abstract class Model {
 					values.put(fieldName, (byte[]) value);
 				}
 				else if (ReflectionUtils.isModel(fieldType)) {
-					values.put(fieldName, ((Model) value).getId());
+					values.put(fieldName, ((Model) value).mPersistedId);
 				}
 				else if (ReflectionUtils.isSubclassOf(fieldType, Enum.class)) {
 					values.put(fieldName, ((Enum<?>) value).name());
@@ -146,15 +154,21 @@ public abstract class Model {
 			}
 		}
 
-		if (mId == null) {
-			mId = db.insert(mTableInfo.getTableName(), null, values);
+		if (mPersistedId == null) {
+            mPersistedId = db.insert(mTableInfo.getTableName(), null, values);
+            id = mPersistedId;
 		}
 		else {
-			db.update(mTableInfo.getTableName(), values, "Id=" + mId, null);
+			db.update(mTableInfo.getTableName(), values, "Id=" + mPersistedId, null);
+
+            // The Id may has been updated, so we need to update mPersistedId and the Cache, as
+            // it stores Entities with their corresponding Ids.
+            Cache.updateEntityId(this, mPersistedId);
+            mPersistedId = id;
 		}
 
 		Cache.getContext().getContentResolver()
-				.notifyChange(ContentProvider.createUri(mTableInfo.getType(), mId), null);
+				.notifyChange(ContentProvider.createUri(mTableInfo.getType(), mPersistedId), null);
 	}
 
 	// Convenience methods
@@ -263,7 +277,8 @@ public abstract class Model {
 			}
 		}
 
-		if (mId != null) {
+		if (id != null) {
+            mPersistedId = id;
 			Cache.addEntity(this);
 		}
 	}
@@ -273,7 +288,7 @@ public abstract class Model {
 	//////////////////////////////////////////////////////////////////////////////////////
 
 	protected final <T extends Model> List<T> getMany(Class<T> type, String foreignKey) {
-		return new Select().from(type).where(Cache.getTableName(type) + "." + foreignKey + "=?", getId()).execute();
+		return new Select().from(type).where(Cache.getTableName(type) + "." + foreignKey + "=?", mPersistedId).execute();
 	}
 
 	//////////////////////////////////////////////////////////////////////////////////////
@@ -282,14 +297,14 @@ public abstract class Model {
 
 	@Override
 	public String toString() {
-		return mTableInfo.getTableName() + "@" + getId();
+		return mTableInfo.getTableName() + "@" + id;
 	}
 
 	@Override
 	public boolean equals(Object obj) {
 		final Model other = (Model) obj;
 
-		return this.mId != null && (this.mTableInfo.getTableName().equals(other.mTableInfo.getTableName()))
-				&& (this.mId.equals(other.mId));
+		return id != null && (this.mTableInfo.getTableName().equals(other.mTableInfo.getTableName()))
+				&& (id.equals(other.id));
 	}
 }

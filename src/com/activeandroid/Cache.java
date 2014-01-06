@@ -119,7 +119,7 @@ public final class Cache {
 	}
 
 	public static String getIdentifier(Model entity) {
-		return getIdentifier(entity.getClass(), entity.getId());
+		return getIdentifier(entity.getClass(), entity.getPersistedId());
 	}
 
 	public static synchronized void addEntity(Model entity) {
@@ -129,6 +129,12 @@ public final class Cache {
 	public static synchronized Model getEntity(Class<? extends Model> type, long id) {
 		return sEntities.get(getIdentifier(type, id));
 	}
+
+    public static synchronized void updateEntityId(Model entity, long previousId) {
+        if (sEntities.remove(getIdentifier(entity.getClass(), previousId)) != null) {
+            sEntities.put(getIdentifier(entity), entity);
+        }
+    }
 
 	public static synchronized void removeEntity(Model entity) {
 		sEntities.remove(getIdentifier(entity));
