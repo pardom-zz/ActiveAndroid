@@ -20,13 +20,15 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
-import com.activeandroid.annotation.Column;
+import com.activeandroid.annotation.ForeignKey;
+import com.activeandroid.annotation.PrimaryKey;
 import com.activeandroid.content.ContentProvider;
 import com.activeandroid.query.Delete;
 import com.activeandroid.query.Select;
 import com.activeandroid.serializer.TypeSerializer;
 import com.activeandroid.util.Log;
 import com.activeandroid.util.ReflectionUtils;
+import com.activeandroid.util.SQLiteUtils;
 
 import java.lang.reflect.Field;
 import java.util.List;
@@ -36,9 +38,6 @@ public abstract class Model {
 	//////////////////////////////////////////////////////////////////////////////////////
 	// PRIVATE MEMBERS
 	//////////////////////////////////////////////////////////////////////////////////////
-
-	@Column(name = "Id")
-	private Long mId = null;
 
 	private TableInfo mTableInfo;
 
@@ -50,20 +49,25 @@ public abstract class Model {
 		mTableInfo = Cache.getTableInfo(getClass());
 	}
 
+    private long mId;
+
 	//////////////////////////////////////////////////////////////////////////////////////
 	// PUBLIC METHODS
 	//////////////////////////////////////////////////////////////////////////////////////
 
-	public final Long getId() {
-		return mId;
-	}
+    /**
+     * Use This method to return the values of your primary key, must be separated by comma delimiter in order of declaration
+     * Also each object thats instance of {@link java.lang.Number} must be DataBaseUtils.sqlEscapeString(object.toString)
+     * @return
+     */
+	public abstract String getId();
 
 	public final void delete() {
-		Cache.openDatabase().delete(mTableInfo.getTableName(), "Id=?", new String[] { getId().toString() });
+		Cache.openDatabase().delete(mTableInfo.getTableName(), SQLiteUtils.getWhereStatement(this, mTableInfo), null);
 		Cache.removeEntity(this);
 
 		Cache.getContext().getContentResolver()
-				.notifyChange(ContentProvider.createUri(mTableInfo.getType(), mId), null);
+				.notifyChange(ContentProvider.createUri(mTableInfo.getType(), getId()), null);
 	}
 
 	public final void save() {
@@ -71,7 +75,7 @@ public abstract class Model {
 		final ContentValues values = new ContentValues();
 
 		for (Field field : mTableInfo.getFields()) {
-			final String fieldName = mTableInfo.getColumnName(field);
+			String fieldName = mTableInfo.getColumnName(field);
 			Class<?> fieldType = field.getType();
 
 			field.setAccessible(true);
@@ -131,7 +135,11 @@ public abstract class Model {
 				else if (fieldType.equals(Byte[].class) || fieldType.equals(byte[].class)) {
 					values.put(fieldName, (byte[]) value);
 				}
-				else if (ReflectionUtils.isModel(fieldType)) {
+				else if (field.isAnnotationPresent(ForeignKey.class) && ReflectionUtils.isModel(fieldType)) {
+                    ForeignKey key = field.getAnnotation(ForeignKey.class);
+                    if(!key.name().equals("")){
+                        fieldName = field.getAnnotation(ForeignKey.class).name();
+                    }
 					values.put(fieldName, ((Model) value).getId());
 				}
 				else if (ReflectionUtils.isSubclassOf(fieldType, Enum.class)) {
@@ -146,16 +154,42 @@ public abstract class Model {
 			}
 		}
 
-		if (mId == null) {
-			mId = db.insert(mTableInfo.getTableName(), null, values);
-		}
-		else {
-			db.update(mTableInfo.getTableName(), values, "Id=" + mId, null);
+        if(!exists()){
+		     mId = db.insert(mTableInfo.getTableName(), null, values);
+
+            for(Field field : mTableInfo.getPrimaryKeys()){
+                if(field.isAnnotationPresent(PrimaryKey.class) &&
+                        field.getAnnotation(PrimaryKey.class).type().equals(PrimaryKey.Type.AUTO_INCREMENT)){
+                    field.setAccessible(true);
+                    try {
+                        field.set(this, mId);
+                    } catch (Throwable e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            }
+        } else {
+			mId = db.update(mTableInfo.getTableName(), values, SQLiteUtils.getWhereStatement(this, mTableInfo), null);
 		}
 
 		Cache.getContext().getContentResolver()
-				.notifyChange(ContentProvider.createUri(mTableInfo.getType(), mId), null);
+				.notifyChange(ContentProvider.createUri(mTableInfo.getType(), getId()), null);
 	}
+
+    public boolean exists(){
+        Model model = new Select().from(getClass()).where(SQLiteUtils.getWhereStatement(this, mTableInfo)).executeSingle();
+        return model!=null;
+    }
+
+    /**
+     * Checks to see if object exists, if so, deletes it then updates itself
+     */
+    public <OBJECT_CLASS extends Model> void saveById(){
+        if(exists()){
+            delete();
+        }
+        save();
+    }
 
 	// Convenience methods
 
@@ -225,13 +259,13 @@ public abstract class Model {
 				else if (fieldType.equals(Byte[].class) || fieldType.equals(byte[].class)) {
 					value = cursor.getBlob(columnIndex);
 				}
-				else if (ReflectionUtils.isModel(fieldType)) {
-					final long entityId = cursor.getLong(columnIndex);
+				else if (field.isAnnotationPresent(ForeignKey.class) && ReflectionUtils.isModel(fieldType)) {
+					final String entityId = cursor.getString(columnIndex);
 					final Class<? extends Model> entityType = (Class<? extends Model>) fieldType;
 
 					Model entity = Cache.getEntity(entityType, entityId);
 					if (entity == null) {
-						entity = new Select().from(entityType).where("Id=?", entityId).executeSingle();
+						entity = new Select().from(entityType).where(SQLiteUtils.getWhereFromEntityId(entityType, entityId)).executeSingle();
 					}
 
 					value = entity;
@@ -247,7 +281,7 @@ public abstract class Model {
 					value = typeSerializer.deserialize(value);
 				}
 
-				// Set the field value
+				// Set the field name
 				if (value != null) {
 					field.set(this, value);
 				}
@@ -263,7 +297,7 @@ public abstract class Model {
 			}
 		}
 
-		if (mId != null) {
+		if (getId() != null) {
 			Cache.addEntity(this);
 		}
 	}
@@ -272,9 +306,13 @@ public abstract class Model {
 	// PROTECTED METHODS
 	//////////////////////////////////////////////////////////////////////////////////////
 
-	protected final <T extends Model> List<T> getMany(Class<T> type, String foreignKey) {
-		return new Select().from(type).where(Cache.getTableName(type) + "." + foreignKey + "=?", getId()).execute();
-	}
+    protected final <T extends Model> List<T> getManyFromField(Class<T> type,Object field, String foreignKey){
+        return new Select().from(type).where(Cache.getTableName(type) + "." + foreignKey + "=?", field).execute();
+    }
+
+    protected final <T extends Model> List<T> getManyFromFieldWithSort(Class<T> type,Object field, String foreignKey, String sort){
+        return new Select().from(type).orderBy(sort).where(Cache.getTableName(type) + "." + foreignKey + "=?", field).execute();
+    }
 
 	//////////////////////////////////////////////////////////////////////////////////////
 	// OVERRIDEN METHODS
@@ -285,11 +323,7 @@ public abstract class Model {
 		return mTableInfo.getTableName() + "@" + getId();
 	}
 
-	@Override
-	public boolean equals(Object obj) {
-		final Model other = (Model) obj;
-
-		return this.mId != null && (this.mTableInfo.getTableName().equals(other.mTableInfo.getTableName()))
-				&& (this.mId.equals(other.mId));
-	}
+    public long getRowId(){
+        return mId;
+    }
 }

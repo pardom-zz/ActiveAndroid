@@ -24,6 +24,7 @@ import android.support.v4.util.LruCache;
 
 import com.activeandroid.serializer.TypeSerializer;
 import com.activeandroid.util.Log;
+import com.activeandroid.util.SQLiteUtils;
 
 public final class Cache {
 	//////////////////////////////////////////////////////////////////////////////////////
@@ -114,8 +115,8 @@ public final class Cache {
 
 	// Entity cache
 
-	public static String getIdentifier(Class<? extends Model> type, Long id) {
-		return getTableName(type) + "@" + id;
+	public static String getIdentifier(Class<? extends Model> type, String entityId) {
+		return getTableName(type) + "@" + entityId;
 	}
 
 	public static String getIdentifier(Model entity) {
@@ -126,8 +127,8 @@ public final class Cache {
 		sEntities.put(getIdentifier(entity), entity);
 	}
 
-	public static synchronized Model getEntity(Class<? extends Model> type, long id) {
-		return sEntities.get(getIdentifier(type, id));
+	public static synchronized Model getEntity(Class<? extends Model> type, String entityId) {
+		return sEntities.get(getIdentifier(type, entityId));
 	}
 
 	public static synchronized void removeEntity(Model entity) {

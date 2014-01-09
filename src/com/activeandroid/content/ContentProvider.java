@@ -96,7 +96,7 @@ public class ContentProvider extends android.content.ContentProvider {
 		final Long id = Cache.openDatabase().insert(Cache.getTableName(type), null, values);
 
 		if (id != null && id > 0) {
-			Uri retUri = createUri(type, id);
+			Uri retUri = createUri(type, String.valueOf(id));
 			notifyChange(retUri);
 
 			return retUri;
@@ -146,7 +146,7 @@ public class ContentProvider extends android.content.ContentProvider {
 	// PUBLIC METHODS
 	//////////////////////////////////////////////////////////////////////////////////////
 
-	public static Uri createUri(Class<? extends Model> type, Long id) {
+	public static Uri createUri(Class<? extends Model> type, String id) {
 		final StringBuilder uri = new StringBuilder();
 		uri.append("content://");
 		uri.append(sAuthority);
@@ -155,7 +155,7 @@ public class ContentProvider extends android.content.ContentProvider {
 
 		if (id != null) {
 			uri.append("/");
-			uri.append(id.toString());
+			uri.append(id);
 		}
 
 		return Uri.parse(uri.toString());
