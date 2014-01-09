@@ -28,14 +28,9 @@ import java.util.List;
  *
  * @param <OBJECT_CLASS> - the class of objects that represent a Model from the DB
  */
-public abstract class DBManager<OBJECT_CLASS extends Model> {
+public abstract class DBManager<OBJECT_CLASS extends Model> extends SingleDBManager{
 
     protected Class<OBJECT_CLASS> mObjectClass;
-
-    /**
-     * Runs all of the UI threaded requests
-     */
-    protected Handler mRequestHandler = new Handler();
 
     /**
      * Constructs a new instance while keeping an instance of the class for its objects
@@ -53,42 +48,13 @@ public abstract class DBManager<OBJECT_CLASS extends Model> {
         throw new IllegalStateException("Cannot call the base implementation of this method");
     }
 
-    /**
-     * Runs a request from the DB in the request queue
-     * @param runnable
-     */
-    protected void processOnBackground(DBRequest runnable){
-       DBRequestQueue.getSharedInstance().add(runnable);
-    }
-
-    /**
-     * Runs UI operations in the handler
-     * @param runnable
-     */
-    protected synchronized void processOnForeground(Runnable runnable){
-        mRequestHandler.post(runnable);
-    }
-
-    /**
-     * Adds an object to the manager's database
-     * @param inObject - object of the class defined by the manager
-     */
-    public OBJECT_CLASS add(OBJECT_CLASS inObject){
-        inObject.save();
-        return inObject;
-    }
 
     /**
      * Adds a json object to this class, however its advised you ensure that the jsonobject being passed is what you want, since there's no type checking
      * @param object
      */
     public OBJECT_CLASS add(JSONObject object){
-        try {
-            return add(mObjectClass.getConstructor(JSONObject.class).newInstance(object));
-        } catch (Throwable e) {
-            e.printStackTrace();
-        }
-        return null;
+        return add(mObjectClass, object);
     }
 
     /**
@@ -98,54 +64,7 @@ public abstract class DBManager<OBJECT_CLASS extends Model> {
      * @param priority
      */
     public void addInBackground(final JSONObject jsonObject, final ObjectReceiver<OBJECT_CLASS> objectReceiver, final int priority){
-        processOnBackground(new DBRequest(priority, "add") {
-            @Override
-            public void run() {
-                final OBJECT_CLASS object = add(jsonObject);
-                processOnForeground(new Runnable() {
-                    @Override
-                    public void run() {
-                        objectReceiver.onObjectReceived(object);
-                    }
-                });
-            }
-        });
-    }
-
-    /**
-     * Adds an object to the DB in the BG
-     * @param objectReceiver
-     * @param priority
-     */
-    public void addInBackground(final OBJECT_CLASS inObject, final ObjectReceiver<OBJECT_CLASS> objectReceiver, final int priority){
-        processOnBackground(new DBRequest(priority, "add") {
-            @Override
-            public void run() {
-                final OBJECT_CLASS object = add(inObject);
-                processOnForeground(new Runnable() {
-                    @Override
-                    public void run() {
-                        objectReceiver.onObjectReceived(object);
-                    }
-                });
-            }
-        });
-    }
-
-    /**
-     * Adds all objects to the DB
-     * @param objects
-     */
-    public void addAll(ArrayList<OBJECT_CLASS> objects){
-        ActiveAndroid.beginTransaction();
-        try{
-            for(OBJECT_CLASS object: objects){
-                add(object);
-            }
-            ActiveAndroid.setTransactionSuccessful();
-        } finally {
-            ActiveAndroid.endTransaction();
-        }
+        addInBackground(mObjectClass, jsonObject, objectReceiver, priority);
     }
 
     /**
@@ -153,31 +72,11 @@ public abstract class DBManager<OBJECT_CLASS extends Model> {
      * @param array
      */
     public void addAll(JSONArray array){
-        ActiveAndroid.beginTransaction();
-        try{
-            for(int i = 0; i < array.length();i++){
-                OBJECT_CLASS object = mObjectClass.getConstructor(JSONObject.class).newInstance(array.get(i));
-                add(object);
-            }
-            ActiveAndroid.setTransactionSuccessful();
-        } catch (Throwable e) {
-            throw new RuntimeException(e);
-        } finally {
-            ActiveAndroid.endTransaction();
-        }
-
+        addAll(mObjectClass, array);
     }
 
     public void addAllInBackground(final JSONArray array, final Runnable finishedRunnable, String tag, int priority){
-        processOnBackground(new DBRequest(priority, "add "+ tag) {
-            @Override
-            public void run() {
-                addAll(array);
-
-                if(finishedRunnable!=null)
-                    processOnForeground(finishedRunnable);
-            }
-        });
+        addAllInBackground(mObjectClass, array, finishedRunnable, tag, priority);
     }
 
     public void addAllInBackground(final JSONArray array, final Runnable finishedRunnable, String tag){
@@ -190,7 +89,7 @@ public abstract class DBManager<OBJECT_CLASS extends Model> {
      * @return
      */
     public List<OBJECT_CLASS> getAll(){
-        return new Select().from(mObjectClass).execute();
+        return getAll(mObjectClass);
     }
 
     /**
@@ -200,7 +99,7 @@ public abstract class DBManager<OBJECT_CLASS extends Model> {
      * @return
      */
     public List<OBJECT_CLASS> getAllWithSort(String sort){
-        return new Select().from(mObjectClass).orderBy(sort).execute();
+        return getAllWithSort(mObjectClass, sort);
     }
 
     /**
@@ -208,18 +107,7 @@ public abstract class DBManager<OBJECT_CLASS extends Model> {
      * @param receiver - function to call when finished that passes the list of objects that was found
      */
     public void fetchAll(final CollectionReceiver<OBJECT_CLASS> receiver){
-        processOnBackground(new DBRequest(DBRequest.PRIORITY_UI, "fetch") {
-            @Override
-            public void run() {
-                final List<OBJECT_CLASS> list = getAll();
-                processOnForeground(new Runnable() {
-                    @Override
-                    public void run() {
-                        receiver.onCollectionReceived(list);
-                    }
-                });
-            }
-        });
+        fetchAll(mObjectClass, receiver);
     }
 
     /**
@@ -228,33 +116,11 @@ public abstract class DBManager<OBJECT_CLASS extends Model> {
      * @param receiver - function to call when finished that passes the list of objects that was found
      */
     public void fetchAllWithSort(final String sort, final CollectionReceiver<OBJECT_CLASS> receiver){
-        processOnBackground(new DBRequest(DBRequest.PRIORITY_UI, "fetch") {
-            @Override
-            public void run() {
-                final List<OBJECT_CLASS> list = getAllWithSort(sort);
-                processOnForeground(new Runnable() {
-                    @Override
-                    public void run() {
-                        receiver.onCollectionReceived(list);
-                    }
-                });
-            }
-        });
+        fetchAllWithSort(mObjectClass, sort, receiver);
     };
 
     public void fetchAllWithColumnValue(final Object value, final String column, final CollectionReceiver<OBJECT_CLASS> receiver){
-        processOnBackground(new DBRequest(DBRequest.PRIORITY_UI, "fetch") {
-            @Override
-            public void run() {
-                final List<OBJECT_CLASS> list = getAllWithColumnValue(column, value);
-                processOnForeground(new Runnable() {
-                    @Override
-                    public void run() {
-                        receiver.onCollectionReceived(list);
-                    }
-                });
-            }
-        });
+        fetchAllWithColumnValue(mObjectClass, value, column, receiver);
     }
 
     /**
@@ -263,7 +129,7 @@ public abstract class DBManager<OBJECT_CLASS extends Model> {
      * @return
      */
     public OBJECT_CLASS getObjectById(Object...ids){
-        return new Select().from(mObjectClass).where(SQLiteUtils.getWhereStatement(mObjectClass, Cache.getTableInfo(mObjectClass)), ids).executeSingle();
+        return getObjectById(mObjectClass, ids);
     }
 
     /**
@@ -274,7 +140,18 @@ public abstract class DBManager<OBJECT_CLASS extends Model> {
      * @return
      */
     public OBJECT_CLASS getObjectByColumnValue(String column, Object uid){
-        return new Select().from(mObjectClass).where(column+" =?", uid).executeSingle();
+        return getObjectByColumnValue(mObjectClass, column, uid);
+    }
+
+    /**
+     * Gets all in a table by a group by
+     * @param obClazz
+     * @param groupBy
+     * @param <OBJECT_CLASS>
+     * @return
+     */
+    public List<OBJECT_CLASS> getAllWithGroupby(String groupBy){
+        return getAllWithGroupby(mObjectClass, groupBy);
     }
 
     /**
@@ -284,7 +161,7 @@ public abstract class DBManager<OBJECT_CLASS extends Model> {
      * @return
      */
     public List<OBJECT_CLASS> getAllWithColumnValue(String column, Object value){
-        return new Select().from(mObjectClass).where(column + "= ?", value).execute();
+        return getAllWithColumnValue(mObjectClass, column, value);
     }
 
     /**
@@ -292,7 +169,7 @@ public abstract class DBManager<OBJECT_CLASS extends Model> {
      * @return
      */
     public long getCount(){
-        return DatabaseUtils.queryNumEntries(Cache.openDatabase(), Cache.getTableName(mObjectClass));
+        return getCount(mObjectClass);
     }
 
     /**
@@ -300,17 +177,7 @@ public abstract class DBManager<OBJECT_CLASS extends Model> {
      * @param objectReceiver
      */
     public void fetchCount(final ObjectReceiver<Long> objectReceiver){
-        processOnBackground(new DBRequest(DBRequest.PRIORITY_UI) {
-            @Override
-            public void run() {
-                processOnForeground(new Runnable() {
-                    @Override
-                    public void run() {
-                        objectReceiver.onObjectReceived(getCount());
-                    }
-                });
-            }
-        });
+        fetchCount(mObjectClass, objectReceiver);
     }
 
     /**

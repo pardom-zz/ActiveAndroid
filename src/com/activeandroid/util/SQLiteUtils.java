@@ -311,7 +311,7 @@ public final class SQLiteUtils {
             try {
                 Object object = field.get(model);
                 if(object==null){
-                    throw new PrimaryKeyCannotBeNullException("The primary key: " + field.getName() + " cannot be null.");
+                    throw new PrimaryKeyCannotBeNullException("The primary key: " + field.getName() + "from " + tableInfo.getTableName() + " cannot be null.");
                 } else if(object instanceof Number){
                     sql = sql.replaceFirst("\\?", object.toString());
                 } else {

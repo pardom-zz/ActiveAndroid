@@ -284,6 +284,17 @@ public class SingleDBManager {
     }
 
     /**
+     * Gets all in a table by a group by
+     * @param obClazz
+     * @param groupBy
+     * @param <OBJECT_CLASS>
+     * @return
+     */
+    public <OBJECT_CLASS extends Model> List<OBJECT_CLASS> getAllWithGroupby(final Class<OBJECT_CLASS> obClazz, String groupBy){
+        return new Select().from(obClazz).groupBy(groupBy).execute();
+    }
+
+    /**
      * Returns the count of rows from this DB manager's DB
      * @return
      */
