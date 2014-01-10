@@ -226,6 +226,9 @@ public final class SQLiteUtils {
 		try {
 			Constructor<?> entityConstructor = type.getConstructor();
 
+            //enable private constructors
+            entityConstructor.setAccessible(true);
+
 			if (cursor.moveToFirst()) {
 				do {
 					Model entity = (T) entityConstructor.newInstance();
@@ -236,7 +239,9 @@ public final class SQLiteUtils {
 			}
 
 		}
-		catch (Exception e) {
+        catch (IllegalArgumentException i){
+            throw new RuntimeException("Default constructor for: " + type.getName() + " was not found.");
+        } catch (Exception e) {
 			Log.e("Failed to process cursor.", e);
 		}
 

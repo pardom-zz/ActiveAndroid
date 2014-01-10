@@ -64,13 +64,6 @@ public class SingleDBManager {
      * @param inObject - object of the class defined by the manager
      */
     public <OBJECT_CLASS extends Model> OBJECT_CLASS add(OBJECT_CLASS inObject){
-        try{
-            if(inObject.exists()){
-                inObject.delete();
-            }
-        }catch (NullPointerException n){
-
-        }
         inObject.save();
         return inObject;
     }
@@ -353,4 +346,12 @@ public class SingleDBManager {
        return fetchObject(obClazz, null, objectReceiver, uid);
     }
 
+    /**
+     * Deletes an object from the db
+     * @param favoriteObject
+     * @param <OBJECT_CLASS>
+     */
+    public <OBJECT_CLASS extends Model> void delete(OBJECT_CLASS favoriteObject) {
+        favoriteObject.delete();
+    }
 }
