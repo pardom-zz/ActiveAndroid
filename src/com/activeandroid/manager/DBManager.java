@@ -6,6 +6,7 @@ import android.os.Handler;
 import com.activeandroid.ActiveAndroid;
 import com.activeandroid.Cache;
 import com.activeandroid.Model;
+import com.activeandroid.exception.DBManagerNotOnMainException;
 import com.activeandroid.query.Select;
 import com.activeandroid.interfaces.CollectionReceiver;
 import com.activeandroid.interfaces.ObjectReceiver;
@@ -47,7 +48,6 @@ public abstract class DBManager<OBJECT_CLASS extends Model> extends SingleDBMana
     public static DBManager getSharedInstance(){
         throw new IllegalStateException("Cannot call the base implementation of this method");
     }
-
 
     /**
      * Adds a json object to this class, however its advised you ensure that the jsonobject being passed is what you want, since there's no type checking

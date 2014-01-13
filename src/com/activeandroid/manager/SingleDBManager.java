@@ -6,6 +6,7 @@ import android.os.Handler;
 import com.activeandroid.ActiveAndroid;
 import com.activeandroid.Cache;
 import com.activeandroid.Model;
+import com.activeandroid.exception.DBManagerNotOnMainException;
 import com.activeandroid.interfaces.ObjectRequester;
 import com.activeandroid.query.Select;
 import com.activeandroid.interfaces.CollectionReceiver;
@@ -31,11 +32,26 @@ public class SingleDBManager {
 
     private static SingleDBManager manager;
 
+    /**
+     * Returns the application's only needed DBManager.
+     * Note: this manager must be created on the main thread, otherwise a {@link com.activeandroid.exception.DBManagerNotOnMainException} will be thrown
+     * @return
+     */
     public static SingleDBManager getSharedInstance(){
         if(manager==null){
            manager = new SingleDBManager();
+           manager.checkThread();
         }
         return manager;
+    }
+
+    /**
+     * Ensure manager was created in the main thread, otherwise handler will not work
+     */
+    protected void checkThread(){
+        if(!Thread.currentThread().getName().equals("main")){
+            throw new DBManagerNotOnMainException("DBManager needs to be instantiated on the main thread so Handler is on UI thread. Was on : " + Thread.currentThread().getName());
+        }
     }
 
     /**
@@ -291,7 +307,7 @@ public class SingleDBManager {
      * Returns the count of rows from this DB manager's DB
      * @return
      */
-    public <OBJECT_CLASS extends Model> long getCount(final Class<OBJECT_CLASS> obClazz){
+    public long getCount(final Class<? extends Model> obClazz){
         return DatabaseUtils.queryNumEntries(Cache.openDatabase(), Cache.getTableName(obClazz));
     }
 
@@ -351,7 +367,7 @@ public class SingleDBManager {
      * @param favoriteObject
      * @param <OBJECT_CLASS>
      */
-    public <OBJECT_CLASS extends Model> void delete(OBJECT_CLASS favoriteObject) {
+    public void delete(Model favoriteObject) {
         favoriteObject.delete();
     }
 }
