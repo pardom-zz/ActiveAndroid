@@ -24,6 +24,7 @@ public final class Select implements Sqlable {
 	private String[] mColumns;
 	private boolean mDistinct = false;
 	private boolean mAll = false;
+    private boolean mCount = false;
 
 	public Select() {
 	}
@@ -43,16 +44,25 @@ public final class Select implements Sqlable {
 	public Select distinct() {
 		mDistinct = true;
 		mAll = false;
+        mCount = false;
 
 		return this;
 	}
 
 	public Select all() {
 		mDistinct = false;
+        mCount = false;
 		mAll = true;
 
 		return this;
 	}
+
+    public Select count(){
+        mAll = false;
+        mDistinct = false;
+        mCount = true;
+        return this;
+    }
 
 	public From from(Class<? extends Model> table) {
 		return new From(table, this);
@@ -79,12 +89,14 @@ public final class Select implements Sqlable {
 		}
 		else if (mAll) {
 			sql.append("ALL ");
-		}
+		} else if(mCount){
+            sql.append("COUNT(*) ");
+        }
 
 		if (mColumns != null && mColumns.length > 0) {
 			sql.append(TextUtils.join(", ", mColumns) + " ");
 		}
-		else {
+		else if(!mCount){
 			sql.append("* ");
 		}
 

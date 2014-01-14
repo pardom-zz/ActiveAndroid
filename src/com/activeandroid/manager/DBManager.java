@@ -213,4 +213,11 @@ public abstract class DBManager<OBJECT_CLASS extends Model> extends SingleDBMana
     public Class<OBJECT_CLASS> getObjectClass() {
         return mObjectClass;
     }
+
+    /**
+     * Deletes all from the current object's class
+     */
+    public void deleteAll() {
+        deleteAll(mObjectClass);
+    }
 }

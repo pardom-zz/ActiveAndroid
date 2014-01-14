@@ -16,6 +16,7 @@ package com.activeandroid.query;
  * limitations under the License.
  */
 
+import android.database.DatabaseUtils;
 import android.text.TextUtils;
 import com.activeandroid.Cache;
 import com.activeandroid.Model;
@@ -199,6 +200,19 @@ public final class From implements Sqlable {
 
 		return sql.toString().trim();
 	}
+
+    /**
+     * Gets the count of of rows
+     * @return
+     */
+    public long executeCount(){
+        if(mQueryBase instanceof Select){
+            return DatabaseUtils.longForQuery(Cache.openDatabase(), toSql(), getArguments());
+        } else{
+            SQLiteUtils.execSql(toSql(), getArguments());
+            return 0L;
+        }
+    }
 
 	public <T extends Model> List<T> execute() {
 		if (mQueryBase instanceof Select) {

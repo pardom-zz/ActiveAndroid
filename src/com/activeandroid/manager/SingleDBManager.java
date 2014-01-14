@@ -8,6 +8,7 @@ import com.activeandroid.Cache;
 import com.activeandroid.Model;
 import com.activeandroid.exception.DBManagerNotOnMainException;
 import com.activeandroid.interfaces.ObjectRequester;
+import com.activeandroid.query.Delete;
 import com.activeandroid.query.Select;
 import com.activeandroid.interfaces.CollectionReceiver;
 import com.activeandroid.interfaces.ObjectReceiver;
@@ -190,6 +191,21 @@ public class SingleDBManager {
         addAllInBackground(obClass, array, finishedRunnable, tag, DBRequest.PRIORITY_LOW);
     }
 
+
+    public <OBJECT_CLASS extends Model> void addAllInBackground(final ArrayList<OBJECT_CLASS> objects, final Runnable finishedRunnable, String tag, int priority) {
+        processOnBackground(new DBRequest(priority, "add "+ tag) {
+            @Override
+            public void run() {
+                addAll(objects);
+
+                if(finishedRunnable!=null)
+                    processOnForeground(finishedRunnable);
+            }
+        });
+    }
+
+
+
     /**
      * Retrieves a list of objects from the database without any threading
      * Its recommended not to call this method in the foreground thread
@@ -369,5 +385,14 @@ public class SingleDBManager {
      */
     public void delete(Model favoriteObject) {
         favoriteObject.delete();
+    }
+
+    /**
+     * Deletes all objects from the class specified
+     * @param obClazz
+     * @param <OBJECT_CLASS>
+     */
+    public <OBJECT_CLASS extends Model> void deleteAll(Class<OBJECT_CLASS> obClazz){
+        new Delete().from(obClazz).execute();
     }
 }
