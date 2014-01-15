@@ -59,7 +59,11 @@ public final class TableInfo {
 		for (Field field : fields) {
 			if (field.isAnnotationPresent(Column.class)) {
 				final Column columnAnnotation = field.getAnnotation(Column.class);
-				mColumnNames.put(field, columnAnnotation.name());
+				String columnName = columnAnnotation.name();
+				if (columnName == null || columnName.isEmpty()) {
+					columnName = field.getName();
+				}
+				mColumnNames.put(field, columnName);
 			}
 		}
 	}
