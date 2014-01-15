@@ -1,4 +1,4 @@
-package com.activeandroid.annotation;
+ package com.activeandroid.annotation;
 
 /*
  * Copyright (C) 2010 Michael Pardo
@@ -32,7 +32,7 @@ public @interface Column {
 		SET_NULL, SET_DEFAULT, CASCADE, RESTRICT, NO_ACTION
 	}
 
-	public String name();
+	public String name() default "";
 
 	public int length() default -1;
 
