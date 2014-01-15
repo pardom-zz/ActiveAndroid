@@ -1,4 +1,4 @@
- package com.activeandroid.annotation;
+package com.activeandroid.annotation;
 
 /*
  * Copyright (C) 2010 Michael Pardo
