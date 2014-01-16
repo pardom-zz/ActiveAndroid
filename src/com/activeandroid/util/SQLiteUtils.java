@@ -31,6 +31,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -172,7 +173,7 @@ public final class SQLiteUtils {
 
 	public static List<String> createIndexDefinitions(TableInfo tableInfo) {
 		final List<String> definitions = new ArrayList<String>();
-		final Map<String, List<String>> indexColumns = new HashMap<String, List<String>>();
+		final Map<String, Set<String>> indexColumns = new HashMap<String, Set<String>>();
 		final String indexNameFormat = "index_%s_of_columns_%s_on_%s";
 		final String defaultIndexName = "default";
 		
@@ -181,9 +182,9 @@ public final class SQLiteUtils {
 
 			// Include columns where @Column.index = true in the default index
 			if (column.index()) {
-				List<String> columns = indexColumns.get(defaultIndexName);
+				Set<String> columns = indexColumns.get(defaultIndexName);
 				if (columns == null) {
-					columns = new ArrayList<String>();
+					columns = new HashSet<String>();
 				}
 
 				columns.add(tableInfo.getColumnName(field));
@@ -198,9 +199,9 @@ public final class SQLiteUtils {
 					continue;
 				}
 				
-				List<String> columns = indexColumns.get(namedIndex);
+				Set<String> columns = indexColumns.get(namedIndex);
 				if (columns == null) {
-					columns = new ArrayList<String>();
+					columns = new HashSet<String>();
 				}
 
 				columns.add(tableInfo.getColumnName(field));
@@ -210,7 +211,7 @@ public final class SQLiteUtils {
 
 		if (!indexColumns.isEmpty()) {
 			for (String indexName : indexColumns.keySet()) {
-				List<String> columns = indexColumns.get(indexName);
+				Set<String> columns = indexColumns.get(indexName);
 				if (!columns.isEmpty()) {
 					definitions.add(String.format("CREATE INDEX IF NOT EXISTS %s on %s(%s);",
 							String.format(indexNameFormat, indexName, TextUtils.join("_", columns), tableInfo.getTableName()),
