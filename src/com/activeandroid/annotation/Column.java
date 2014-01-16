@@ -72,4 +72,6 @@ public @interface Column {
 	public ConflictAction[] onUniqueConflicts() default {};
 
 	public boolean index() default false;
+	
+	public String[] indexGroups() default {};
 }

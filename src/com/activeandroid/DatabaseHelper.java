@@ -126,8 +126,10 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
 		db.beginTransaction();
 		try {
 			for (TableInfo tableInfo : Cache.getTableInfos()) {
-				String s = SQLiteUtils.createIndexDefinition(tableInfo);
-				if (!android.text.TextUtils.isEmpty(s)) db.execSQL(s);
+				List<String> definitions = SQLiteUtils.createIndexDefinitions(tableInfo);
+				for (String s : definitions) {
+					if (!android.text.TextUtils.isEmpty(s)) db.execSQL(s);
+				}
 			}
 			db.setTransactionSuccessful();
 		}
