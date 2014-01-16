@@ -32,6 +32,7 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public final class SQLiteUtils {
@@ -169,36 +170,57 @@ public final class SQLiteUtils {
 		}
 	}
 
-	public static String createIndexDefinition(TableInfo tableInfo) {
-		final ArrayList<String> definitions = new ArrayList<String>();
-
+	public static List<String> createIndexDefinitions(TableInfo tableInfo) {
+		final List<String> definitions = new ArrayList<String>();
+		final Map<String, List<String>> indexColumns = new HashMap<String, List<String>>();
+		final String indexNameFormat = "index_%s_of_columns_%s_on_%s";
+		final String defaultIndexName = "default";
+		
 		for (Field field : tableInfo.getFields()) {
-			String definition = createIndexColumnDefinition(tableInfo, field);
-			if (!TextUtils.isEmpty(definition)) {
-				definitions.add(definition);
+			Column column = field.getAnnotation(Column.class);
+
+			// Include columns where @Column.index = true in the default index
+			if (column.index()) {
+				List<String> columns = indexColumns.get(defaultIndexName);
+				if (columns == null) {
+					columns = new ArrayList<String>();
+				}
+
+				columns.add(tableInfo.getColumnName(field));
+				indexColumns.put(defaultIndexName, columns);
+			}
+			
+			// Create any named indexes as defined by values in @Column.indexGroups
+			// and add the corresponding columns to those named indexes
+			String[] namedIndexes = column.indexGroups();
+			for (String namedIndex : namedIndexes) {
+				if (namedIndex.isEmpty()) {
+					continue;
+				}
+				
+				List<String> columns = indexColumns.get(namedIndex);
+				if (columns == null) {
+					columns = new ArrayList<String>();
+				}
+
+				columns.add(tableInfo.getColumnName(field));
+				indexColumns.put(namedIndex, columns);
 			}
 		}
-		if (definitions.isEmpty()) return null;
 
-		return String.format("CREATE INDEX IF NOT EXISTS %s on %s(%s);",
-				"index_" + tableInfo.getTableName(),
-				tableInfo.getTableName(),
-				TextUtils.join(",", definitions));
-	}
-
-	@SuppressWarnings("unchecked")
-	public static String createIndexColumnDefinition(TableInfo tableInfo, Field field) {
-		StringBuilder definition = new StringBuilder();
-
-		Class<?> type = field.getType();
-		final String name = tableInfo.getColumnName(field);
-		final Column column = field.getAnnotation(Column.class);
-
-		if (column.index()) {
-			definition.append(name);
+		if (!indexColumns.isEmpty()) {
+			for (String indexName : indexColumns.keySet()) {
+				List<String> columns = indexColumns.get(indexName);
+				if (!columns.isEmpty()) {
+					definitions.add(String.format("CREATE INDEX IF NOT EXISTS %s on %s(%s);",
+							String.format(indexNameFormat, indexName, TextUtils.join("_", columns), tableInfo.getTableName()),
+							tableInfo.getTableName(),
+							TextUtils.join(",", columns)));
+				}
+			}
 		}
-
-		return definition.toString();
+		
+		return definitions;
 	}
 
 	public static String createTableDefinition(TableInfo tableInfo) {
