@@ -66,7 +66,7 @@ public abstract class Model {
 				.notifyChange(ContentProvider.createUri(mTableInfo.getType(), mId), null);
 	}
 
-	public final void save() {
+	public final Long save() {
 		final SQLiteDatabase db = Cache.openDatabase();
 		final ContentValues values = new ContentValues();
 
@@ -155,6 +155,7 @@ public abstract class Model {
 
 		Cache.getContext().getContentResolver()
 				.notifyChange(ContentProvider.createUri(mTableInfo.getType(), mId), null);
+		return mId;
 	}
 
 	// Convenience methods
