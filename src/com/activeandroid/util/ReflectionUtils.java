@@ -16,6 +16,8 @@ package com.activeandroid.util;
  * limitations under the License.
  */
 
+import java.lang.reflect.Modifier;
+
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
@@ -29,7 +31,7 @@ public final class ReflectionUtils {
 	//////////////////////////////////////////////////////////////////////////////////////
 
 	public static boolean isModel(Class<?> type) {
-		return isSubclassOf(type, Model.class);
+		return isSubclassOf(type, Model.class) && (!Modifier.isAbstract(type.getModifiers()));
 	}
 
 	public static boolean isTypeSerializer(Class<?> type) {
