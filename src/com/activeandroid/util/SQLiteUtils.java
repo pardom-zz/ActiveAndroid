@@ -32,6 +32,7 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public final class SQLiteUtils {
@@ -82,6 +83,7 @@ public final class SQLiteUtils {
 	// PRIVATE MEMBERS
 	//////////////////////////////////////////////////////////////////////////////////////
 
+	private static HashMap<String, List<String>> sIndexGroupMap;
 	private static HashMap<String, List<String>> sUniqueGroupMap;
 	private static HashMap<String, ConflictAction> sOnUniqueConflictsMap;
 
@@ -169,36 +171,50 @@ public final class SQLiteUtils {
 		}
 	}
 
-	public static String createIndexDefinition(TableInfo tableInfo) {
+	public static String[] createIndexDefinition(TableInfo tableInfo) {
 		final ArrayList<String> definitions = new ArrayList<String>();
+		sIndexGroupMap = new HashMap<String, List<String>>();
 
 		for (Field field : tableInfo.getFields()) {
-			String definition = createIndexColumnDefinition(tableInfo, field);
-			if (!TextUtils.isEmpty(definition)) {
-				definitions.add(definition);
-			}
+			createIndexColumnDefinition(tableInfo, field);
 		}
-		if (definitions.isEmpty()) return null;
 
-		return String.format("CREATE INDEX IF NOT EXISTS %s on %s(%s);",
-				"index_" + tableInfo.getTableName(),
-				tableInfo.getTableName(),
-				TextUtils.join(",", definitions));
+		if (sIndexGroupMap.isEmpty()) {
+			return new String[0];
+		}
+
+		for (Map.Entry<String, List<String>> entry : sIndexGroupMap.entrySet()) {
+			definitions.add(String.format("CREATE INDEX IF NOT EXISTS %s on %s(%s);",
+					"index_" + tableInfo.getTableName() + "_" + entry.getKey(),
+					tableInfo.getTableName(), TextUtils.join(", ", entry.getValue())));
+		}
+
+		return definitions.toArray(new String[definitions.size()]);
 	}
 
-	@SuppressWarnings("unchecked")
-	public static String createIndexColumnDefinition(TableInfo tableInfo, Field field) {
-		StringBuilder definition = new StringBuilder();
-
-		Class<?> type = field.getType();
+	public static void createIndexColumnDefinition(TableInfo tableInfo, Field field) {
 		final String name = tableInfo.getColumnName(field);
 		final Column column = field.getAnnotation(Column.class);
 
 		if (column.index()) {
-			definition.append(name);
+			List<String> list = new ArrayList<String>();
+			list.add(name);
+			sIndexGroupMap.put(name, list);
 		}
 
-		return definition.toString();
+		String[] groups = column.indexGroups();
+		for (String group : groups) {
+			if (group.isEmpty())
+				continue;
+
+			List<String> list = sIndexGroupMap.get(group);
+			if (list == null) {
+				list = new ArrayList<String>();
+			}
+
+			list.add(name);
+			sIndexGroupMap.put(group, list);
+		}
 	}
 
 	public static String createTableDefinition(TableInfo tableInfo) {
