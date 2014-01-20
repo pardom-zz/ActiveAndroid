@@ -16,13 +16,20 @@ package com.activeandroid.util;
  * limitations under the License.
  */
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 
 import com.activeandroid.Model;
+import com.activeandroid.annotation.Column;
 import com.activeandroid.serializer.TypeSerializer;
 
 public final class ReflectionUtils {
@@ -55,6 +62,34 @@ public final class ReflectionUtils {
 		}
 
 		return null;
+	}
+	
+	public static Set<Field> getDeclaredColumnFields(Class<?> type) {
+		Set<Field> declaredColumnFields = Collections.emptySet();
+		
+		if (ReflectionUtils.isSubclassOf(type, Model.class) || Model.class.equals(type)) {
+			declaredColumnFields = new LinkedHashSet<Field>();
+			
+			Field[] fields = type.getDeclaredFields();
+			Arrays.sort(fields, new Comparator<Field>() {
+				@Override
+				public int compare(Field field1, Field field2) {
+					return field2.getName().compareTo(field1.getName());
+				}
+			});
+			for (Field field : fields) {
+				if (field.isAnnotationPresent(Column.class)) {
+					declaredColumnFields.add(field);
+				}
+			}
+	
+			Class<?> parentType = type.getSuperclass();
+			if (parentType != null) {
+				declaredColumnFields.addAll(getDeclaredColumnFields(parentType));
+			}
+		}
+		
+		return declaredColumnFields;		
 	}
 
 	//////////////////////////////////////////////////////////////////////////////////////
