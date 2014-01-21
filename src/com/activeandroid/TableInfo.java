@@ -17,16 +17,16 @@ package com.activeandroid;
  */
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
 import com.activeandroid.annotation.Column;
 import com.activeandroid.annotation.Table;
-import com.activeandroid.util.Log;
+import com.activeandroid.util.ReflectionUtils;
 
 public final class TableInfo {
 	//////////////////////////////////////////////////////////////////////////////////////
@@ -36,7 +36,7 @@ public final class TableInfo {
 	private Class<? extends Model> mType;
 	private String mTableName;
 
-	private Map<Field, String> mColumnNames = new HashMap<Field, String>();
+	private Map<Field, String> mColumnNames = new LinkedHashMap<Field, String>();
 
 	//////////////////////////////////////////////////////////////////////////////////////
 	// CONSTRUCTORS
@@ -53,18 +53,17 @@ public final class TableInfo {
 			mTableName = type.getSimpleName();
 		}
 
-		List<Field> fields = new ArrayList<Field>(Arrays.asList(type.getDeclaredFields()));
-		fields.add(getIdField(type));
-
+		List<Field> fields = new LinkedList<Field>(ReflectionUtils.getDeclaredColumnFields(type));
+		Collections.reverse(fields);
+		
 		for (Field field : fields) {
-			if (field.isAnnotationPresent(Column.class)) {
-				final Column columnAnnotation = field.getAnnotation(Column.class);
-				String columnName = columnAnnotation.name();
-				if (columnName == null || columnName.isEmpty()) {
-					columnName = field.getName();
-				}
-				mColumnNames.put(field, columnName);
+			final Column columnAnnotation = field.getAnnotation(Column.class);
+			String columnName = columnAnnotation.name();
+			if (columnName == null || columnName.isEmpty()) {
+				columnName = field.getName();
 			}
+			
+			mColumnNames.put(field, columnName);
 		}
 	}
 
@@ -86,25 +85,5 @@ public final class TableInfo {
 
 	public String getColumnName(Field field) {
 		return mColumnNames.get(field);
-	}
-
-	//////////////////////////////////////////////////////////////////////////////////////
-	// PRIVATE METHODS
-	//////////////////////////////////////////////////////////////////////////////////////
-
-	private Field getIdField(Class<?> type) {
-		if (type.equals(Model.class)) {
-			try {
-				return type.getDeclaredField("mId");
-			}
-			catch (NoSuchFieldException e) {
-				Log.e("Impossible!", e);
-			}
-		}
-		else if (type.getSuperclass() != null) {
-			return getIdField(type.getSuperclass());
-		}
-
-		return null;
 	}
 }
