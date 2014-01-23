@@ -40,6 +40,8 @@ public @interface Column {
 
 	public ConflictAction onNullConflict() default ConflictAction.FAIL;
 
+	public boolean foreign() default true;
+
 	public ForeignKeyAction onDelete() default ForeignKeyAction.NO_ACTION;
 
 	public ForeignKeyAction onUpdate() default ForeignKeyAction.NO_ACTION;

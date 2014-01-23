@@ -283,7 +283,7 @@ public final class SQLiteUtils {
 				definition.append(column.onUniqueConflict().toString());
 			}
 
-			if (FOREIGN_KEYS_SUPPORTED && ReflectionUtils.isModel(type)) {
+			if (FOREIGN_KEYS_SUPPORTED && ReflectionUtils.isModel(type) && column.foreign()) {
 				definition.append(" REFERENCES ");
 				definition.append(Cache.getTableInfo((Class<? extends Model>) type).getTableName());
 				definition.append("(Id)");
