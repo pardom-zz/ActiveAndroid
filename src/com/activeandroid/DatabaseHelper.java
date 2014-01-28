@@ -195,7 +195,10 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
 			String line = null;
 
 			while ((line = reader.readLine()) != null) {
-				db.execSQL(line.replace(";", ""));
+				line = line.replace(";", "").trim();
+				if (!line.isEmpty()) {
+					db.execSQL(line);
+				}
 			}
 		}
 		catch (IOException e) {
