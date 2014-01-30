@@ -97,6 +97,10 @@ public final class Cache {
 	}
 
 	// Database access
+	
+	public static boolean isInitialized() {
+		return sIsInitialized;
+	}
 
 	public static synchronized SQLiteDatabase openDatabase() {
 		return sDatabaseHelper.getWritableDatabase();
