@@ -33,6 +33,7 @@ import com.activeandroid.serializer.CalendarSerializer;
 import com.activeandroid.serializer.SqlDateSerializer;
 import com.activeandroid.serializer.TypeSerializer;
 import com.activeandroid.serializer.UtilDateSerializer;
+import com.activeandroid.serializer.FileSerializer;
 import com.activeandroid.util.Log;
 import com.activeandroid.util.ReflectionUtils;
 import dalvik.system.DexFile;
@@ -48,6 +49,7 @@ final class ModelInfo {
 			put(Calendar.class, new CalendarSerializer());
 			put(java.sql.Date.class, new SqlDateSerializer());
 			put(java.util.Date.class, new UtilDateSerializer());
+			put(java.io.File.class, new FileSerializer());
 		}
 	};
 
