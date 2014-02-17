@@ -19,6 +19,7 @@ package com.activeandroid.query;
 import android.text.TextUtils;
 import com.activeandroid.Cache;
 import com.activeandroid.Model;
+import com.activeandroid.content.ContentProvider;
 import com.activeandroid.query.Join.JoinType;
 import com.activeandroid.util.Log;
 import com.activeandroid.util.SQLiteUtils;
@@ -206,6 +207,8 @@ public final class From implements Sqlable {
 		}
 		else {
 			SQLiteUtils.execSql(toSql(), getArguments());
+			Cache.getContext().getContentResolver().notifyChange(ContentProvider
+					.createUri(mType, null), null);
 			return null;
 		}
 	}
