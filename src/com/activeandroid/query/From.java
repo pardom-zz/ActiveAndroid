@@ -219,7 +219,8 @@ public final class From implements Sqlable {
 			return (T) SQLiteUtils.rawQuerySingle(mType, toSql(), getArguments());
 		}
 		else {
-			SQLiteUtils.execSql(toSql(), getArguments());
+			limit(1);
+			SQLiteUtils.rawQuerySingle(mType, toSql(), getArguments()).delete();
 			return null;
 		}
 	}
