@@ -149,7 +149,7 @@ final class ModelInfo {
 
 		for (String path : paths) {
 			File file = new File(path);
-			scanForModelClasses(file, packageName, context.getClass().getClassLoader());
+			scanForModelClasses(file, packageName, context.getClassLoader());
 		}
 	}
 

@@ -1,11 +1,43 @@
 language: java
 jdk: oraclejdk7
+env: ANDROID_SDK=android-16 ANDROID_ABI=armeabi-v7a
 
 before_install:
-  # Gradle
-  - wget http://services.gradle.org/distributions/gradle-1.6-bin.zip
-  - unzip gradle-1.6-bin.zip
-  - export GRADLE_HOME=$PWD/gradle-1.6
-  - export PATH=$GRADLE_HOME/bin:$PATH
+  # Install ia32-libs (necessary for Android SDK to run on 64-bit linux)
+  # - sudo apt-get clean && sudo apt-get update
+  - sudo apt-get update -qq
+  - sudo apt-get install -qq --force-yes libgd2-xpm ia32-libs ia32-libs-multiarch
 
-script: gradle assemble
+  # Install Android SDK
+  - wget http://dl.google.com/android/android-sdk_r21.0.1-linux.tgz
+  - tar -zxf android-sdk_r21.0.1-linux.tgz
+  - ls
+  - export ANDROID_HOME=`pwd`/android-sdk-linux
+  - export PATH=${PATH}:${ANDROID_HOME}/tools:${ANDROID_HOME}/platform-tools
+
+  # Install required Android components
+  - android list sdk --extended
+  # Do you accept the license 'android-sdk-license-bcbbd656' [y/n]:
+  - echo -ne "y\n" | android update sdk --filter system-image,platform-tools,extra-android-support,$ANDROID_SDK --no-ui --force
+
+  # Create and start emulator
+  - echo no | android create avd --force -n test -t $ANDROID_SDK --abi $ANDROID_ABI
+  - android list avds
+  - emulator -avd test -no-skin -no-audio -no-window &
+
+before_script:
+  # Make sure the emulator has started before running tests
+  - chmod +x ./wait_for_emulator
+  - ./wait_for_emulator
+
+script:
+  - wget http://ftp.tsukuba.wide.ad.jp/software/apache/maven/maven-3/3.0.5/binaries/apache-maven-3.0.5-bin.tar.gz
+  - tar -zxf apache-maven-3.0.5-bin.tar.gz
+  # Dirty hack
+  - sudo rm /usr/local/maven
+  - sudo rm -rf /usr/local/maven-3.1.1
+  - sudo mv ./apache-maven-3.0.5 /usr/local/maven-3.1.1
+  - sudo ln -sf /usr/local/maven-3.1.1 /usr/local/maven
+  - which mvn
+  - mvn --version
+  - mvn clean install
