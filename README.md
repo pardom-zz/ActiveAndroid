@@ -15,6 +15,7 @@ ActiveAndroid does so much more than this though. Accessing the database is a ha
 * [Using the content provider](http://github.com/pardom/ActiveAndroid/wiki/Using-the-content-provider)
 * [Schema migrations](http://github.com/pardom/ActiveAndroid/wiki/Schema-migrations)
 * [Pre-populated-databases](http://github.com/pardom/ActiveAndroid/wiki/Pre-populated-databases)
+* [Running the Test Suite](https://github.com/pardom/ActiveAndroid/wiki/Running-the-Test-Suite)
 
 ## License
 
@@ -39,6 +40,9 @@ ActiveAndroid does so much more than this though. Accessing the database is a ha
 Please fork this repository and contribute back using [pull requests](http://github.com/pardom/ActiveAndroid/pulls).
 
 Any contributions, large or small, major features, bug fixes, unit tests are welcomed and appreciated but will be thoroughly reviewed and discussed.
+
+You can run the test suite by following the instructions on the [Running the Test Suite](https://github.com/pardom/ActiveAndroid/wiki/Running-the-Test-Suite) Wiki page.
+
 
 ## Author
 
