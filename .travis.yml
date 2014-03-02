@@ -31,13 +31,4 @@ before_script:
   - ./wait_for_emulator
 
 script:
-  - wget http://ftp.tsukuba.wide.ad.jp/software/apache/maven/maven-3/3.0.5/binaries/apache-maven-3.0.5-bin.tar.gz
-  - tar -zxf apache-maven-3.0.5-bin.tar.gz
-  # Dirty hack
-  - sudo rm /usr/local/maven
-  - sudo rm -rf /usr/local/maven-3.1.1
-  - sudo mv ./apache-maven-3.0.5 /usr/local/maven-3.1.1
-  - sudo ln -sf /usr/local/maven-3.1.1 /usr/local/maven
-  - which mvn
-  - mvn --version
   - mvn clean install
