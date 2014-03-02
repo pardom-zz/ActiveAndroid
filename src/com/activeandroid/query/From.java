@@ -87,20 +87,28 @@ public final class From implements Sqlable {
 		return join;
 	}
 
-	public From where(String where) {
-		mWhere = where;
-		mArguments.clear();
+    public From where(String where) {
+        if (mWhere != null) {                                   // Chain conditions if a previous
+            mWhere = mWhere + " AND " + where;                  // condition exists.
+        } else {
+            mWhere = where;
+        }
 
-		return this;
-	}
+        return this;
+    }
 
-	public From where(String where, Object... args) {
-		mWhere = where;
-		mArguments.clear();
-		mArguments.addAll(Arrays.asList(args));
+    public From where(String where, Object... args) {
+        if (mWhere != null) {                                    // Chain conditions if a previous
+            mWhere = mWhere + " AND " + where;                   // condition exists.
+            mArguments.addAll(Arrays.asList(args));
 
-		return this;
-	}
+        } else {
+            mWhere = where;
+            mArguments.addAll(Arrays.asList(args));
+        }
+
+        return this;
+    }
 
 	public From groupBy(String groupBy) {
 		mGroupBy = groupBy;

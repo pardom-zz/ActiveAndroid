@@ -60,7 +60,7 @@ public class FromTest extends SqlableTestCase {
 		assertSqlEquals(SELECT_PREFIX + "WHERE Id = 5",
 				from().where("Id = 5"));
 		
-		assertSqlEquals(SELECT_PREFIX + "WHERE Id = 5",
+		assertSqlEquals(SELECT_PREFIX + "WHERE Id = 1 AND Id = 2 AND Id = 5",
 				from().where("Id = 1").where("Id = 2").where("Id = 5"));
 	}
 	
@@ -75,14 +75,24 @@ public class FromTest extends SqlableTestCase {
 		assertSqlEquals(SELECT_PREFIX + "WHERE Id > ? AND Id < ?",
 				query);
 		
+        // Chained
 		query = from()
 				.where("Id != ?", 10)
 				.where("Id IN (?, ?, ?)", 5, 10, 15)
 				.where("Id > ? AND Id < ?", 5, 10);
-		assertArrayEquals(query.getArguments(), "5", "10");
-		assertSqlEquals(SELECT_PREFIX + "WHERE Id > ? AND Id < ?",
+		assertArrayEquals(query.getArguments(), "10", "5", "10", "15", "5", "10");
+		assertSqlEquals(SELECT_PREFIX + "WHERE Id != ? AND Id IN (?, ?, ?) AND Id > ? AND Id < ?",
 				query);
 	}
+
+    // Test with 'no arguments' and 'with arguments' chained together.
+    public void testWhereWithNoArgumentsAndWithArguments() {
+        From query = from().where("Id = 5");
+        query.where("Id > ?", 4);
+        assertArrayEquals(query.getArguments(), "4");
+        assertSqlEquals(SELECT_PREFIX + "WHERE Id = 5 AND Id > ?",
+                query);
+    }
 	
 	public void testSingleJoin() {
 		assertSqlEquals(SELECT_PREFIX + "JOIN JoinModel ON MockModel.Id = JoinModel.Id",
