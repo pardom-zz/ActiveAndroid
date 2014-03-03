@@ -148,6 +148,10 @@ public final class SQLiteUtils {
 		final String name = tableInfo.getColumnName(field);
 		final Column column = field.getAnnotation(Column.class);
 
+        if (field.getName().equals("mId")) {
+            return;
+        }
+
 		String[] groups = column.uniqueGroups();
 		ConflictAction[] conflictActions = column.onUniqueConflicts();
 		if (groups.length != conflictActions.length)
@@ -195,6 +199,10 @@ public final class SQLiteUtils {
 	public static void createIndexColumnDefinition(TableInfo tableInfo, Field field) {
 		final String name = tableInfo.getColumnName(field);
 		final Column column = field.getAnnotation(Column.class);
+
+        if (field.getName().equals("mId")) {
+            return;
+        }
 
 		if (column.index()) {
 			List<String> list = new ArrayList<String>();
