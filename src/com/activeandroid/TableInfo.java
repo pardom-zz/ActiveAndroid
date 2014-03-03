@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 
 import android.text.TextUtils;
+import android.util.Log;
 
 import com.activeandroid.annotation.Column;
 import com.activeandroid.annotation.Table;
@@ -49,26 +50,33 @@ public final class TableInfo {
 		mType = type;
 
 		final Table tableAnnotation = type.getAnnotation(Table.class);
-		if (tableAnnotation != null) {
+
+        if (tableAnnotation != null) {
 			mTableName = tableAnnotation.name();
 			mIdName = tableAnnotation.id();
 		}
 		else {
 			mTableName = type.getSimpleName();
-		}
+        }
 
-		List<Field> fields = new LinkedList<Field>(ReflectionUtils.getDeclaredColumnFields(type));
-		Collections.reverse(fields);
+        // Manually add the id column since it is not declared like the other columns.
+        Field idField = getIdField(type);
+        mColumnNames.put(idField, mIdName);
 
-		for (Field field : fields) {
-			final Column columnAnnotation = field.getAnnotation(Column.class);
-			String columnName = columnAnnotation.name();
-			if (TextUtils.isEmpty(columnName)) {
-				columnName = field.getName();
-			}
+        List<Field> fields = new LinkedList<Field>(ReflectionUtils.getDeclaredColumnFields(type));
+        Collections.reverse(fields);
 
-			mColumnNames.put(field, columnName);
-		}
+        for (Field field : fields) {
+            if (field.isAnnotationPresent(Column.class)) {
+                final Column columnAnnotation = field.getAnnotation(Column.class);
+                String columnName = columnAnnotation.name();
+                if (TextUtils.isEmpty(columnName)) {
+                    columnName = field.getName();
+                }
+
+                mColumnNames.put(field, columnName);
+            }
+        }
 
 	}
 
@@ -95,4 +103,22 @@ public final class TableInfo {
 	public String getColumnName(Field field) {
 		return mColumnNames.get(field);
 	}
+
+
+    private Field getIdField(Class<?> type) {
+        if (type.equals(Model.class)) {
+            try {
+                return type.getDeclaredField("mId");
+            }
+            catch (NoSuchFieldException e) {
+                Log.e("Impossible!", e.toString());
+            }
+        }
+        else if (type.getSuperclass() != null) {
+            return getIdField(type.getSuperclass());
+        }
+
+        return null;
+    }
+
 }
