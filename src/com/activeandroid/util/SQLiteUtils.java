@@ -161,7 +161,7 @@ public final class SQLiteUtils {
 			String group = groups[i];
 			ConflictAction conflictAction = conflictActions[i];
 
-			if (group.isEmpty())
+			if (TextUtils.isEmpty(group))
 				continue;
 
 			List<String> list = sUniqueGroupMap.get(group);
@@ -212,7 +212,7 @@ public final class SQLiteUtils {
 
 		String[] groups = column.indexGroups();
 		for (String group : groups) {
-			if (group.isEmpty())
+			if (TextUtils.isEmpty(group))
 				continue;
 
 			List<String> list = sIndexGroupMap.get(group);
