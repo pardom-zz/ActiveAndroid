@@ -350,7 +350,7 @@ public final class SQLiteUtils {
 	}
 
 	public static List<String> lexSqlScript(String sqlScript) {
-		ArrayList<String> sl = new ArrayList<>();
+		ArrayList<String> sl = new ArrayList<String>();
 		boolean inString = false, quoteNext = false;
 		StringBuilder b = new StringBuilder(100);
 
