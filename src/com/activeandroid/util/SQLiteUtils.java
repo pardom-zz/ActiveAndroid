@@ -348,4 +348,36 @@ public final class SQLiteUtils {
 
 		return entities;
 	}
+
+	public static List<String> lexSqlScript(String sqlScript) {
+		ArrayList<String> sl = new ArrayList<>();
+		boolean inString = false, quoteNext = false;
+		StringBuilder b = new StringBuilder(100);
+
+		for (int i = 0; i < sqlScript.length(); i++) {
+			char c = sqlScript.charAt(i);
+
+			if (c == ';' && !inString && !quoteNext) {
+				sl.add(b.toString());
+				b = new StringBuilder(100);
+				inString = false;
+				quoteNext = false;
+				continue;
+			}
+
+			if (c == '\'' && !quoteNext) {
+				inString = !inString;
+			}
+
+			quoteNext = c == '\\' && !quoteNext;
+
+			b.append(c);
+		}
+
+		if (b.length() > 0) {
+			sl.add(b.toString());
+		}
+
+		return sl;
+	}
 }
