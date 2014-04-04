@@ -32,6 +32,10 @@ import java.util.List;
 
 @SuppressWarnings("unchecked")
 public abstract class Model {
+
+	/** Prime number used for hashcode() implementation. */
+	private static final int HASH_PRIME = 739;
+
 	//////////////////////////////////////////////////////////////////////////////////////
 	// PRIVATE MEMBERS
 	//////////////////////////////////////////////////////////////////////////////////////
@@ -289,9 +293,21 @@ public abstract class Model {
 
 	@Override
 	public boolean equals(Object obj) {
-		final Model other = (Model) obj;
+		if (obj instanceof Model && this.mId != null) {
+			final Model other = (Model) obj;
 
-		return this.mId != null && (this.mTableInfo.getTableName().equals(other.mTableInfo.getTableName()))
-				&& (this.mId.equals(other.mId));
+			return this.mId.equals(other.mId)							
+							&& (this.mTableInfo.getTableName().equals(other.mTableInfo.getTableName()));
+		} else {
+			return this == obj;
+		}
+	}
+
+	@Override
+	public int hashCode() {
+		int hash = HASH_PRIME;
+		hash += HASH_PRIME * (mId == null ? super.hashCode() : mId.hashCode()); //if id is null, use Object.hashCode()
+		hash += HASH_PRIME * mTableInfo.getTableName().hashCode();
+		return hash; //To change body of generated methods, choose Tools | Templates.
 	}
 }
