@@ -16,6 +16,7 @@ public class CacheTest extends AndroidTestCase {
     @Override
     protected void setUp() {
         Configuration conf = new Configuration.Builder(getContext())
+                .setDatabaseName("CacheTest")
                 .addModelClasses(CacheTestModel.class, CacheTestModel2.class)
                 .create();
         ActiveAndroid.initialize(conf, true);
