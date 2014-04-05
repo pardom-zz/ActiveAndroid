@@ -18,10 +18,9 @@ package com.activeandroid.test;
 
 import com.activeandroid.Model;
 import com.activeandroid.annotation.Table;
+
 import java.util.HashSet;
 import java.util.Set;
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertFalse;
 
 /**
  * Simple test now covering equals and hashcode methods.
@@ -58,7 +57,7 @@ public class ModelTest extends ActiveAndroidTestCase {
 
 		assertFalse(model1.equals(model2));
 		assertFalse(model2.equals(model1));
-		assertTrue(model1.equals(model1));//equal only to itself
+		assertTrue(model1.equals(model1));  //equal only to itself
 	}
 
 	/**
@@ -73,10 +72,15 @@ public class ModelTest extends ActiveAndroidTestCase {
 		model2.save();
 		model3 = Model.load(MockModel.class, model1.getId());
 
+        // Not equal to each other.
 		assertFalse(model1.equals(model2));
 		assertFalse(model2.equals(model1));
+
+        // Equal to each other when loaded.
 		assertTrue(model1.equals(model3));
 		assertTrue(model1.equals(model3));
+
+        // Loaded model is not equal to a different model.
 		assertFalse(model3.equals(model2));
 		assertFalse(model2.equals(model3));
 	}
