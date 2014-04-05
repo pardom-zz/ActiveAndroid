@@ -1,13 +1,13 @@
 package com.activeandroid.test;
 
+import android.test.AndroidTestCase;
+
 import com.activeandroid.ActiveAndroid;
 import com.activeandroid.Cache;
 import com.activeandroid.Configuration;
 import com.activeandroid.Model;
 import com.activeandroid.TableInfo;
 import com.activeandroid.annotation.Table;
-
-import android.test.AndroidTestCase;
 
 import java.util.Collection;
 
