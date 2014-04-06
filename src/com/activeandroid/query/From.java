@@ -17,6 +17,7 @@ package com.activeandroid.query;
  */
 
 import android.text.TextUtils;
+
 import com.activeandroid.Cache;
 import com.activeandroid.Model;
 import com.activeandroid.content.ContentProvider;
@@ -25,7 +26,6 @@ import com.activeandroid.util.Log;
 import com.activeandroid.util.SQLiteUtils;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public final class From implements Sqlable {
@@ -100,12 +100,12 @@ public final class From implements Sqlable {
     public From where(String where, Object... args) {
         if (mWhere != null) {                                    // Chain conditions if a previous
             mWhere = mWhere + " AND " + where;                   // condition exists.
-            mArguments.addAll(Arrays.asList(args));
-
-        } else {
-            mWhere = where;
-            mArguments.addAll(Arrays.asList(args));
         }
+        else {
+            mWhere = where;
+        }
+
+        addArguments(args);
 
         return this;
     }
@@ -144,7 +144,12 @@ public final class From implements Sqlable {
 	}
 
 	void addArguments(Object[] args) {
-		mArguments.addAll(Arrays.asList(args));
+        for( Object arg : args ) {
+            if (arg.getClass() == boolean.class || arg.getClass() == Boolean.class)
+                arg = ( arg.equals(true) ? 1 : 0 );
+
+            mArguments.add(arg);
+        }
 	}
 
 	@Override
