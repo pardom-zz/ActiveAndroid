@@ -20,6 +20,7 @@ import com.activeandroid.Cache;
 import com.activeandroid.Model;
 import com.activeandroid.TableInfo;
 import com.activeandroid.annotation.Table;
+import com.activeandroid.query.Select;
 
 import java.lang.reflect.Field;
 import java.util.HashSet;
@@ -140,6 +141,32 @@ public class ModelTest extends ActiveAndroidTestCase {
 
             assertEquals(field.getName(), tableInfo.getColumnName(field));
         }
+    }
+
+    /**
+     * Boolean should handle integer (0/1) and boolean (false/true) values.
+     */
+    public void testBooleanColumnType() {
+        MockModel mockModel = new MockModel();
+        mockModel.booleanField = false;
+        Long id = mockModel.save();
+
+        boolean databaseBooleanValue = MockModel.load( MockModel.class, id ).booleanField;
+
+        assertEquals( false, databaseBooleanValue );
+
+        // Test passing both a integer and a boolean into the where conditional.
+        assertEquals(
+                mockModel,
+                new Select().from(MockModel.class).where("booleanField = ?", 0).executeSingle() );
+
+        assertEquals(
+                mockModel,
+                new Select().from(MockModel.class).where("booleanField = ?", false).executeSingle() );
+
+        assertNull( new Select().from(MockModel.class).where("booleanField = ?", 1).executeSingle() );
+
+        assertNull( new Select().from(MockModel.class).where("booleanField = ?", true).executeSingle() );
     }
 
 	/**
