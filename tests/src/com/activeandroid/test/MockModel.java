@@ -17,8 +17,22 @@ package com.activeandroid.test;
  */
 
 import com.activeandroid.Model;
+import com.activeandroid.annotation.Column;
 import com.activeandroid.annotation.Table;
+
+import java.util.Date;
 
 @Table(name = "MockModel")
 public class MockModel extends Model {
+    @Column
+    public Date dateField;
+
+    @Column
+    public double doubleField;
+
+    @Column
+    public int intField;
+
+    @Column
+    public boolean booleanField;
 }

@@ -16,9 +16,12 @@
 
 package com.activeandroid.test;
 
+import com.activeandroid.Cache;
 import com.activeandroid.Model;
+import com.activeandroid.TableInfo;
 import com.activeandroid.annotation.Table;
 
+import java.lang.reflect.Field;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -124,6 +127,20 @@ public class ModelTest extends ActiveAndroidTestCase {
 		set.add(m3);
 		assertEquals(2, set.size());
 	}
+
+    /**
+     * Column names should default to the field name.
+     */
+    public void testColumnNamesDefaulToFieldNames() {
+        TableInfo tableInfo = Cache.getTableInfo(MockModel.class);
+
+        for ( Field field : tableInfo.getFields() ) {
+            // Id column is a special case, we'll ignore that one.
+            if ( field.getName().equals("mId") ) continue;
+
+            assertEquals(field.getName(), tableInfo.getColumnName(field));
+        }
+    }
 
 	/**
 	 * Mock model as we need 2 different model classes.
