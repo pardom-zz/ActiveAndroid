@@ -18,7 +18,7 @@ before_install:
   # Install required Android components
   - android list sdk --extended --all
   # Do you accept the license 'android-sdk-license-bcbbd656' [y/n]:
-  - echo -ne "y\n" | android update sdk --filter system-image,platform-tools,extra-android-support,$ANDROID_SDK --no-ui --force --all
+  - echo -ne "y\n" | android update sdk --filter sysimg-16,platform-tools,extra-android-support --no-ui --force --all
 
   # Create and start emulator
   - echo no | android create avd --force -n test -t $ANDROID_SDK --abi $ANDROID_ABI
