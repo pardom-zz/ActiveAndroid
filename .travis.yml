@@ -1,29 +1,30 @@
 language: java
 jdk: oraclejdk7
-env: ANDROID_SDK=android-16 ANDROID_ABI=armeabi-v7a
+env:
+ matrix:
+   # android-16 is always included
+   - ANDROID_SDKS=sysimg-16           ANDROID_TARGET=android-16  ANDROID_ABI=armeabi-v7a
+   - ANDROID_SDKS=android-17,sysimg-17 ANDROID_TARGET=android-17  ANDROID_ABI=armeabi-v7a
 
 before_install:
-  # Install ia32-libs (necessary for Android SDK to run on 64-bit linux)
-  # - sudo apt-get clean && sudo apt-get update
+  # Install base Android SDK
   - sudo apt-get update -qq
-  - sudo apt-get install -qq --force-yes libgd2-xpm ia32-libs ia32-libs-multiarch
-
-  # Install Android SDK
-  - wget http://dl.google.com/android/android-sdk_r21.0.1-linux.tgz
-  - tar -zxf android-sdk_r21.0.1-linux.tgz
-  - ls
-  - export ANDROID_HOME=`pwd`/android-sdk-linux
+  - if [ `uname -m` = x86_64 ]; then sudo apt-get install -qq --force-yes libgd2-xpm ia32-libs ia32-libs-multiarch > /dev/null; fi
+  - wget http://dl.google.com/android/android-sdk_r21.1-linux.tgz
+  - tar xzf android-sdk_r21.1-linux.tgz
+  - export ANDROID_HOME=$PWD/android-sdk-linux
   - export PATH=${PATH}:${ANDROID_HOME}/tools:${ANDROID_HOME}/platform-tools
 
-  # Install required Android components
-  - android list sdk --extended --all
-  # Do you accept the license 'android-sdk-license-bcbbd656' [y/n]:
-  - echo -ne "y\n" | android update sdk --filter sysimg-16,platform-tools,extra-android-support --no-ui --force --all
+  # Install required components.
+  # For a full list, run `android list sdk -a --extended`
+  # Note that sysimg-16 downloads the ARM, x86 and MIPS images (we should optimize this).
+  # Other relevant API's:
+  #  addon-google_apis-google-16
+  - android update sdk --filter platform-tools,android-16,extra-android-support,66,$ANDROID_SDKS --no-ui --force > /dev/null
 
   # Create and start emulator
-  - echo no | android create avd --force -n test -t $ANDROID_SDK --abi $ANDROID_ABI
-  - android list avds
-  - emulator -avd test -no-skin -no-audio -no-window &
+    - echo no | android create avd --force -n test -t $ANDROID_TARGET --abi $ANDROID_ABI
+    - emulator -avd test -no-skin -no-audio -no-window &
 
 before_script:
   # Make sure the emulator has started before running tests
