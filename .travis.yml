@@ -16,7 +16,7 @@ before_install:
   - export PATH=${PATH}:${ANDROID_HOME}/tools:${ANDROID_HOME}/platform-tools
 
   # Install required Android components
-  - android list sdk --extended
+  - android list sdk --extended --all
   # Do you accept the license 'android-sdk-license-bcbbd656' [y/n]:
   - echo -ne "y\n" | android update sdk --filter system-image,platform-tools,extra-android-support,$ANDROID_SDK --no-ui --force --all
 
