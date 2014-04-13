@@ -106,6 +106,14 @@ public final class SQLiteUtils {
 
 		return entities;
 	}
+	  
+	public static int intQuery(final String sql, final String[] selectionArgs) {
+        final Cursor cursor = Cache.openDatabase().rawQuery(sql, selectionArgs);
+        final int number = processIntCursor(cursor);
+        cursor.close();
+
+        return number;
+	}
 
 	public static <T extends Model> T rawQuerySingle(Class<? extends Model> type, String sql, String[] selectionArgs) {
 		List<T> entities = rawQuery(type, sql, selectionArgs);
@@ -348,6 +356,13 @@ public final class SQLiteUtils {
 
 		return entities;
 	}
+
+	private static int processIntCursor(final Cursor cursor) {
+        if (cursor.moveToFirst()) {
+            return cursor.getInt(0);
+	    }
+        return 0;
+    }
 
 	public static List<String> lexSqlScript(String sqlScript) {
 		ArrayList<String> sl = new ArrayList<String>();
