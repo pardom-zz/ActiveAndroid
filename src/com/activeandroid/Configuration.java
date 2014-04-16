@@ -27,6 +27,10 @@ import com.activeandroid.util.Log;
 import com.activeandroid.util.ReflectionUtils;
 
 public class Configuration {
+
+    public final static String SQL_PARSER_LEGACY = "legacy";
+    public final static String SQL_PARSER_DELIMITED = "delimited";
+
 	//////////////////////////////////////////////////////////////////////////////////////
 	// PRIVATE MEMBERS
 	//////////////////////////////////////////////////////////////////////////////////////
@@ -34,6 +38,7 @@ public class Configuration {
 	private Context mContext;
 	private String mDatabaseName;
 	private int mDatabaseVersion;
+	private String mSqlParser;
 	private List<Class<? extends Model>> mModelClasses;
 	private List<Class<? extends TypeSerializer>> mTypeSerializers;
 	private int mCacheSize;
@@ -60,6 +65,10 @@ public class Configuration {
 
 	public int getDatabaseVersion() {
 		return mDatabaseVersion;
+	}
+	
+	public String getSqlParser() {
+	    return mSqlParser;
 	}
 
 	public List<Class<? extends Model>> getModelClasses() {
@@ -91,9 +100,11 @@ public class Configuration {
 		private static final String AA_DB_VERSION = "AA_DB_VERSION";
 		private final static String AA_MODELS = "AA_MODELS";
 		private final static String AA_SERIALIZERS = "AA_SERIALIZERS";
+		private final static String AA_SQL_PARSER = "AA_SQL_PARSER";
 
 		private static final int DEFAULT_CACHE_SIZE = 1024;
 		private static final String DEFAULT_DB_NAME = "Application.db";
+		private static final String DEFAULT_SQL_PARSER = SQL_PARSER_LEGACY;
 
 		//////////////////////////////////////////////////////////////////////////////////////
 		// PRIVATE MEMBERS
@@ -104,6 +115,7 @@ public class Configuration {
 		private Integer mCacheSize;
 		private String mDatabaseName;
 		private Integer mDatabaseVersion;
+		private String mSqlParser;
 		private List<Class<? extends Model>> mModelClasses;
 		private List<Class<? extends TypeSerializer>> mTypeSerializers;
 
@@ -133,6 +145,11 @@ public class Configuration {
 		public Builder setDatabaseVersion(int databaseVersion) {
 			mDatabaseVersion = databaseVersion;
 			return this;
+		}
+		
+		public Builder setSqlParser(String sqlParser) {
+		    mSqlParser = sqlParser;
+		    return this;
 		}
 
 		public Builder addModelClass(Class<? extends Model> modelClass) {
@@ -188,24 +205,28 @@ public class Configuration {
 			// Get database name from meta-data
 			if (mDatabaseName != null) {
 				configuration.mDatabaseName = mDatabaseName;
-			}
-			else {
+			} else {
 				configuration.mDatabaseName = getMetaDataDatabaseNameOrDefault();
 			}
 
 			// Get database version from meta-data
 			if (mDatabaseVersion != null) {
 				configuration.mDatabaseVersion = mDatabaseVersion;
-			}
-			else {
+			} else {
 				configuration.mDatabaseVersion = getMetaDataDatabaseVersionOrDefault();
 			}
 
+			// Get SQL parser from meta-data
+			if (mSqlParser != null) {
+			    configuration.mSqlParser = mSqlParser;
+			} else {
+			    configuration.mSqlParser = getMetaDataSqlParserOrDefault();
+			}
+			
 			// Get model classes from meta-data
 			if (mModelClasses != null) {
 				configuration.mModelClasses = mModelClasses;
-			}
-			else {
+			} else {
 				final String modelList = ReflectionUtils.getMetaData(mContext, AA_MODELS);
 				if (modelList != null) {
 					configuration.mModelClasses = loadModelList(modelList.split(","));
@@ -215,8 +236,7 @@ public class Configuration {
 			// Get type serializer classes from meta-data
 			if (mTypeSerializers != null) {
 				configuration.mTypeSerializers = mTypeSerializers;
-			}
-			else {
+			} else {
 				final String serializerList = ReflectionUtils.getMetaData(mContext, AA_SERIALIZERS);
 				if (serializerList != null) {
 					configuration.mTypeSerializers = loadSerializerList(serializerList.split(","));
@@ -248,6 +268,14 @@ public class Configuration {
 			}
 
 			return aaVersion;
+		}
+
+		private String getMetaDataSqlParserOrDefault() {
+		    final String mode = ReflectionUtils.getMetaData(mContext, AA_SQL_PARSER);
+		    if (mode == null) {
+		        return DEFAULT_SQL_PARSER;
+		    }
+		    return mode;
 		}
 
 		private List<Class<? extends Model>> loadModelList(String[] models) {
