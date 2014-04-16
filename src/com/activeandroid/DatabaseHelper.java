@@ -192,14 +192,20 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
 		try {
 			final InputStream input = Cache.getContext().getAssets().open(MIGRATION_PATH + "/" + file);
 			final BufferedReader reader = new BufferedReader(new InputStreamReader(input));
+
+			StringBuilder sb = new StringBuilder(255);
 			String line = null;
 
 			while ((line = reader.readLine()) != null) {
-				line = line.replace(";", "").trim();
-				if (!line.isEmpty()) {
-					db.execSQL(line);
+				sb.append(line).append('\n');
+			}
+
+			for (String s : SQLiteUtils.lexSqlScript(sb.toString())) {
+				if (!"\n".equals(s)) {
+					db.execSQL(s);
 				}
 			}
+
 		}
 		catch (IOException e) {
 			Log.e("Failed to execute " + file, e);
