@@ -85,6 +85,67 @@ public class FromTest extends SqlableTestCase {
 				query);
 	}
 
+	public void testWhereChaining() {
+	    
+	    From expected = from()
+	            .where("a = ? AND b = ?", 1, 2);
+	    
+	    From actual = from()
+	            .where("a = ?", 1, 2)
+	            .where("b = ?", 1, 2);
+	    
+	    assertSqlEquals(expected, actual);
+	}
+	
+   public void testWhereAndChaining() {
+
+       From expected = from()
+               .where("a = ? AND b = ?", 1, 2);
+
+       From actual = from()
+               .where("a = ?", 1)
+               .and("b = ?", 2);
+
+       assertSqlEquals(expected, actual);
+   }
+
+   public void testWhereOrChaining() {
+
+       From expected = from()
+               .where("a = ? OR b = ?", 1, 2);
+
+       From actual = from()
+               .where("a = ?", 1)
+               .or("b = ?", 2);
+
+       assertSqlEquals(expected, actual);
+   }
+
+   public void testWhereAndOrChaining() {
+
+       From expected = from()
+               .where("a = ? OR (b = ? AND c = ?)", 1, 2, 3);
+
+       From actual = from()
+               .where("a = ?", 1)
+               .or("(b = ? AND c = ?)", 2, 3);
+
+       assertSqlEquals(expected, actual);
+   }
+
+   public void testWhereAlternateAndOrChaining() {
+
+       From expected = from()
+               .where("a = ? OR (b = ? AND c = ?)", 1, 2, 3);
+
+       From actual = from()
+               .where("a = ?", 1)
+               .or("(b = ?", 2)
+               .and("c = ?)", 3);
+
+       assertSqlEquals(expected, actual);
+   }
+
     // Test with 'no arguments' and 'with arguments' chained together.
     public void testWhereWithNoArgumentsAndWithArguments() {
         From query = from().where("Id = 5");

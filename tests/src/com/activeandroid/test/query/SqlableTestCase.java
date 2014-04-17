@@ -23,4 +23,8 @@ public abstract class SqlableTestCase extends ActiveAndroidTestCase {
 	public static void assertSqlEquals(String expected, Sqlable actual) {
 		assertEquals(expected, actual.toSql());
 	}
+	
+	public static void assertSqlEquals(Sqlable expected, Sqlable actual) {
+	    assertEquals(expected.toSql(), actual.toSql());
+	}
 }
