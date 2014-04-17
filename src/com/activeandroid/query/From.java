@@ -267,6 +267,10 @@ public final class From implements Sqlable {
         addFrom(sql);
         addJoins(sql);
         addWhere(sql);
+        addGroupBy(sql);
+        addHaving(sql);
+        addLimit(sql);
+        addOffset(sql);
 
         sql.append(")");
 
