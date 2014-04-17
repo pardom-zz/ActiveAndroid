@@ -37,6 +37,19 @@ public class ParserTest extends ActiveAndroidTestCase {
     }
 
     /**
+     * Should reduce unnecessary whitespace.
+     * @throws IOException
+     */
+    public void testWhitespace() throws IOException {
+
+        final InputStream stream = this.getStream(R.raw.whitespace);
+        List<String> commands = SqlParser.parse(stream);
+
+        assertEquals(1, commands.size());
+        assertEquals(sql1, commands.get(0));
+    }
+
+    /**
      * Should be able to parse a multi-line statement that has an embedded line comment.
      * @throws IOException
      */
@@ -56,6 +69,19 @@ public class ParserTest extends ActiveAndroidTestCase {
     public void testLineCommentWithString() throws IOException {
 
         final InputStream stream = this.getStream(R.raw.line_comment_with_string);
+        List<String> commands = SqlParser.parse(stream);
+
+        assertEquals(1, commands.size());
+        assertEquals(sql1, commands.get(0));
+    }
+
+    /**
+     * Should be able to handle a line comment that contains a semicolon.
+     * @throws IOException
+     */
+    public void testLineCommentWithSemicolon() throws IOException {
+
+        final InputStream stream = this.getStream(R.raw.line_comment_with_semicolon);
         List<String> commands = SqlParser.parse(stream);
 
         assertEquals(1, commands.size());
@@ -95,6 +121,19 @@ public class ParserTest extends ActiveAndroidTestCase {
     public void testBlockCommentWithString() throws IOException {
 
         final InputStream stream = this.getStream(R.raw.block_comment_with_string);
+        List<String> commands = SqlParser.parse(stream);
+
+        assertEquals(1, commands.size());
+        assertEquals(sql1, commands.get(0));
+    }
+
+    /**
+     * Should be able to handle a block comment that contains a semicolon.
+     * @throws IOException
+     */
+    public void testBlockCommentWithSemicolon() throws IOException {
+
+        final InputStream stream = this.getStream(R.raw.block_comment_with_semicolon);
         List<String> commands = SqlParser.parse(stream);
 
         assertEquals(1, commands.size());
@@ -150,6 +189,34 @@ public class ParserTest extends ActiveAndroidTestCase {
         final String sql = "INSERT INTO Entity ( Id, Column1, Column2 ) VALUES ( 1, '/* some text', 'some text */' )";
 
         final InputStream stream = this.getStream(R.raw.string_with_block_comment);
+        List<String> commands = SqlParser.parse(stream);
+
+        assertEquals(1, commands.size());
+        assertEquals(sql, commands.get(0));
+    }
+
+    /**
+     * Should ignore semicolons inside strings.
+     * @throws IOException
+     */
+    public void testStringWithSemicolon() throws IOException {
+        final String sql = "INSERT INTO Entity ( Id, Column1, Column2 ) VALUES ( 1, 'some ; text', 'some ; text' )";
+
+        final InputStream stream = this.getStream(R.raw.string_with_semicolon);
+        List<String> commands = SqlParser.parse(stream);
+
+        assertEquals(1, commands.size());
+        assertEquals(sql, commands.get(0));
+    }
+
+    /**
+     * Should not clobber whitespace in strings.
+     * @throws IOException
+     */
+    public void testStringWithWhitespace() throws IOException {
+        final String sql = "INSERT INTO Entity ( Id, Column1, Column2 ) VALUES ( 1, 'some\t\t\ttext', 'some    text' )";
+
+        final InputStream stream = this.getStream(R.raw.string_with_whitespace);
         List<String> commands = SqlParser.parse(stream);
 
         assertEquals(1, commands.size());

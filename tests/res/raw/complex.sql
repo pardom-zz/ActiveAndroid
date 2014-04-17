@@ -10,7 +10,7 @@ CREATE TABLE Entity2
 INSERT INTO Entity2
 (
     Id,
-    Column,
+    Column, /* --> ; <-- */
     Column2
 )
 SELECT  Id,
@@ -25,7 +25,7 @@ ALTER TABLE Entity2 RENAME TO Entity;
 /* Add some --sample-- data */
 INSERT INTO Entity2
 (
-    Id,
+    Id, --;'/*;*/--
     Col/*not sure if anyone would ever be insane enough to do this*/umn,
     Column2--,
 )
