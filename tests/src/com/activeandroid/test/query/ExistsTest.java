@@ -74,11 +74,11 @@ public class ExistsTest extends SqlableTestCase {
     }
 
     /**
-     * Shouldn't include <i>group by</i> and <i>order by</i> as they has no influence on the result
-     * of <i>exists</i> and should improve performance.
+     * Shouldn't include <i>order by</i> as it has no influence on the result of <i>exists</i> and
+     * should improve performance.
      */
     public void testCountOrderBySql() {
-        final String expected = "SELECT EXISTS(SELECT 1 FROM MockModel WHERE intField <> ? )";
+        final String expected = "SELECT EXISTS(SELECT 1 FROM MockModel WHERE intField <> ? GROUP BY intField )";
 
         String actual = new Select()
                 .from(MockModel.class)
@@ -120,6 +120,63 @@ public class ExistsTest extends SqlableTestCase {
         From from = new Select()
                 .from(MockModel.class)
                 .where("intField = ?", 3);
+
+        final List<MockModel> list = from.execute();
+        final boolean exists = from.exists();
+
+        assertFalse(exists);
+        assertFalse(list.size() > 0);
+    }
+
+    /**
+     * Should not change the result if order by is used.
+     */
+    public void testCountOrderBy() {
+        cleanTable();
+        populateTable();
+
+        From from = new Select()
+                .from(MockModel.class)
+                .where("intField = ?", 1)
+                .orderBy("intField ASC");
+
+        final List<MockModel> list = from.execute();
+        final boolean exists = from.exists();
+
+        assertTrue(exists);
+        assertTrue(list.size() > 0);
+    }
+
+    /**
+     * Should not change the result if group by is used.
+     */
+    public void testCountGroupBy() {
+        cleanTable();
+        populateTable();
+
+        From from = new Select()
+                .from(MockModel.class)
+                .groupBy("intField")
+                .having("intField = 1");
+
+        final List<MockModel> list = from.execute();
+        final boolean exists = from.exists();
+
+        assertTrue(exists);
+        assertTrue(list.size() > 0);
+    }
+
+    /**
+     * Should not exist if group by eliminates all rows.
+     */
+    public void testCountGroupByEmpty() {
+        cleanTable();
+        populateTable();
+
+        From from = new Select()
+                .from(MockModel.class)
+                .groupBy("intField")
+                .having("intField = 3");
 
         final List<MockModel> list = from.execute();
         final boolean exists = from.exists();

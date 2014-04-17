@@ -65,9 +65,9 @@ public class CountTest extends SqlableTestCase {
 
         String actual = new Select()
                 .from(MockModel.class)
-                .groupBy("intField")
-                .orderBy("intField")
                 .where("intField <> ?", 0)
+                .orderBy("intField")
+                .groupBy("intField")
                 .toCountSql();
 
         assertEquals(expected, actual);
@@ -126,5 +126,44 @@ public class CountTest extends SqlableTestCase {
 
         assertEquals(0, count);
         assertEquals(list.size(), count);
+    }
+
+    /**
+     * Should not change the result if order by is used.
+     */
+    public void testCountOrderBy() {
+        cleanTable();
+        populateTable();
+
+        From from = new Select()
+                .from(MockModel.class)
+                .where("intField = ?", 1)
+                .orderBy("intField ASC");
+
+        final List<MockModel> list = from.execute();
+        final int count = from.count();
+
+        assertEquals(2, count);
+        assertEquals(list.size(), count);
+    }
+
+    /**
+     * Should return the total number of rows, even if the rows are grouped. May seem weird, just
+     * test it in an SQL explorer.
+     */
+    public void testCountGroupBy() {
+        cleanTable();
+        populateTable();
+
+        From from = new Select()
+                .from(MockModel.class)
+                .groupBy("intField")
+                .having("intField = 1");
+
+        final List<MockModel> list = from.execute();
+        final int count = from.count();
+
+        assertEquals(2, count);
+        assertEquals(1, list.size());
     }
 }
