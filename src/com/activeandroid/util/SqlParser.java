@@ -49,7 +49,7 @@ public class SqlParser {
                     continue;
 
                 } else if (state == STATE_NONE && c == ';') {
-                    final String command = sb.toString();
+                    final String command = sb.toString().trim();
                     commands.add(command);
                     sb.setLength(0);
                     continue;
@@ -78,7 +78,7 @@ public class SqlParser {
         }
 
         if (sb.length() > 0) {
-            commands.add(sb.toString());
+            commands.add(sb.toString().trim());
         }
 
         return commands;
