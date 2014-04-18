@@ -1,0 +1,18 @@
+CREATE TABLE IF NOT EXISTS MockMigration
+(
+	Id INTEGER AUTO_INCREMENT PRIMARY KEY,
+	Column TEXT NOT NULL
+);
+
+INSERT INTO MockMigration
+(
+	Id,
+	Column
+)
+VALUES
+(
+	1,
+	'text'
+);
+
+DROP TABLE IF EXISTS MockMigration;

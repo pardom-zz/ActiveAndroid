@@ -20,6 +20,7 @@ public class ConfigurationTest extends AndroidTestCase {
         assertNull(conf.getModelClasses());
         assertFalse(conf.isValid());
         assertNull(conf.getTypeSerializers());
+        assertEquals(Configuration.SQL_PARSER_LEGACY, conf.getSqlParser());
     }
 
     public void testCreateConfigurationWithMockModel() {
