@@ -30,6 +30,7 @@ import java.util.List;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.text.TextUtils;
 
 import com.activeandroid.util.IOUtils;
 import com.activeandroid.util.Log;
@@ -196,7 +197,7 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
 
 		return migrationExecuted;
 	}
-	
+
 	private void executeSqlScript(SQLiteDatabase db, String file) {
 
 	    InputStream stream = null;
@@ -224,7 +225,7 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
 	private void executeDelimitedSqlScript(SQLiteDatabase db, InputStream stream) throws IOException {
 
 	    List<String> commands = SqlParser.parse(stream);
-	    
+
 	    for(String command : commands) {
 	        db.execSQL(command);
 	    }
@@ -239,10 +240,10 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
             reader = new InputStreamReader(stream);
             buffer = new BufferedReader(reader);
             String line = null;
-    
+
             while ((line = buffer.readLine()) != null) {
                 line = line.replace(";", "").trim();
-                if (!line.isEmpty()) {
+                if (!TextUtils.isEmpty(line)) {
                     db.execSQL(line);
                 }
             }
