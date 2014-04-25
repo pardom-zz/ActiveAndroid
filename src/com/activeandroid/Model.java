@@ -163,6 +163,14 @@ public abstract class Model {
 
 	// Convenience methods
 
+    // Truncate fix
+    public static void truncate(Class<? extends Model> type){
+        TableInfo tableInfo = Cache.getTableInfo(type);
+        // Not the cleanest way, but...
+        ActiveAndroid.execSQL("delete from "+tableInfo.getTableName()+";");
+        ActiveAndroid.execSQL("delete from sqlite_sequence where name='"+tableInfo.getTableName()+"';");
+    }
+
 	public static void delete(Class<? extends Model> type, long id) {
 		TableInfo tableInfo = Cache.getTableInfo(type);
 		new Delete().from(type).where(tableInfo.getIdName()+"=?", id).execute();
