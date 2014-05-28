@@ -27,8 +27,11 @@ import com.activeandroid.annotation.Column;
 import com.activeandroid.annotation.Column.ConflictAction;
 import com.activeandroid.serializer.TypeSerializer;
 
+import java.lang.Long;
+import java.lang.String;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -327,8 +330,13 @@ public final class SQLiteUtils {
 			Constructor<?> entityConstructor = type.getConstructor();
 
 			if (cursor.moveToFirst()) {
+                /**
+                 * Obtain the columns ordered to fix issue #106 (https://github.com/pardom/ActiveAndroid/issues/106)
+                 * when the cursor have multiple columns with same name obtained from join tables.
+                 */
+                List<String> columnsOrdered = new ArrayList<String>(Arrays.asList(cursor.getColumnNames()));
 				do {
-					Model entity = Cache.getEntity(type, cursor.getLong(cursor.getColumnIndex(idName)));
+					Model entity = Cache.getEntity(type, cursor.getLong(columnsOrdered.indexOf(idName)));
 					if (entity == null) {
 						entity = (T) entityConstructor.newInstance();
 					}

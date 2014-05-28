@@ -28,6 +28,8 @@ import com.activeandroid.util.Log;
 import com.activeandroid.util.ReflectionUtils;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @SuppressWarnings("unchecked")
@@ -176,10 +178,15 @@ public abstract class Model {
 	// Model population
 
 	public final void loadFromCursor(Cursor cursor) {
+        /**
+         * Obtain the columns ordered to fix issue #106 (https://github.com/pardom/ActiveAndroid/issues/106)
+         * when the cursor have multiple columns with same name obtained from join tables.
+         */
+        List<String> columnsOrdered = new ArrayList<String>(Arrays.asList(cursor.getColumnNames()));
 		for (Field field : mTableInfo.getFields()) {
 			final String fieldName = mTableInfo.getColumnName(field);
 			Class<?> fieldType = field.getType();
-			final int columnIndex = cursor.getColumnIndex(fieldName);
+			final int columnIndex = columnsOrdered.indexOf(fieldName);
 
 			if (columnIndex < 0) {
 				continue;
