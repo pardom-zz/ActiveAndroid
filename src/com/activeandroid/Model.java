@@ -173,6 +173,40 @@ public abstract class Model {
 		return (T) new Select().from(type).where(tableInfo.getIdName()+"=?", id).executeSingle();
 	}
 
+    /**
+     * Clones a model instance. Only the model ID and the fields annotated 
+     * as {@link Column} will be copied over to the new instance.
+     * @param model
+     * @return The new model instance or null if an error occurs.
+     */
+    public static <T extends Model> T clone(T model) {
+        final Class<T> cls = (Class<T>) model.getClass();
+        T newInstance = null;
+
+        try {
+            newInstance = cls.newInstance();
+
+            // copy fields from model to newInstance.
+            for (Field field : model.mTableInfo.getFields()) {
+                field.setAccessible(true);
+                field.set(newInstance, field.get(model));
+            }
+
+            newInstance.mId = model.mId;
+
+            return newInstance;
+        }
+        // These should not happen.
+        catch (IllegalAccessException e) {
+            // nothing
+        }
+        catch (InstantiationException e) {
+            // nothing
+        }
+
+        return null;
+    }
+	
 	// Model population
 
 	public final void loadFromCursor(Cursor cursor) {
