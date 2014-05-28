@@ -105,10 +105,10 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
 			final InputStream inputStream = context.getAssets().open(databaseName);
 			final OutputStream output = new FileOutputStream(dbPath);
 
-			byte[] buffer = new byte[1024];
+			byte[] buffer = new byte[8192];
 			int length;
 
-			while ((length = inputStream.read(buffer)) > 0) {
+			while ((length = inputStream.read(buffer, 0, 8192)) > 0) {
 				output.write(buffer, 0, length);
 			}
 
