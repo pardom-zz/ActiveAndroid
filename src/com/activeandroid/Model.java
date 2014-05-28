@@ -174,7 +174,7 @@ public abstract class Model {
 	}
 
     /**
-     * Clones a model instance. Only the model ID and the fields annotated 
+     * Deep copies a model instance. Only the model ID and the fields annotated 
      * as {@link Column} will be copied over to the new instance.
      * @param model
      * @return The new model instance or null if an error occurs.
@@ -188,8 +188,13 @@ public abstract class Model {
 
             // copy fields from model to newInstance.
             for (Field field : model.mTableInfo.getFields()) {
+                Object val = field.get(model);
+                
+                if (val instanceof Model)
+                    val = clone((Model)val);
+                
                 field.setAccessible(true);
-                field.set(newInstance, field.get(model));
+                field.set(newInstance, val);
             }
 
             newInstance.mId = model.mId;
