@@ -175,8 +175,10 @@ public abstract class Model {
 
     /**
      * Deep copies a model instance. Only the model ID and the fields annotated 
-     * as {@link Column} will be copied over to the new instance.
-     * @param model
+     * as {@link Column} will be copied over to the new instance. 
+     * WARNING: If the specified model is self-referential, this will cause an 
+     * infinite recursion. 
+     * @param model Model instance to copy. Must not be null.
      * @return The new model instance or null if an error occurs.
      */
     public static <T extends Model> T clone(T model) {
