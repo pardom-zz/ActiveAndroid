@@ -18,11 +18,6 @@ package com.test.christophergastebois.activeandroid;
 
 import android.content.Context;
 
-import com.test.christophergastebois.activeandroid.serializer.CalendarSerializer;
-import com.test.christophergastebois.activeandroid.serializer.FileSerializer;
-import com.test.christophergastebois.activeandroid.serializer.SqlDateSerializer;
-import com.test.christophergastebois.activeandroid.serializer.TypeSerializer;
-import com.test.christophergastebois.activeandroid.serializer.UtilDateSerializer;
 import com.test.christophergastebois.activeandroid.util.Log;
 import com.test.christophergastebois.activeandroid.util.ReflectionUtils;
 
@@ -30,7 +25,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -39,29 +33,21 @@ import java.util.Map;
 
 import dalvik.system.DexFile;
 
-final class ModelInfo {
+final class ViewTableInfo {
 	//////////////////////////////////////////////////////////////////////////////////////
 	// PRIVATE METHODS
 	//////////////////////////////////////////////////////////////////////////////////////
 
-	private Map<Class<? extends Model>, TableInfo> mTableInfos = new HashMap<Class<? extends Model>, TableInfo>();
-	private Map<Class<?>, TypeSerializer> mTypeSerializers = new HashMap<Class<?>, TypeSerializer>() {
-		{
-			put(Calendar.class, new CalendarSerializer());
-			put(java.sql.Date.class, new SqlDateSerializer());
-			put(java.util.Date.class, new UtilDateSerializer());
-			put(java.io.File.class, new FileSerializer());
-		}
-	};
+	private Map<Class<? extends ViewTable>, ViewTableTableInfo> mTableInfos  = new HashMap<Class<? extends ViewTable>, ViewTableTableInfo>();
 
 	//////////////////////////////////////////////////////////////////////////////////////
 	// CONSTRUCTORS
 	//////////////////////////////////////////////////////////////////////////////////////
 
-	public ModelInfo(Configuration configuration) {
-		if (!loadModelFromMetaData(configuration)) {
+	public ViewTableInfo(Configuration configuration) {
+		if (!loadViewTableFromMetaData(configuration)) {
 			try {
-				scanForModel(configuration.getContext());
+				scanForViewTable(configuration.getContext());
 			}
 			catch (IOException e) {
 				Log.e("Couldn't open source path.", e);
@@ -75,54 +61,34 @@ final class ModelInfo {
 	// PUBLIC METHODS
 	//////////////////////////////////////////////////////////////////////////////////////
 
-	public Collection<TableInfo> getTableInfos() {
+	public Collection<ViewTableTableInfo> getViewTableTableInfos() {
 		return mTableInfos.values();
 	}
 
-	public TableInfo getTableInfo(Class<? extends Model> type) {
+	public ViewTableTableInfo getViewTableTableInfo(Class<? extends ViewTable> type) {
 		return mTableInfos.get(type);
-	}
-
-	public TypeSerializer getTypeSerializer(Class<?> type) {
-		return mTypeSerializers.get(type);
 	}
 
 	//////////////////////////////////////////////////////////////////////////////////////
 	// PRIVATE METHODS
 	//////////////////////////////////////////////////////////////////////////////////////
 
-	private boolean loadModelFromMetaData(Configuration configuration) {
-		if (!configuration.modelConfigurationIsValid()) {
+	private boolean loadViewTableFromMetaData(Configuration configuration) {
+		if (!configuration.viewTableConfigurationIsValid()) {
 			return false;
 		}
 
-		final List<Class<? extends Model>> models = configuration.getModelClasses();
-		if (models != null) {
-			for (Class<? extends Model> model : models) {
-				mTableInfos.put(model, new TableInfo(model));
-			}
-		}
-
-		final List<Class<? extends TypeSerializer>> typeSerializers = configuration.getTypeSerializers();
-		if (typeSerializers != null) {
-			for (Class<? extends TypeSerializer> typeSerializer : typeSerializers) {
-				try {
-					TypeSerializer instance = typeSerializer.newInstance();
-					mTypeSerializers.put(instance.getDeserializedType(), instance);
-				}
-				catch (InstantiationException e) {
-					Log.e("Couldn't instantiate TypeSerializer.", e);
-				}
-				catch (IllegalAccessException e) {
-					Log.e("IllegalAccessException", e);
-				}
+		final List<Class<? extends ViewTable>> viewTables = configuration.getViewTableClasses();
+		if (viewTables != null) {
+			for (Class<? extends ViewTable> viewTable : viewTables) {
+				mTableInfos.put(viewTable, new ViewTableTableInfo(viewTable));
 			}
 		}
 
 		return true;
 	}
 
-	private void scanForModel(Context context) throws IOException {
+	private void scanForViewTable(Context context) throws IOException {
 		String packageName = context.getPackageName();
 		String sourcePath = context.getApplicationInfo().sourceDir;
 		List<String> paths = new ArrayList<String>();
@@ -150,14 +116,14 @@ final class ModelInfo {
 
 		for (String path : paths) {
 			File file = new File(path);
-			scanForModelClasses(file, packageName, context.getClassLoader());
+			scanForViewTableClasses(file, packageName, context.getClassLoader());
 		}
 	}
 
-	private void scanForModelClasses(File path, String packageName, ClassLoader classLoader) {
+	private void scanForViewTableClasses(File path, String packageName, ClassLoader classLoader) {
 		if (path.isDirectory()) {
 			for (File file : path.listFiles()) {
-				scanForModelClasses(file, packageName, classLoader);
+				scanForViewTableClasses(file, packageName, classLoader);
 			}
 		}
 		else {
@@ -186,24 +152,14 @@ final class ModelInfo {
 
 			try {
 				Class<?> discoveredClass = Class.forName(className, false, classLoader);
-				if (ReflectionUtils.isModel(discoveredClass)) {
-					@SuppressWarnings("unchecked")
-					Class<? extends Model> modelClass = (Class<? extends Model>) discoveredClass;
-					mTableInfos.put(modelClass, new TableInfo(modelClass));
-				}
-				else if (ReflectionUtils.isTypeSerializer(discoveredClass)) {
-					TypeSerializer instance = (TypeSerializer) discoveredClass.newInstance();
-					mTypeSerializers.put(instance.getDeserializedType(), instance);
+				if (ReflectionUtils.isViewTable(discoveredClass)) {
+
+					Class<? extends ViewTable> viewTableClass = (Class<? extends ViewTable>) discoveredClass;
+					mTableInfos.put(viewTableClass, new ViewTableTableInfo(viewTableClass));
 				}
 			}
 			catch (ClassNotFoundException e) {
 				Log.e("Couldn't create class.", e);
-			}
-			catch (InstantiationException e) {
-				Log.e("Couldn't instantiate TypeSerializer.", e);
-			}
-			catch (IllegalAccessException e) {
-				Log.e("IllegalAccessException", e);
 			}
 		}
 	}

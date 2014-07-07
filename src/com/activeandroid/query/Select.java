@@ -18,19 +18,26 @@ package com.activeandroid.query;
 
 import android.text.TextUtils;
 
-import com.activeandroid.Model;
+import com.test.christophergastebois.activeandroid.Model;
+import com.test.christophergastebois.activeandroid.ViewTable;
 
 public final class Select implements Sqlable {
 	private String[] mColumns;
 	private boolean mDistinct = false;
 	private boolean mAll = false;
 
-	public Select() {
-	}
+    private Class<? extends ViewTable> mViewTableType;
+
+	public Select() {}
 
 	public Select(String... columns) {
 		mColumns = columns;
 	}
+
+    public Select(Class<? extends ViewTable> viewTable, String... columns) {
+        mViewTableType = viewTable;
+        mColumns = columns;
+    }
 
 	public Select(Column... columns) {
 		final int size = columns.length;
@@ -40,7 +47,7 @@ public final class Select implements Sqlable {
 		}
 	}
 
-	public Select distinct() {
+    public Select distinct() {
 		mDistinct = true;
 		mAll = false;
 
@@ -54,8 +61,13 @@ public final class Select implements Sqlable {
 		return this;
 	}
 
-	public From from(Class<? extends Model> table) {
-		return new From(table, this);
+	public From from(Class<? extends Model> table) { package com.activeandroid.query
+        if( mViewTableType != null  ) {
+            return new From( mViewTableType, table, this );
+        }
+        else {
+            return new From(table, this);
+        }
 	}
 
 	public static class Column {

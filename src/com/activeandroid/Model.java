@@ -1,4 +1,4 @@
-package com.activeandroid;
+package com.test.christophergastebois.activeandroid;
 
 /*
  * Copyright (C) 2010 Michael Pardo
@@ -20,12 +20,12 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
-import com.activeandroid.content.ContentProvider;
-import com.activeandroid.query.Delete;
-import com.activeandroid.query.Select;
-import com.activeandroid.serializer.TypeSerializer;
-import com.activeandroid.util.Log;
-import com.activeandroid.util.ReflectionUtils;
+import com.test.christophergastebois.activeandroid.content.ContentProvider;
+import com.test.christophergastebois.activeandroid.query.Delete;
+import com.test.christophergastebois.activeandroid.query.Select;
+import com.test.christophergastebois.activeandroid.serializer.TypeSerializer;
+import com.test.christophergastebois.activeandroid.util.Log;
+import com.test.christophergastebois.activeandroid.util.ReflectionUtils;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;

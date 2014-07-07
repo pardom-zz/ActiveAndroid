@@ -1,4 +1,4 @@
-package com.activeandroid.util;
+package com.test.christophergastebois.activeandroid.util;
 
 /*
  NaturalOrderComparator.java -- Perform 'natural order' comparisons of strings in Java.

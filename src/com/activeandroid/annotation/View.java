@@ -1,4 +1,4 @@
-package com.activeandroid.query;
+package com.activeandroid.annotation;
 
 /*
  * Copyright (C) 2010 Michael Pardo
@@ -16,18 +16,14 @@ package com.activeandroid.query;
  * limitations under the License.
  */
 
-import com.test.christophergastebois.activeandroid.Model;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-public final class Delete implements Sqlable {
-	public Delete() {
-	}
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface View {
 
-	public From from(Class<? extends Model> table) {
-		return new From(table, this);
-	}
-
-	@Override
-	public String toSql() {
-		return "DELETE ";
-	}
+	public String name();
 }

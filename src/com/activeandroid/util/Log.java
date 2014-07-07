@@ -1,4 +1,4 @@
-package com.activeandroid.util;
+package com.test.christophergastebois.activeandroid.util;
 
 /*
  * Copyright (C) 2010 Michael Pardo

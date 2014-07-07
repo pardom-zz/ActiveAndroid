@@ -1,4 +1,4 @@
-package com.activeandroid.util;
+package com.test.christophergastebois.activeandroid.util;
 
 /*
  * Copyright (C) 2010 Michael Pardo
@@ -16,6 +16,15 @@ package com.activeandroid.util;
  * limitations under the License.
  */
 
+import android.content.Context;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
+
+import com.test.christophergastebois.activeandroid.Model;
+import com.test.christophergastebois.activeandroid.ViewTable;
+import com.test.christophergastebois.activeandroid.annotation.Column;
+import com.test.christophergastebois.activeandroid.serializer.TypeSerializer;
+
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
@@ -24,18 +33,14 @@ import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-import android.content.Context;
-import android.content.pm.ApplicationInfo;
-import android.content.pm.PackageManager;
-
-import com.activeandroid.Model;
-import com.activeandroid.annotation.Column;
-import com.activeandroid.serializer.TypeSerializer;
-
 public final class ReflectionUtils {
 	//////////////////////////////////////////////////////////////////////////////////////
 	// PUBLIC METHODS
 	//////////////////////////////////////////////////////////////////////////////////////
+
+    public static boolean isViewTable(Class<?> type) {
+        return isSubclassOf(type, ViewTable.class) && (!Modifier.isAbstract(type.getModifiers()));
+    }
 
 	public static boolean isModel(Class<?> type) {
 		return isSubclassOf(type, Model.class) && (!Modifier.isAbstract(type.getModifiers()));
@@ -67,7 +72,7 @@ public final class ReflectionUtils {
 	public static Set<Field> getDeclaredColumnFields(Class<?> type) {
 		Set<Field> declaredColumnFields = Collections.emptySet();
 		
-		if (ReflectionUtils.isSubclassOf(type, Model.class) || Model.class.equals(type)) {
+		if (ReflectionUtils.isSubclassOf(type, Model.class) || Model.class.equals(type) || ReflectionUtils.isSubclassOf(type, ViewTable.class) || ViewTable.class.equals(type)) {
 			declaredColumnFields = new LinkedHashSet<Field>();
 			
 			Field[] fields = type.getDeclaredFields();

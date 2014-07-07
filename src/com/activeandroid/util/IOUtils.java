@@ -1,5 +1,5 @@
 
-package com.activeandroid.util;
+package com.test.christophergastebois.activeandroid.util;
 
 /*
  * Copyright (C) 2014 Markus Pfeiffer
@@ -21,8 +21,6 @@ import android.database.Cursor;
 
 import java.io.Closeable;
 import java.io.IOException;
-
-import com.activeandroid.util.Log;
 
 
 public class IOUtils {

@@ -18,8 +18,8 @@ package com.activeandroid.query;
 
 import android.text.TextUtils;
 
-import com.activeandroid.Cache;
-import com.activeandroid.Model;
+import com.test.christophergastebois.activeandroid.Cache;
+import com.test.christophergastebois.activeandroid.Model;
 
 public final class Join implements Sqlable {
 	static enum JoinType {

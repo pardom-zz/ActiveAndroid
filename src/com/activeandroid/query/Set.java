@@ -16,7 +16,7 @@ package com.activeandroid.query;
  * limitations under the License.
  */
 
-import com.activeandroid.util.SQLiteUtils;
+import com.test.christophergastebois.activeandroid.util.SQLiteUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
