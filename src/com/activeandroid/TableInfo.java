@@ -1,4 +1,4 @@
-package com.test.christophergastebois.activeandroid;
+package com.activeandroid;
 
 /*
  * Copyright (C) 2010 Michael Pardo
@@ -19,9 +19,9 @@ package com.test.christophergastebois.activeandroid;
 import android.text.TextUtils;
 import android.util.Log;
 
-import com.test.christophergastebois.activeandroid.annotation.Column;
-import com.test.christophergastebois.activeandroid.annotation.Table;
-import com.test.christophergastebois.activeandroid.util.ReflectionUtils;
+import com.activeandroid.annotation.Column;
+import com.activeandroid.annotation.Table;
+import com.activeandroid.util.ReflectionUtils;
 
 import java.lang.reflect.Field;
 import java.util.Collection;

@@ -18,13 +18,13 @@ package com.activeandroid.query;
 
 import android.text.TextUtils;
 
-import com.test.christophergastebois.activeandroid.Cache;
-import com.test.christophergastebois.activeandroid.Model;
-import com.test.christophergastebois.activeandroid.ViewTable;
-import com.test.christophergastebois.activeandroid.content.ContentProvider;
-import com.test.christophergastebois.activeandroid.query.Join.JoinType;
-import com.test.christophergastebois.activeandroid.util.Log;
-import com.test.christophergastebois.activeandroid.util.SQLiteUtils;
+import com.activeandroid.Cache;
+import com.activeandroid.Model;
+import com.activeandroid.ViewTable;
+import com.activeandroid.content.ContentProvider;
+import com.activeandroid.query.Join.JoinType;
+import com.activeandroid.util.Log;
+import com.activeandroid.util.SQLiteUtils;
 
 import java.util.ArrayList;
 import java.util.List;

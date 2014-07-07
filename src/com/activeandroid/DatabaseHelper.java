@@ -1,4 +1,4 @@
-package com.test.christophergastebois.activeandroid;
+package com.activeandroid;
 
 /*
  * Copyright (C) 2010 Michael Pardo
@@ -32,11 +32,11 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.text.TextUtils;
 
-import com.test.christophergastebois.activeandroid.util.IOUtils;
-import com.test.christophergastebois.activeandroid.util.Log;
-import com.test.christophergastebois.activeandroid.util.NaturalOrderComparator;
-import com.test.christophergastebois.activeandroid.util.SQLiteUtils;
-import com.test.christophergastebois.activeandroid.util.SqlParser;
+import com.activeandroid.util.IOUtils;
+import com.activeandroid.util.Log;
+import com.activeandroid.util.NaturalOrderComparator;
+import com.activeandroid.util.SQLiteUtils;
+import com.activeandroid.util.SqlParser;
 
 public final class DatabaseHelper extends SQLiteOpenHelper {
 	//////////////////////////////////////////////////////////////////////////////////////

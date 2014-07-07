@@ -1,8 +1,5 @@
 package com.activeandroid.content;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import android.content.ContentValues;
 import android.content.UriMatcher;
 import android.database.Cursor;
@@ -14,6 +11,9 @@ import com.activeandroid.Cache;
 import com.activeandroid.Configuration;
 import com.activeandroid.Model;
 import com.activeandroid.TableInfo;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class ContentProvider extends android.content.ContentProvider {
 	//////////////////////////////////////////////////////////////////////////////////////

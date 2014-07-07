@@ -1,10 +1,10 @@
-package com.test.christophergastebois.activeandroid;
+package com.activeandroid;
 
 import android.database.Cursor;
 
-import com.test.christophergastebois.activeandroid.serializer.TypeSerializer;
-import com.test.christophergastebois.activeandroid.util.Log;
-import com.test.christophergastebois.activeandroid.util.ReflectionUtils;
+import com.activeandroid.serializer.TypeSerializer;
+import com.activeandroid.util.Log;
+import com.activeandroid.util.ReflectionUtils;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;

@@ -1,4 +1,4 @@
-package com.test.christophergastebois.activeandroid;
+package com.activeandroid;
 
 /*
  * Copyright (C) 2010 Michael Pardo
@@ -19,7 +19,7 @@ package com.test.christophergastebois.activeandroid;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 
-import com.test.christophergastebois.activeandroid.util.Log;
+import com.activeandroid.util.Log;
 
 public final class ActiveAndroid {
 	//////////////////////////////////////////////////////////////////////////////////////

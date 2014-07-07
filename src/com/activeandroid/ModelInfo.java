@@ -1,4 +1,4 @@
-package com.test.christophergastebois.activeandroid;
+package com.activeandroid;
 
 /*
  * Copyright (C) 2010 Michael Pardo
@@ -18,13 +18,13 @@ package com.test.christophergastebois.activeandroid;
 
 import android.content.Context;
 
-import com.test.christophergastebois.activeandroid.serializer.CalendarSerializer;
-import com.test.christophergastebois.activeandroid.serializer.FileSerializer;
-import com.test.christophergastebois.activeandroid.serializer.SqlDateSerializer;
-import com.test.christophergastebois.activeandroid.serializer.TypeSerializer;
-import com.test.christophergastebois.activeandroid.serializer.UtilDateSerializer;
-import com.test.christophergastebois.activeandroid.util.Log;
-import com.test.christophergastebois.activeandroid.util.ReflectionUtils;
+import com.activeandroid.serializer.CalendarSerializer;
+import com.activeandroid.serializer.FileSerializer;
+import com.activeandroid.serializer.SqlDateSerializer;
+import com.activeandroid.serializer.TypeSerializer;
+import com.activeandroid.serializer.UtilDateSerializer;
+import com.activeandroid.util.Log;
+import com.activeandroid.util.ReflectionUtils;
 
 import java.io.File;
 import java.io.IOException;

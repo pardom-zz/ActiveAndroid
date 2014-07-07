@@ -16,8 +16,8 @@ package com.activeandroid.query;
  * limitations under the License.
  */
 
-import com.test.christophergastebois.activeandroid.Cache;
-import com.test.christophergastebois.activeandroid.Model;
+import com.activeandroid.Cache;
+import com.activeandroid.Model;
 
 public final class Update implements Sqlable {
 	private Class<? extends Model> mType;

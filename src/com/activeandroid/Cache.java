@@ -1,4 +1,4 @@
-package com.test.christophergastebois.activeandroid;
+package com.activeandroid;
 
 /*
  * Copyright (C) 2010 Michael Pardo
@@ -20,8 +20,8 @@ import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.support.v4.util.LruCache;
 
-import com.test.christophergastebois.activeandroid.serializer.TypeSerializer;
-import com.test.christophergastebois.activeandroid.util.Log;
+import com.activeandroid.serializer.TypeSerializer;
+import com.activeandroid.util.Log;
 
 import java.util.Collection;
 

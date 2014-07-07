@@ -1,4 +1,4 @@
-package com.test.christophergastebois.activeandroid.util;
+package com.activeandroid.util;
 
 /*
  * Copyright (C) 2010 Michael Pardo
@@ -20,10 +20,10 @@ import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 
-import com.test.christophergastebois.activeandroid.Model;
-import com.test.christophergastebois.activeandroid.ViewTable;
-import com.test.christophergastebois.activeandroid.annotation.Column;
-import com.test.christophergastebois.activeandroid.serializer.TypeSerializer;
+import com.activeandroid.Model;
+import com.activeandroid.ViewTable;
+import com.activeandroid.annotation.Column;
+import com.activeandroid.serializer.TypeSerializer;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;

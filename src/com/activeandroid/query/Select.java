@@ -18,8 +18,8 @@ package com.activeandroid.query;
 
 import android.text.TextUtils;
 
-import com.test.christophergastebois.activeandroid.Model;
-import com.test.christophergastebois.activeandroid.ViewTable;
+import com.activeandroid.Model;
+import com.activeandroid.ViewTable;
 
 public final class Select implements Sqlable {
 	private String[] mColumns;
@@ -61,7 +61,7 @@ public final class Select implements Sqlable {
 		return this;
 	}
 
-	public From from(Class<? extends Model> table) { package com.activeandroid.query
+	public From from(Class<? extends Model> table) {
         if( mViewTableType != null  ) {
             return new From( mViewTableType, table, this );
         }

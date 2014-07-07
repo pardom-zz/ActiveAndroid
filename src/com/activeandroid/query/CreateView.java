@@ -1,6 +1,6 @@
 package com.activeandroid.query;
 
-import com.test.christophergastebois.activeandroid.ViewTable;
+import com.activeandroid.ViewTable;
 
 /**
  * Created by Christopher GATEBOIS on 07/07/2014.

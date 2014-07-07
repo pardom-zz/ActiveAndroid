@@ -16,7 +16,7 @@ package com.activeandroid.query;
  * limitations under the License.
  */
 
-import com.test.christophergastebois.activeandroid.Model;
+import com.activeandroid.Model;
 
 public final class Delete implements Sqlable {
 	public Delete() {
