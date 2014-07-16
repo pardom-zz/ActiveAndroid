@@ -136,7 +136,7 @@ final class ModelInfo {
                 // Libs won't have models of ActiveRecord
                 String entry = entries.nextElement();
 
-                if(entry.startsWith(packageName) && !entry.endsWith("$1")) {
+                if(entry.startsWith(packageName)) {
                     paths.add(entry);
                 }
 			}
