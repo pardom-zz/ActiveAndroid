@@ -131,7 +131,14 @@ final class ModelInfo {
 			Enumeration<String> entries = dexfile.entries();
 
 			while (entries.hasMoreElements()) {
-				paths.add(entries.nextElement());
+
+                // Check if the package starts with the correct packageName
+                // Libs won't have models of ActiveRecord
+                String entry = entries.nextElement();
+
+                if(entry.startsWith(packageName) && !entry.endsWith("$1")) {
+                    paths.add(entry);
+                }
 			}
 		}
 		// Robolectric fallback
