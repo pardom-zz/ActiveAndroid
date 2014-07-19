@@ -60,7 +60,7 @@ final class ModelInfo {
 	public ModelInfo(Configuration configuration) {
 		if (!loadModelFromMetaData(configuration)) {
 			try {
-				scanForModel(configuration.getContext());
+				scanForModel(configuration.getContext(), configuration.getExcludeLibs());
 			}
 			catch (IOException e) {
 				Log.e("Couldn't open source path.", e);
@@ -121,7 +121,7 @@ final class ModelInfo {
 		return true;
 	}
 
-	private void scanForModel(Context context) throws IOException {
+	private void scanForModel(Context context, Boolean excludeLibs) throws IOException {
 		String packageName = context.getPackageName();
 		String sourcePath = context.getApplicationInfo().sourceDir;
 		List<String> paths = new ArrayList<String>();
@@ -132,11 +132,14 @@ final class ModelInfo {
 
 			while (entries.hasMoreElements()) {
 
-                // Check if the package starts with the correct packageName
-                // Libs won't have models of ActiveRecord
                 String entry = entries.nextElement();
 
-                if(entry.startsWith(packageName)) {
+                if(excludeLibs){
+                    // Check if the package starts with the correct packageName
+                    if(entry.startsWith(packageName)) {
+                        paths.add(entry);
+                    }
+                } else {
                     paths.add(entry);
                 }
 			}
