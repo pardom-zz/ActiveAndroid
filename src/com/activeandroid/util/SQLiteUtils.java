@@ -325,6 +325,9 @@ public final class SQLiteUtils {
 		TableInfo tableInfo = Cache.getTableInfo(type);
 		String idName = tableInfo.getIdName();
 		final List<T> entities = new ArrayList<T>();
+        //TODO: Это моя вставка для того чтобы работал distinct
+        if (cursor.getColumnCount() == 1)
+            idName = cursor.getColumnNames()[0];
 
 		try {
 			Constructor<?> entityConstructor = type.getConstructor();
