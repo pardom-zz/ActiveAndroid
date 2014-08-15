@@ -4,7 +4,7 @@ env: ANDROID_SDK=android-16 ANDROID_ABI=armeabi-v7a
 
 before_install:
   # Install ia32-libs (necessary for Android SDK to run on 64-bit linux)
-  # - sudo apt-get clean && sudo apt-get update
+  - mvn -version
   - sudo apt-get update -qq
   - sudo apt-get install -qq --force-yes libgd2-xpm ia32-libs ia32-libs-multiarch
 
@@ -16,9 +16,9 @@ before_install:
   - export PATH=${PATH}:${ANDROID_HOME}/tools:${ANDROID_HOME}/platform-tools
 
   # Install Maven 3.2.2
-  - wget http://apache-mirror.rbc.ru/pub/apache/maven/maven-3/3.2.2/binaries/apache-maven-3.2.2-bin.tar.gz
-  - tar -zxf apache-maven-3.2.2-bin.tar.gz
-  - export PATH=${PATH}:`pwd`/apache-maven-3.2.2/bin
+  #- wget http://apache-mirror.rbc.ru/pub/apache/maven/maven-3/3.2.2/binaries/apache-maven-3.2.2-bin.tar.gz
+  #- tar -zxf apache-maven-3.2.2-bin.tar.gz
+  #- export PATH=${PATH}:`pwd`/apache-maven-3.2.2/bin
 
   # Install required Android components
   - android list sdk --extended --all
@@ -46,4 +46,4 @@ before_script:
   - ./wait_for_emulator
 
 script:
-  - mvn clean install -e
+  - mvn -Dandroid.sdk.path=${ANDROID_HOME} clean install -e
