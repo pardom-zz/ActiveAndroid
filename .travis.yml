@@ -24,7 +24,7 @@ before_install:
   # Install required Android components
   - android list sdk --extended
   # Do you accept the license 'android-sdk-license-bcbbd656' [y/n]:
-  - echo -ne "y\n" | android update sdk --filter system-image --no-ui --force
+  - echo -ne "y\n" | android update sdk --filter system-image --no-ui --all --force
 
   - echo -ne "y\n" | android update sdk --filter platform-tools --no-ui --force
 
