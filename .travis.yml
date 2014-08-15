@@ -24,11 +24,8 @@ before_install:
   # Install required Android components
   - android list sdk --extended
   
-  # Get exactly ARM EABI v7a
-  - export EABI_V7A_ID=$(android list sdk --all | grep "ABI.*16.*" | tr -d " " | cut -d "-" -f1)
-
   # Do you accept the license 'android-sdk-license-bcbbd656' [y/n]:
-  - echo -ne "y\n" | android update sdk --no-ui --all --force --filter $EABI_V7A_ID
+  - echo -ne "y\n" | android update sdk --no-ui --all --force --filter sys-img-armeabi-v7a-android-16
 
   - echo -ne "y\n" | android update sdk --filter platform-tools --no-ui --force
 
