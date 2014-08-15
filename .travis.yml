@@ -22,7 +22,7 @@ before_install:
   - mv $ANDROID_HOME/android-4.4.2 $ANDROID_HOME/build-tools/19.0.1
 
   # Install required Android components
-  - android list sdk --extended
+  - android list sdk --extended --all
   
   # Do you accept the license 'android-sdk-license-bcbbd656' [y/n]:
   - echo -ne "y\n" | android update sdk --no-ui --all --force --filter sys-img-armeabi-v7a-android-16
