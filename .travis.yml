@@ -1,6 +1,6 @@
 language: java
 jdk: oraclejdk7
-env: ANDROID_SDK=android-16 ANDROID_ABI=armeabi-v7a
+env: ANDROID_SDK=android-19 ANDROID_ABI=armeabi-v7a
 
 before_install:
   # Install ia32-libs (necessary for Android SDK to run on 64-bit linux)
