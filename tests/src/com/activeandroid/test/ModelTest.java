@@ -16,6 +16,8 @@
 
 package com.activeandroid.test;
 
+import android.util.Log;
+
 import com.activeandroid.Cache;
 import com.activeandroid.Model;
 import com.activeandroid.TableInfo;
@@ -228,6 +230,40 @@ public class ModelTest extends ActiveAndroidTestCase {
         }
 
     }
+
+	/**
+	 * If parent model has pk name different from Id and children don't.
+	 * Test the issue #188 (https://github.com/pardom/ActiveAndroid/issues/188)
+	 */
+	public void testOneToManyWithBaseColumn_ID()
+	{
+		MockParentModel parentModel = new MockParentModel();
+		parentModel.save();
+
+		Log.d("testOneToMany", "Parent was saved");
+
+		MockChildModel son = new MockChildModel();
+		son.parnet = parentModel;
+		son.save();
+
+		Log.d("testOneToMany", "Son was saved");
+
+		MockChildModel daughter = new MockChildModel();
+		daughter.parnet = parentModel;
+		daughter.save();
+
+		Log.d("testOneToMany", "Daughter was saved");
+
+		assertNotSame("Parent was created", null, parentModel.getId());
+		assertEquals("Children were created", 2, new Select().from(MockChildModel.class).count());
+
+		for (Model child: new Select().from(MockChildModel.class).execute())
+		{
+			assertEquals("Child parent is ", parentModel.getId(), ((MockChildModel) child).parnet.getId());
+		}
+
+		assertEquals("Parent has children", 2, parentModel.getChildren().size());
+	}
 
 	/**
 	 * Mock model as we need 2 different model classes.

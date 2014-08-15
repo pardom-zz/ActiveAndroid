@@ -106,7 +106,6 @@ public final class SQLiteUtils {
 		Cursor cursor = Cache.openDatabase().rawQuery(sql, selectionArgs);
 		List<T> entities = processCursor(type, cursor);
 		cursor.close();
-
 		return entities;
 	}
 	  
@@ -326,7 +325,7 @@ public final class SQLiteUtils {
 	public static <T extends Model> List<T> processCursor(Class<? extends Model> type, Cursor cursor) {
 		TableInfo tableInfo = Cache.getTableInfo(type);
 		String idName = tableInfo.getIdName();
-		final List<T> entities = new ArrayList<T>();
+		final List<T> entities = new ArrayList<T>(cursor.getCount());
 
 		try {
 			Constructor<?> entityConstructor = type.getConstructor();

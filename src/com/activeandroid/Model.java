@@ -241,10 +241,12 @@ public abstract class Model {
 				else if (ReflectionUtils.isModel(fieldType)) {
 					final long entityId = cursor.getLong(columnIndex);
 					final Class<? extends Model> entityType = (Class<? extends Model>) fieldType;
+					String entityIdName = Cache.getTableInfo(entityType).getIdName();
 
 					Model entity = Cache.getEntity(entityType, entityId);
 					if (entity == null) {
-						entity = new Select().from(entityType).where(idName+"=?", entityId).executeSingle();
+						String where = new StringBuilder(entityIdName).append(" = ?").toString();
+						entity = new Select().from(entityType).where(where, entityId).executeSingle();
 					}
 
 					value = entity;
