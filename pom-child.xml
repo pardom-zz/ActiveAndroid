@@ -81,7 +81,6 @@
                 <version>3.8.2</version>
                 <configuration>
                     <sdk>
-                        <path>${env.ANDROID_HOME}</path>
                         <platform>${platform.sdk}</platform>
                     </sdk>
                 </configuration>

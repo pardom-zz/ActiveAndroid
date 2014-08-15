@@ -42,8 +42,9 @@ before_install:
 
 before_script:
   # Make sure the emulator has started before running tests
+  - export ANDROID_HOME=`pwd`/android-sdk-linux
   - chmod +x ./wait_for_emulator
   - ./wait_for_emulator
 
 script:
-  - mvn -Dandroid.sdk.path=`pwd`/android-sdk-linux clean install -e
+  - mvn -Dandroid.sdk.path=${ANDROID_HOME} clean install -e
