@@ -15,11 +15,10 @@ before_install:
   - export ANDROID_HOME=`pwd`/android-sdk-linux
   - export PATH=${PATH}:${ANDROID_HOME}/tools:${ANDROID_HOME}/platform-tools
 
-  # Install build-tools
-  #- wget https://dl-ssl.google.com/android/repository/build-tools_r19.0.3-linux.zip
-  #- unzip build-tools_r19.0.3-linux.zip -d $ANDROID_HOME
-  #- mkdir -p $ANDROID_HOME/build-tools/
-  #- mv $ANDROID_HOME/android-4.4.2 $ANDROID_HOME/build-tools/19.0.1
+  # Install Maven 3.2.2
+  - wget http://apache-mirror.rbc.ru/pub/apache/maven/maven-3/3.2.2/binaries/apache-maven-3.2.2-bin.tar.gz
+  - tar -zxf apache-maven-3.2.2-bin.tar.gz
+  - export PATH=${PATH}:`pwd`/apache-maven-3.2.2/bin
 
   # Install required Android components
   - android list sdk --extended --all
