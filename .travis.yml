@@ -46,4 +46,4 @@ before_script:
   - ./wait_for_emulator
 
 script:
-  - mvn -Dandroid.sdk.path=${ANDROID_HOME} clean install -e
+  - mvn -Dandroid.sdk.path=`pwd`/android-sdk-linux clean install -e
