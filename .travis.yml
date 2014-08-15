@@ -24,15 +24,18 @@ before_install:
   # Install required Android components
   - android list sdk --extended --all
   
-  # Do you accept the license 'android-sdk-license-bcbbd656' [y/n]:
-  - echo -ne "y\n" | android update sdk --no-ui --all --force --filter sys-img-armeabi-v7a-android-16
+  # Install build environment
 
   - echo -ne "y\n" | android update sdk --filter platform-tools --no-ui --force
 
-  - echo -ne "y\n" | android update sdk --filter extra-android-support --no-ui --force
   
   - echo -ne "y\n" | android update sdk --filter $ANDROID_SDK --no-ui --force
   
+
+  - echo -ne "y\n" | android update sdk --filter extra-android-support --no-ui --force
+
+  - echo -ne "y\n" | android update sdk --no-ui --all --force --filter sys-img-armeabi-v7a-android-16
+
   # Create and start emulator
   - echo no | android create avd --force -n test -t $ANDROID_SDK --abi $ANDROID_ABI
   - android list avds
