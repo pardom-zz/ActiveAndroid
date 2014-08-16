@@ -27,7 +27,7 @@ before_install:
 
   - echo -ne "y\n" | android update sdk --filter platform-tools --no-ui --force
 
-  - echo -ne "y\n" | android update sdk --filter build-tools-19.1.0 --no-ui --force
+  - echo -ne "y\n" | android update sdk --no-ui --all --force --filter build-tools-19.1.0
   
   - echo -ne "y\n" | android update sdk --filter $ANDROID_SDK --no-ui --force
 
@@ -42,11 +42,8 @@ before_install:
 
 before_script:
   # Make sure the emulator has started before running tests
-  - export ANDROID_HOME=`pwd`/android-sdk-linux
   - chmod +x ./wait_for_emulator
   - ./wait_for_emulator
 
 script:
-  - echo ${ANDROID_HOME}
-  - echo "sdk.dir=${ANDROID_HOME}" > local.properties
-  - mvn -X -Dandroid.sdk.path=${ANDROID_HOME} clean install -e
+  - mvn -Dandroid.sdk.path=${ANDROID_HOME} clean install -e
