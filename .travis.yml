@@ -1,6 +1,6 @@
 language: java
 jdk: oraclejdk7
-env: ANDROID_SDK=android-16 ANDROID_ABI=armeabi-v7a
+env: ANDROID_SDK=android-20 ANDROID_ABI=armeabi-v7a
 
 before_install:
   # Install ia32-libs (necessary for Android SDK to run on 64-bit linux)
@@ -27,7 +27,7 @@ before_install:
   - echo -ne "y\n" | android update sdk --filter system-image,platform-tools,extra-android-support,$ANDROID_SDK --no-ui --force
 
   # Create and start emulator
-  - echo no | android create avd --force -n test -t $ANDROID_SDK --abi $ANDROID_ABI
+  - echo no | android create avd --force -n test -t "Google Inc.:Google APIs:"$ANDROID_SDK --abi $
   - android list avds
   - emulator -avd test -no-skin -no-audio -no-window &
 
