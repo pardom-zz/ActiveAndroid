@@ -1,5 +1,34 @@
-language: java
+language: android
 jdk: oraclejdk7
+android:
+  components:
+    # Uncomment the lines below if you want to
+    # use the latest revision of Android SDK Tools
+    # - platform-tools
+    # - tools
+
+    # The BuildTools version used by your project
+    - build-tools-19.1.0
+
+    # The SDK version used to compile your project
+    - android-19
+
+    # Additional components
+    #- extra-google-google_play_services
+    #- extra-google-m2repository
+    #- extra-android-m2repository
+    #- addon-google_apis-google-19
+
+    # Specify at least one system image,
+    # if you need to run emulator(s) during your tests
+    - sys-img-armeabi-v7a-android-19
+    - sys-img-x86-android-17
+
+  licenses:
+    - 'android-sdk-preview-license-52d11cd2'
+    - 'android-sdk-license-.+'
+    - 'google-gdk-license-.+
+
 env:
   matrix:
       - ANDROID_SDKS=android-8            ANDROID_TARGET=android-8   ANDROID_ABI=armeabi
@@ -30,11 +59,10 @@ before_install:
   - android list sdk --extended
   - android list targets
   # Do you accept the license 'android-sdk-license-bcbbd656' [y/n]:
-  - echo -ne "y\n" | android update sdk --filter android-16,platform-tools,extra-android-support,$ANDROID_SDKS --no-ui --force
+  #- echo -ne "y\n" | android update sdk --filter android-16,platform-tools,extra-android-support,$ANDROID_SDKS --no-ui --force
 
   # Create and start emulator
   - echo no | android create avd --force -n test -t $ANDROID_TARGET --abi $ANDROID_ABI
-  - android list avds
   - emulator -avd test -no-skin -no-audio -no-window &
 
 before_script:
