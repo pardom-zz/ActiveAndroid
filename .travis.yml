@@ -24,11 +24,6 @@ android:
     - sys-img-armeabi-v7a-android-19
     - sys-img-x86-android-17
 
-  licenses:
-    - 'android-sdk-preview-license-52d11cd2'
-    - 'android-sdk-license-.+'
-    - 'google-gdk-license-.+
-
 env:
   matrix:
       - ANDROID_SDKS=android-8            ANDROID_TARGET=android-8   ANDROID_ABI=armeabi
@@ -58,7 +53,7 @@ before_install:
   # Install required Android components
   - android list sdk --extended
   - android list targets
-  # Do you accept the license 'android-sdk-license-bcbbd656' [y/n]:
+  # Do you accept the license "android-sdk-license-bcbbd656" [y/n]:
   #- echo -ne "y\n" | android update sdk --filter android-16,platform-tools,extra-android-support,$ANDROID_SDKS --no-ui --force
 
   # Create and start emulator
