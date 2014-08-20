@@ -1,6 +1,11 @@
 language: java
 jdk: oraclejdk7
-env: ANDROID_SDK=android-16 ANDROID_ABI=armeabi-v7a
+env:
+  matrix:
+      - ANDROID_SDKS=android-8            ANDROID_TARGET=android-8   ANDROID_ABI=armeabi
+      - ANDROID_SDKS=android-10           ANDROID_TARGET=android-10  ANDROID_ABI=armeabi
+      - ANDROID_SDKS=sysimg-16            ANDROID_TARGET=android-16  ANDROID_ABI=armeabi-v7a
+      - ANDROID_SDKS=android-17,sysimg-17 ANDROID_TARGET=android-17  ANDROID_ABI=armeabi-v7a
 
 before_install:
   # Install ia32-libs (necessary for Android SDK to run on 64-bit linux)
@@ -25,7 +30,7 @@ before_install:
   - android list sdk --extended
   - android list targets
   # Do you accept the license 'android-sdk-license-bcbbd656' [y/n]:
-  - echo -ne "y\n" | android update sdk --filter system-image,platform-tools,extra-android-support,$ANDROID_SDK --no-ui --force
+  - echo -ne "y\n" | android update sdk --filter android-16,platform-tools,extra-android-support,$ANDROID_SDK --no-ui --force
 
   # Create and start emulator
   - echo no | android create avd --force -n test -t $ANDROID_SDK --abi $ANDROID_ABI
