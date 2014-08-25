@@ -131,7 +131,10 @@ final class ModelInfo {
 			Enumeration<String> entries = dexfile.entries();
 
 			while (entries.hasMoreElements()) {
-				paths.add(entries.nextElement());
+                String element = entries.nextElement();
+                if (element.startsWith(packageName.substring(0, packageName.indexOf(".", packageName.indexOf(".") + 1)))) {
+                    paths.add(element);
+                }
 			}
 		}
 		// Robolectric fallback
