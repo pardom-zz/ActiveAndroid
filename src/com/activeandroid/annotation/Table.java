@@ -32,4 +32,5 @@ public @interface Table {
 	public String name();
 	public String id() default DEFAULT_ID_NAME;
     public Class <? extends ColumnNamingStrategy> columnNaming() default FieldNamingStrategy.class;
+    public String uniqueIdentifier() default "";
 }
