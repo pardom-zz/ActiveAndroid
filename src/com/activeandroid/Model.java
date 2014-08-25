@@ -21,7 +21,6 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
 import com.activeandroid.annotation.Column;
-import com.activeandroid.annotation.Table;
 import com.activeandroid.content.ContentProvider;
 import com.activeandroid.exceptions.IllegalUniqueIdentifierException;
 import com.activeandroid.exceptions.ModelUpdateException;
@@ -29,9 +28,9 @@ import com.activeandroid.query.Delete;
 import com.activeandroid.query.Select;
 import com.activeandroid.serializer.TypeSerializer;
 import com.activeandroid.util.Log;
+import com.activeandroid.util.ModelUtils;
 import com.activeandroid.util.ReflectionUtils;
 
-import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -301,9 +300,19 @@ public abstract class Model {
         return hash; //To change body of generated methods, choose Tools | Templates.
     }
 
+    /**
+     * Create or update a model entity. The table has to have an unique identifier registrated.
+     * The default unique identifier is the id column.
+     * If there are foreign keys you should wrap this method in a transaction.
+     *
+     * @param object
+     * @return the created/updated enity
+     * @throws IllegalUniqueIdentifierException
+     * @throws ModelUpdateException
+     */
     public static <T extends Model> T createOrUpdate(T object) throws IllegalUniqueIdentifierException, ModelUpdateException {
         Class<? extends Model> objectClass = object.getClass();
-        TableInfo info = new TableInfo(objectClass);
+        TableInfo info = Cache.getTableInfo(objectClass);
         String uniqueIdentifier = info.getUniqueIdentifier();
         T entity;
         try {
@@ -317,30 +326,61 @@ public abstract class Model {
         } catch (IllegalAccessException e) {
             throw new IllegalUniqueIdentifierException("Couldn't get the specified unique identifier", e);
         }
+        List<Model> modelsToBeDeleted = new ArrayList<Model>();
         if (entity != null) {
-            entity.updateWith(object);
+            modelsToBeDeleted = entity.updateWith(object);
         } else {
             entity = object;
         }
         entity.save();
+        for (Model m : modelsToBeDeleted) {
+            m.delete();
+        }
         return entity;
     }
 
-    protected void updateWith(Model other) throws ModelUpdateException {
+    /**
+     * This method updates a model with another one.
+     *
+     * @param other
+     * @return Entities to delete. (Because they get exchanged).
+     * @throws ModelUpdateException
+     * @throws IllegalUniqueIdentifierException
+     */
+    protected List<Model> updateWith(Model other) throws ModelUpdateException, IllegalUniqueIdentifierException {
         Class<? extends Model> myClass = getClass();
         Class<? extends Model> otherClass = other.getClass();
+        ArrayList<Model> entitiesToBeDeleted = new ArrayList<Model>();
         if (myClass.isAssignableFrom(otherClass)) {
+            fieldloop:
             for (Field field : Cache.getTableInfo(myClass).getFields()) {
                 field.setAccessible(true);
                 try {
-                    Object otherFieldValue = field.get(other);
-                    if (otherFieldValue != null) {
-                        field.set(this, otherFieldValue);
+                    Object newValue = field.get(other);
+                    Column annotation = field.getAnnotation(Column.class);
+                    Column.ModelUpdateAction modelUpdateAction = (annotation != null) ? annotation.onModelUpdate() : Column.ModelUpdateAction.NO_ACTION;
+                    switch (modelUpdateAction) {
+                        case NO_ACTION:
+                            continue fieldloop;
+                        case REPLACE:
+                            if (ModelUtils.isForeignKey(field)) {
+                                Model thisFieldValue = (Model) field.get(this);
+                                entitiesToBeDeleted.add(thisFieldValue);
+                            }
+                            break;
+                        case UPDATE:
+                            if (ModelUtils.isForeignKey(field)) {
+                                newValue = Model.createOrUpdate((Model) newValue);
+                            }
+                            break;
+
                     }
+                    field.set(this, newValue);
                 } catch (IllegalAccessException e) {
                     throw new ModelUpdateException("The update of field: " + field.getName() + "was not possible.", e);
                 }
             }
         }
+        return entitiesToBeDeleted;
     }
 }

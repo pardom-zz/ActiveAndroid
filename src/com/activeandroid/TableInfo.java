@@ -61,8 +61,8 @@ public final class TableInfo {
             mTableName = tableAnnotation.name();
             mIdName = tableAnnotation.id();
             mUniqueIdentifier = tableAnnotation.uniqueIdentifier();
-            if (mUniqueIdentifier.equals(Table.DEFAULT_ID_NAME)) {
-                mUniqueIdentifier = mIdName;
+            if (mUniqueIdentifier.equals("")) {
+                mUniqueIdentifier = getIdField(type).getName();
             }
             try {
                 Class<? extends ColumnNamingStrategy> namingClass = tableAnnotation.columnNaming();
