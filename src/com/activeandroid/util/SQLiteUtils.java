@@ -305,8 +305,9 @@ public final class SQLiteUtils {
 
 			if (FOREIGN_KEYS_SUPPORTED && ReflectionUtils.isModel(type)) {
 				definition.append(" REFERENCES ");
-				definition.append(Cache.getTableInfo((Class<? extends Model>) type).getTableName());
-				definition.append("("+tableInfo.getIdName()+")");
+                TableInfo otherTableInfo = Cache.getTableInfo((Class<? extends Model>) type);
+                definition.append(otherTableInfo.getTableName());
+				definition.append("("+otherTableInfo.getIdName()+")");
 				definition.append(" ON DELETE ");
 				definition.append(column.onDelete().toString().replace("_", " "));
 				definition.append(" ON UPDATE ");
