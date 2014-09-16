@@ -42,6 +42,9 @@ public final class TableInfo {
     private String mTableName;
     private String mIdName = Table.DEFAULT_ID_NAME;
 
+
+
+    private String mUniqueIdentifier = Table.DEFAULT_ID_NAME;
     private Map<Field, String> mColumnNames = new LinkedHashMap<Field, String>();
 
     //////////////////////////////////////////////////////////////////////////////////////
@@ -57,6 +60,10 @@ public final class TableInfo {
         if (tableAnnotation != null) {
             mTableName = tableAnnotation.name();
             mIdName = tableAnnotation.id();
+            mUniqueIdentifier = tableAnnotation.uniqueIdentifier();
+            if (mUniqueIdentifier.equals("")) {
+                mUniqueIdentifier = getIdField(type).getName();
+            }
             try {
                 Class<? extends ColumnNamingStrategy> namingClass = tableAnnotation.columnNaming();
                 namingStrategy = namingClass.newInstance();
@@ -128,4 +135,7 @@ public final class TableInfo {
         return null;
     }
 
+    public String getUniqueIdentifier() {
+        return mUniqueIdentifier;
+    }
 }

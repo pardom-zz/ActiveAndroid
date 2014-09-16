@@ -24,13 +24,17 @@ import java.lang.annotation.Target;
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Column {
-	public enum ConflictAction {
+
+    public enum ConflictAction {
 		ROLLBACK, ABORT, FAIL, IGNORE, REPLACE
 	}
 
 	public enum ForeignKeyAction {
 		SET_NULL, SET_DEFAULT, CASCADE, RESTRICT, NO_ACTION
 	}
+    public enum ModelUpdateAction {
+        UPDATE, REPLACE, NO_ACTION
+    }
 
 	public String name() default "";
 
@@ -44,7 +48,11 @@ public @interface Column {
 
 	public ForeignKeyAction onUpdate() default ForeignKeyAction.NO_ACTION;
 
-	public boolean unique() default false;
+    public boolean autoCreate() default false;
+
+    public ModelUpdateAction onModelUpdate() default ModelUpdateAction.NO_ACTION;
+
+    public boolean unique() default false;
 
 	public ConflictAction onUniqueConflict() default ConflictAction.FAIL;
 
@@ -107,4 +115,6 @@ public @interface Column {
 	 * Execute CREATE INDEX index_table_name_group2 on table_name(member2, member3)
 	 */
 	public String[] indexGroups() default {};
+
+
 }
