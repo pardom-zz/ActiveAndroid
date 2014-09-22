@@ -343,4 +343,35 @@ public final class From implements Sqlable {
 
 		return args;
 	}
+
+
+    public int avg(String column) {
+        return SQLiteUtils.intQuery(toFunctiongSql("AVG", column), getArguments());
+    }
+    public int max(String column) {
+        return SQLiteUtils.intQuery(toFunctiongSql("max", column), getArguments());
+    }
+    public int min(String column) {
+        return SQLiteUtils.intQuery(toFunctiongSql("min", column), getArguments());
+    }
+
+    private String toFunctiongSql(String functionName, String column) {
+
+        final StringBuilder sql = new StringBuilder();
+        sql.append("SELECT ");
+        sql.append(functionName);
+        sql.append("(");
+        sql.append(column);
+        sql.append(") ");
+
+        addFrom(sql);
+        addJoins(sql);
+        addWhere(sql);
+        addGroupBy(sql);
+        addHaving(sql);
+        addLimit(sql);
+        addOffset(sql);
+
+        return sqlString(sql);
+    }
 }
