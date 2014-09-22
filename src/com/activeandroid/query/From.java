@@ -346,16 +346,16 @@ public final class From implements Sqlable {
 
 
     public int avg(String column) {
-        return SQLiteUtils.intQuery(toFunctiongSql("AVG", column), getArguments());
+        return SQLiteUtils.intQuery(toFunctionSql("avg", column), getArguments());
     }
     public int max(String column) {
-        return SQLiteUtils.intQuery(toFunctiongSql("max", column), getArguments());
+        return SQLiteUtils.intQuery(toFunctionSql("max", column), getArguments());
     }
     public int min(String column) {
-        return SQLiteUtils.intQuery(toFunctiongSql("min", column), getArguments());
+        return SQLiteUtils.intQuery(toFunctionSql("min", column), getArguments());
     }
 
-    private String toFunctiongSql(String functionName, String column) {
+    private String toFunctionSql(String functionName, String column) {
 
         final StringBuilder sql = new StringBuilder();
         sql.append("SELECT ");
