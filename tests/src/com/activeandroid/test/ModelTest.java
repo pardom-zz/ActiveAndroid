@@ -19,11 +19,15 @@ package com.activeandroid.test;
 import com.activeandroid.Cache;
 import com.activeandroid.Model;
 import com.activeandroid.TableInfo;
+import com.activeandroid.annotation.Column;
 import com.activeandroid.annotation.Table;
 import com.activeandroid.query.Select;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -170,8 +174,94 @@ public class ModelTest extends ActiveAndroidTestCase {
     }
 
 	/**
+     * Test to check the join of two (or more) tables with some fields in common when not use a projection on select.
+     * Test the issue #106 (https://github.com/pardom/ActiveAndroid/issues/106)
+     */
+    public void testJoinWithSameNames(){
+        //create a parent entity and store
+        ParentJoinMockModel parent = new ParentJoinMockModel();
+        parent.booleanField = true;
+        parent.dateField = new Date();
+        parent.doubleField = 2.0;
+        parent.intField = 1;
+        parent.save();
+
+        //the values to assign to child
+        Date dateValue = new Date();
+        double doubleValue = 30.0;
+        int intValue = 3;
+
+        //create two child entities, relate with parent and save
+        ChildMockModel child1 = new ChildMockModel();
+        child1.booleanField = false;
+        child1.dateField = dateValue;
+        child1.doubleField = doubleValue;
+        child1.intField = intValue;
+        child1.parent = parent;
+        child1.save();
+
+        ChildMockModel child2 = new ChildMockModel();
+        child2.booleanField = false;
+        child2.dateField = dateValue;
+        child2.doubleField = doubleValue;
+        child2.intField = intValue;
+        child2.parent = parent;
+        child2.save();
+
+        //Store the ids assigned to child entities when persists
+        List<Long> ids = new ArrayList<Long>();
+        ids.add(child1.getId());
+        ids.add(child2.getId());
+
+        //make the query with a join
+        List<ChildMockModel> result = new Select().from(ChildMockModel.class).
+                join(ParentJoinMockModel.class).on("ParentJoinMockModel.Id = ChildMockModel.parent").execute();
+
+        //check result
+        assertNotNull(result);
+        assertEquals(result.size(), 2);
+        for(ChildMockModel currentModel : result){
+            assertFalse(currentModel.booleanField);
+            assertEquals(currentModel.intField, intValue);
+            assertEquals(currentModel.doubleField, doubleValue);
+            assertTrue(ids.contains(currentModel.getId()));
+        }
+
+    }
+
+	/**
 	 * Mock model as we need 2 different model classes.
 	 */
 	@Table(name = "AnotherMockTable")
 	public static class AnotherMockModel extends Model {}
+
+    /**
+     * Mock model to test joins with same names.
+     * It's a copy from MockModel.
+     */
+    @Table(name = "ParentJoinMockModel")
+    public static class ParentJoinMockModel extends Model {
+        @Column
+        public Date dateField;
+
+        @Column
+        public double doubleField;
+
+        @Column
+        public int intField;
+
+        @Column
+        public boolean booleanField;
+    }
+
+    /**
+     * Mock model to test joins with same names.
+     * Extends from ParentJoinMockModel to have the same columns.
+     * Have a relationship with ParentJoinMockModel to make te join query.
+     */
+    @Table(name = "ChildMockModel")
+    public static class ChildMockModel extends ParentJoinMockModel {
+        @Column
+        ParentJoinMockModel parent;
+    }
 }
