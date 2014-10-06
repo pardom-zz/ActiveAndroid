@@ -183,6 +183,7 @@ final class ModelInfo {
 				className = className.substring(packageNameIndex);
 			}
 
+            Log.d("Scanning for " + className);
 			try {
 				Class<?> discoveredClass = Class.forName(className, false, classLoader);
 				if (ReflectionUtils.isModel(discoveredClass)) {
