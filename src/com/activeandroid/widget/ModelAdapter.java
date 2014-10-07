@@ -27,8 +27,8 @@ public class ModelAdapter<T extends Model> extends ArrayAdapter<T> {
 
 	/**
 	 * Clears the adapter and, if data != null, fills if with new Items.
-	 * 
-	 * @param collection A Collection<? extends T> which members get added to the adapter.
+	 *
+	 * @param collection A Collection&lt;? extends T&gt; which members get added to the adapter.
 	 */
 	public void setData(Collection<? extends T> collection) {
 		clear();
