@@ -173,6 +173,28 @@ public class ModelTest extends ActiveAndroidTestCase {
         assertNull( new Select().from(MockModel.class).where("booleanField = ?", true).executeSingle() );
     }
 
+    /*
+    * Table truncation should delete all table's content and reset counter.
+    */
+    public void testTruncate(){
+        MockModel mockModel = new MockModel();
+        mockModel.save();
+
+        // Let's truncate table.
+        Model.truncate(MockModel.class);
+
+        // Table should have zero elements.
+        assertEquals( 0, new Select().from(MockModel.class).execute().size() );
+
+        // And generate another model
+        mockModel = new MockModel();
+        Long id = mockModel.save();
+
+        // This will tell us if ID's are equal (index have been reset).
+        assertEquals( id, new Long(1L) );
+    }
+
+
 	/**
      * Test to check the join of two (or more) tables with some fields in common when not use a projection on select.
      * Test the issue #106 (https://github.com/pardom/ActiveAndroid/issues/106)
