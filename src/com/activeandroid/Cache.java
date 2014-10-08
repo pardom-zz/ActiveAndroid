@@ -20,7 +20,6 @@ import java.util.Collection;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
-import android.support.v4.util.LruCache;
 
 import com.activeandroid.serializer.TypeSerializer;
 import com.activeandroid.util.Log;
@@ -41,7 +40,7 @@ public final class Cache {
 	private static ModelInfo sModelInfo;
 	private static DatabaseHelper sDatabaseHelper;
 
-	private static LruCache<String, Model> sEntities;
+	private static CacheProvider<String, Model> sEntities;
 
 	private static boolean sIsInitialized = false;
 
@@ -70,7 +69,7 @@ public final class Cache {
 		// actually used, however at this point it seems like the reflection
 		// required would be too costly to be of any benefit. We'll just set a max
 		// object size instead.
-		sEntities = new LruCache<String, Model>(configuration.getCacheSize());
+		setCacheProvider(new CacheProviderLruCache<String, Model>(configuration.getCacheSize()));
 
 		openDatabase();
 
@@ -109,6 +108,10 @@ public final class Cache {
 	public static synchronized void closeDatabase() {
 		sDatabaseHelper.close();
 	}
+
+    public static void setCacheProvider(CacheProvider<String, Model> cacheProvider) {
+        sEntities = cacheProvider;
+    }
 
 	// Context access
 

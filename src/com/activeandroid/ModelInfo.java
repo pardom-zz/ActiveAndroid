@@ -183,6 +183,7 @@ final class ModelInfo {
 				className = className.substring(packageNameIndex);
 			}
 
+            Log.d("Scanning for " + className);
 			try {
 				Class<?> discoveredClass = Class.forName(className, false, classLoader);
 				if (ReflectionUtils.isModel(discoveredClass)) {
@@ -204,6 +205,9 @@ final class ModelInfo {
 			catch (IllegalAccessException e) {
 				Log.e("IllegalAccessException", e);
 			}
+            catch (NoClassDefFoundError e) {
+                Log.e("NoClassDefFoundError", e);
+            }
 		}
 	}
 }
