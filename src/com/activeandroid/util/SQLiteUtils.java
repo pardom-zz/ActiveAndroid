@@ -327,7 +327,7 @@ public final class SQLiteUtils {
 		final List<T> entities = new ArrayList<T>();
 
 		try {
-			Constructor<?> entityConstructor = type.getConstructor();
+			Constructor<?> entityConstructor = type.getDeclaredConstructor();
 
 			if (cursor.moveToFirst()) {
                 /**
@@ -338,6 +338,7 @@ public final class SQLiteUtils {
 				do {
 					Model entity = Cache.getEntity(type, cursor.getLong(columnsOrdered.indexOf(idName)));
 					if (entity == null) {
+					    entityConstructor.setAccessible(true);
 						entity = (T) entityConstructor.newInstance();
 					}
 
