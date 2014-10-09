@@ -16,15 +16,15 @@ package com.activeandroid;
  * limitations under the License.
  */
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
 import android.content.Context;
 
 import com.activeandroid.serializer.TypeSerializer;
 import com.activeandroid.util.Log;
 import com.activeandroid.util.ReflectionUtils;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class Configuration {
 
@@ -39,6 +39,7 @@ public class Configuration {
 	private String mDatabaseName;
 	private int mDatabaseVersion;
 	private String mSqlParser;
+    private List<Class<? extends ViewTable>> mViewTableClasses;
 	private List<Class<? extends Model>> mModelClasses;
 	private List<Class<? extends TypeSerializer>> mTypeSerializers;
 	private int mCacheSize;
@@ -71,9 +72,11 @@ public class Configuration {
 	    return mSqlParser;
 	}
 
-	public List<Class<? extends Model>> getModelClasses() {
-		return mModelClasses;
-	}
+	public List<Class<? extends Model>> getModelClasses() { return mModelClasses; }
+
+    public List<Class<? extends ViewTable>> getViewTableClasses() {
+        return mViewTableClasses;
+    }
 
 	public List<Class<? extends TypeSerializer>> getTypeSerializers() {
 		return mTypeSerializers;
@@ -83,9 +86,13 @@ public class Configuration {
 		return mCacheSize;
 	}
 
-	public boolean isValid() {
+	public boolean modelConfigurationIsValid() {
 		return mModelClasses != null && mModelClasses.size() > 0;
 	}
+
+    public boolean viewTableConfigurationIsValid(){
+        return mViewTableClasses != null && mViewTableClasses.size() > 0;
+    }
 
 	//////////////////////////////////////////////////////////////////////////////////////
 	// INNER CLASSES
@@ -116,6 +123,7 @@ public class Configuration {
 		private String mDatabaseName;
 		private Integer mDatabaseVersion;
 		private String mSqlParser;
+        private List<Class<? extends ViewTable>> mViewTableClasses;
 		private List<Class<? extends Model>> mModelClasses;
 		private List<Class<? extends TypeSerializer>> mTypeSerializers;
 
@@ -152,28 +160,51 @@ public class Configuration {
 		    return this;
 		}
 
-		public Builder addModelClass(Class<? extends Model> modelClass) {
-			if (mModelClasses == null) {
-				mModelClasses = new ArrayList<Class<? extends Model>>();
+        public Builder addModelClass(Class<? extends Model> modelClass) {
+            if (mModelClasses == null) {
+                mModelClasses = new ArrayList<Class<? extends Model>>();
+            }
+
+            mModelClasses.add(modelClass);
+            return this;
+        }
+
+        public Builder addModelClasses(Class<? extends Model>... modelClasses) {
+            if (mModelClasses == null) {
+                mModelClasses = new ArrayList<Class<? extends Model>>();
+            }
+
+            mModelClasses.addAll(Arrays.asList(modelClasses));
+            return this;
+        }
+
+        public Builder setModelClasses(Class<? extends Model>... modelClasses) {
+            mModelClasses = Arrays.asList(modelClasses);
+            return this;
+        }
+
+		public Builder addViewTableClass(Class<? extends ViewTable> viewTableClass) {
+			if (mViewTableClasses == null) {
+                mViewTableClasses = new ArrayList<Class<? extends ViewTable>>();
 			}
 
-			mModelClasses.add(modelClass);
+            mViewTableClasses.add(viewTableClass);
 			return this;
 		}
 
-		public Builder addModelClasses(Class<? extends Model>... modelClasses) {
-			if (mModelClasses == null) {
-				mModelClasses = new ArrayList<Class<? extends Model>>();
+		public Builder addViewTableClasses(Class<? extends ViewTable>... viewTableClasses) {
+			if (mViewTableClasses == null) {
+                mViewTableClasses = new ArrayList<Class<? extends ViewTable>>();
 			}
 
-			mModelClasses.addAll(Arrays.asList(modelClasses));
+            mViewTableClasses.addAll(Arrays.asList(viewTableClasses));
 			return this;
 		}
 
-		public Builder setModelClasses(Class<? extends Model>... modelClasses) {
-			mModelClasses = Arrays.asList(modelClasses);
-			return this;
-		}
+        public Builder setViewTableClasses(Class<? extends ViewTable>... viewTableClasses) {
+            mViewTableClasses = Arrays.asList(viewTableClasses);
+            return this;
+        }
 
 		public Builder addTypeSerializer(Class<? extends TypeSerializer> typeSerializer) {
 			if (mTypeSerializers == null) {
@@ -232,6 +263,16 @@ public class Configuration {
 					configuration.mModelClasses = loadModelList(modelList.split(","));
 				}
 			}
+
+            // Get model classes from meta-data
+            if (mViewTableClasses != null) {
+                configuration.mViewTableClasses = mViewTableClasses;
+            } else {
+                final String viewTableList = ReflectionUtils.getMetaData(mContext, AA_MODELS); // TODO
+                if (viewTableList != null) {
+                    configuration.mViewTableClasses = loadViewTableList(viewTableList.split(","));
+                }
+            }
 
 			// Get type serializer classes from meta-data
 			if (mTypeSerializers != null) {
@@ -295,6 +336,24 @@ public class Configuration {
 
 			return modelClasses;
 		}
+
+        private List<Class<? extends ViewTable>> loadViewTableList(String[] viewTables) {
+            final List<Class<? extends ViewTable>> viewTableClasses = new ArrayList<Class<? extends ViewTable>>();
+            final ClassLoader classLoader = mContext.getClass().getClassLoader();
+            for (String model : viewTables) {
+                try {
+                    Class viewTableClass = Class.forName(model.trim(), false, classLoader);
+                    if (ReflectionUtils.isModel(viewTableClass)) {
+                        viewTableClasses.add(viewTableClass);
+                    }
+                }
+                catch (ClassNotFoundException e) {
+                    Log.e("Couldn't create class.", e);
+                }
+            }
+
+            return viewTableClasses;
+        }
 
 		private List<Class<? extends TypeSerializer>> loadSerializerList(String[] serializers) {
 			final List<Class<? extends TypeSerializer>> typeSerializers = new ArrayList<Class<? extends TypeSerializer>>();

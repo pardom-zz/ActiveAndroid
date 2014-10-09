@@ -23,16 +23,15 @@ import android.text.TextUtils;
 import com.activeandroid.Cache;
 import com.activeandroid.Model;
 import com.activeandroid.TableInfo;
+import com.activeandroid.ViewTable;
 import com.activeandroid.annotation.Column;
 import com.activeandroid.annotation.Column.ConflictAction;
 import com.activeandroid.serializer.TypeSerializer;
 
-import java.lang.Long;
-import java.lang.String;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
-import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -109,6 +108,15 @@ public final class SQLiteUtils {
 
 		return entities;
 	}
+
+    // NEW
+    public static <T extends ViewTable> List<T> rawQueryToViewTable(Class<? extends ViewTable> viewTableType, String sql, String[] selectionArgs) {
+        Cursor cursor = Cache.openDatabase().rawQuery(sql, selectionArgs);
+        List<T> entities = processCursorToViewTable(viewTableType, cursor);
+        cursor.close();
+
+        return entities;
+    }
 	  
 	public static int intQuery(final String sql, final String[] selectionArgs) {
         final Cursor cursor = Cache.openDatabase().rawQuery(sql, selectionArgs);
@@ -127,6 +135,16 @@ public final class SQLiteUtils {
 
 		return null;
 	}
+    // NEW
+    public static <T extends ViewTable> T rawQuerySingleToViewTable(Class<? extends ViewTable> type, String sql, String[] selectionArgs) {
+        List<T> entities = rawQueryToViewTable(type, sql, selectionArgs);
+
+        if (entities.size() > 0) {
+            return entities.get(0);
+        }
+
+        return null;
+    }
 
 	// Database creation
 
@@ -364,6 +382,48 @@ public final class SQLiteUtils {
 
 		return entities;
 	}
+
+    // test TODO
+    public static <T extends ViewTable> List<T> processCursorToViewTable(Class<? extends ViewTable> type, Cursor cursor) {
+
+        /*TableInfo tableInfo = Cache.getTableInfo(type);
+        String idName = tableInfo.getIdName();*/
+        final List<T> entities = new ArrayList<T>();
+
+        try {
+            Constructor<?> entityConstructor = type.getConstructor();
+
+            if (cursor.moveToFirst()) {
+                /**
+                 * Obtain the columns ordered to fix issue #106 (https://github.com/pardom/ActiveAndroid/issues/106)
+                 * when the cursor have multiple columns with same name obtained from join tables.
+                 */
+                List<String> columnsOrdered = new ArrayList<String>(Arrays.asList(cursor.getColumnNames()));
+                do {
+                    ViewTable entity = (T) entityConstructor.newInstance();
+                    entity.loadFromCursor(cursor);
+                    entities.add((T) entity);
+                }
+                while (cursor.moveToNext());
+            }
+
+        }
+        catch (NoSuchMethodException e) {
+            throw new RuntimeException(
+                    "Your model " + type.getName() + " does not define a default " +
+                            "constructor. The default constructor is required for " +
+                            "now in ActiveAndroid models, as the process to " +
+                            "populate the ORM model is : " +
+                            "1. instantiate default model " +
+                            "2. populate fields"
+            );
+        }
+        catch (Exception e) {
+            Log.e("Failed to process cursor.", e);
+        }
+
+        return entities;
+    }
 
 	private static int processIntCursor(final Cursor cursor) {
         if (cursor.moveToFirst()) {

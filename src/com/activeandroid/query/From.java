@@ -20,6 +20,7 @@ import android.text.TextUtils;
 
 import com.activeandroid.Cache;
 import com.activeandroid.Model;
+import com.activeandroid.ViewTable;
 import com.activeandroid.content.ContentProvider;
 import com.activeandroid.query.Join.JoinType;
 import com.activeandroid.util.Log;
@@ -31,7 +32,8 @@ import java.util.List;
 public final class From implements Sqlable {
 	private Sqlable mQueryBase;
 
-	private Class<? extends Model> mType;
+	private Class<? extends Model> mModelType;
+    private Class<? extends ViewTable> mViewTableType;
 	private String mAlias;
 	private List<Join> mJoins;
 	private final StringBuilder mWhere = new StringBuilder();
@@ -44,13 +46,23 @@ public final class From implements Sqlable {
 	private List<Object> mArguments;
 
 	public From(Class<? extends Model> table, Sqlable queryBase) {
-		mType = table;
+		mModelType = table;
 		mJoins = new ArrayList<Join>();
 		mQueryBase = queryBase;
 
 		mJoins = new ArrayList<Join>();
 		mArguments = new ArrayList<Object>();
 	}
+
+    public From(Class<? extends ViewTable> viewTable, Class<? extends Model> table, Sqlable queryBase) {
+        mModelType = table;
+        mViewTableType = viewTable;
+        mJoins = new ArrayList<Join>();
+        mQueryBase = queryBase;
+
+        mJoins = new ArrayList<Join>();
+        mArguments = new ArrayList<Object>();
+    }
 
 	public From as(String alias) {
 		mAlias = alias;
@@ -166,7 +178,7 @@ public final class From implements Sqlable {
 
     private void addFrom(final StringBuilder sql) {
         sql.append("FROM ");
-        sql.append(Cache.getTableName(mType)).append(" ");
+        sql.append(Cache.getTableName(mModelType)).append(" ");
 
         if (mAlias != null) {
             sql.append("AS ");
@@ -295,28 +307,63 @@ public final class From implements Sqlable {
 
 	public <T extends Model> List<T> execute() {
 		if (mQueryBase instanceof Select) {
-			return SQLiteUtils.rawQuery(mType, toSql(), getArguments());
+			return SQLiteUtils.rawQuery(mModelType, toSql(), getArguments());
 			
 		} else {
 			SQLiteUtils.execSql(toSql(), getArguments());
-			Cache.getContext().getContentResolver().notifyChange(ContentProvider.createUri(mType, null), null);
+			Cache.getContext().getContentResolver().notifyChange(ContentProvider.createUri(mModelType, null), null);
 			return null;
-			
 		}
 	}
 
 	public <T extends Model> T executeSingle() {
 		if (mQueryBase instanceof Select) {
 			limit(1);
-			return (T) SQLiteUtils.rawQuerySingle(mType, toSql(), getArguments());
-			
-		} else {
+			return (T) SQLiteUtils.rawQuerySingle(mModelType, toSql(), getArguments());
+		}
+        else {
 			limit(1);
-			SQLiteUtils.rawQuerySingle(mType, toSql(), getArguments()).delete();
+			SQLiteUtils.rawQuerySingle(mModelType, toSql(), getArguments()).delete();
 			return null;
-			
 		}
 	}
+
+    // NEW
+    public <T extends ViewTable> List<T> executeToView() {
+        if( mViewTableType != null ) {
+            if (mQueryBase instanceof Select) {
+                return SQLiteUtils.rawQueryToViewTable(mViewTableType, toSql(), getArguments());
+            }
+            else {
+                SQLiteUtils.execSql(toSql(), getArguments());
+                Cache.getContext().getContentResolver().notifyChange(ContentProvider.createUri(mModelType, null), null);
+                return null;
+            }
+        }
+        else {
+            Log.e("You must instanciate CreateView for executeToView ");
+            return null;
+        }
+    }
+
+    // NEW
+    public <T extends ViewTable> T executeSingleToView() {
+        if( mViewTableType != null ) {
+            if (mQueryBase instanceof Select) {
+                limit(1);
+                return (T) SQLiteUtils.rawQuerySingleToViewTable(mViewTableType, toSql(), getArguments());
+
+            } else {
+                limit(1);
+                SQLiteUtils.rawQuerySingle(mModelType, toSql(), getArguments()).delete();
+                return null;
+            }
+        }
+        else {
+            Log.e("You must instanciate CreateView for executeToView ");
+            return null;
+        }
+    }
 	
     /**
      * Gets a value indicating whether the query returns any rows.

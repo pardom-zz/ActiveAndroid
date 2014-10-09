@@ -16,14 +16,14 @@ package com.activeandroid;
  * limitations under the License.
  */
 
-import java.util.Collection;
-
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.support.v4.util.LruCache;
 
 import com.activeandroid.serializer.TypeSerializer;
 import com.activeandroid.util.Log;
+
+import java.util.Collection;
 
 public final class Cache {
 	//////////////////////////////////////////////////////////////////////////////////////
@@ -39,6 +39,7 @@ public final class Cache {
 	private static Context sContext;
 
 	private static ModelInfo sModelInfo;
+    private static ViewTableInfo sViewTableInfo;
 	private static DatabaseHelper sDatabaseHelper;
 
 	private static LruCache<String, Model> sEntities;
@@ -64,6 +65,7 @@ public final class Cache {
 
 		sContext = configuration.getContext();
 		sModelInfo = new ModelInfo(configuration);
+        sViewTableInfo = new ViewTableInfo( configuration );
 		sDatabaseHelper = new DatabaseHelper(configuration);
 
 		// TODO: It would be nice to override sizeOf here and calculate the memory
@@ -139,7 +141,6 @@ public final class Cache {
 	}
 
 	// Model cache
-
 	public static synchronized Collection<TableInfo> getTableInfos() {
 		return sModelInfo.getTableInfos();
 	}
@@ -155,4 +156,17 @@ public final class Cache {
 	public static synchronized String getTableName(Class<? extends Model> type) {
 		return sModelInfo.getTableInfo(type).getTableName();
 	}
+
+    // ViewTable cache
+    public static synchronized Collection<ViewTableTableInfo> getViewTableTableInfos() {
+        return sViewTableInfo.getViewTableTableInfos();
+    }
+
+    public static synchronized ViewTableTableInfo getViewTableTableInfo(Class<? extends ViewTable> type) {
+        return sViewTableInfo.getViewTableTableInfo(type);
+    }
+
+    public static synchronized String getViewTableTableName(Class<? extends ViewTable> type) {
+        return sViewTableInfo.getViewTableTableInfo(type).getViewTableName();
+    }
 }

@@ -17,10 +17,9 @@ package com.activeandroid;
  */
 
 import android.text.TextUtils;
-import android.util.Log;
 
 import com.activeandroid.annotation.Column;
-import com.activeandroid.annotation.Table;
+import com.activeandroid.annotation.View;
 import com.activeandroid.util.ReflectionUtils;
 
 import java.lang.reflect.Field;
@@ -31,14 +30,13 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-public final class TableInfo {
+public final class ViewTableTableInfo {
 	//////////////////////////////////////////////////////////////////////////////////////
 	// PRIVATE MEMBERS
 	//////////////////////////////////////////////////////////////////////////////////////
 
-	private Class<? extends Model> mType;
-	private String mTableName;
-	private String mIdName = Table.DEFAULT_ID_NAME;
+	private Class<? extends ViewTable> mType;
+	private String mViewTableName;
 
 	private Map<Field, String> mColumnNames = new LinkedHashMap<Field, String>();
 
@@ -46,22 +44,17 @@ public final class TableInfo {
 	// CONSTRUCTORS
 	//////////////////////////////////////////////////////////////////////////////////////
 
-	public TableInfo(Class<? extends Model> type) {
+	public ViewTableTableInfo(Class<? extends ViewTable> type) {
 		mType = type;
 
-		final Table tableAnnotation = type.getAnnotation(Table.class);
+		final View tableAnnotation = type.getAnnotation(View.class);
 
         if (tableAnnotation != null) {
-			mTableName = tableAnnotation.name();
-			mIdName = tableAnnotation.id();
+			mViewTableName = tableAnnotation.name();
 		}
 		else {
-			mTableName = type.getSimpleName();
+			mViewTableName = type.getSimpleName();
         }
-
-        // Manually add the id column since it is not declared like the other columns.
-        Field idField = getIdField(type);
-        mColumnNames.put(idField, mIdName);
 
         List<Field> fields = new LinkedList<Field>(ReflectionUtils.getDeclaredColumnFields(type));
         Collections.reverse(fields);
@@ -84,16 +77,12 @@ public final class TableInfo {
 	// PUBLIC METHODS
 	//////////////////////////////////////////////////////////////////////////////////////
 
-	public Class<? extends Model> getType() {
+	public Class<? extends ViewTable> getType() {
 		return mType;
 	}
 
-	public String getTableName() {
-		return mTableName;
-	}
-
-	public String getIdName() {
-		return mIdName;
+	public String getViewTableName() {
+		return mViewTableName;
 	}
 
 	public Collection<Field> getFields() {
@@ -103,22 +92,5 @@ public final class TableInfo {
 	public String getColumnName(Field field) {
 		return mColumnNames.get(field);
 	}
-
-
-    private Field getIdField(Class<?> type) {
-        if (type.equals(Model.class)) {
-            try {
-                return type.getDeclaredField("mId");
-            }
-            catch (NoSuchFieldException e) {
-                Log.e("Impossible!", e.toString());
-            }
-        }
-        else if (type.getSuperclass() != null) {
-            return getIdField(type.getSuperclass());
-        }
-
-        return null;
-    }
 
 }

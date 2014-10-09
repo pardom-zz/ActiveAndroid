@@ -22,8 +22,6 @@ import android.database.Cursor;
 import java.io.Closeable;
 import java.io.IOException;
 
-import com.activeandroid.util.Log;
-
 
 public class IOUtils {
 
