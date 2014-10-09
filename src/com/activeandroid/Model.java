@@ -289,6 +289,17 @@ public abstract class Model {
 		return new Select().from(type).where(Cache.getTableName(type) + "." + foreignKey + "=?", getId()).execute();
 	}
 
+	protected final <T extends Model> List<T> getManyThrough(Class<T> targetClass, Class<T> joinClass, String targetForeignKeyInJoin, String foreignKeyInJoin){
+		return new Select()
+		.from(targetClass)
+		.as("target_model")
+		.join(joinClass)
+		.as("join_model")
+		.on("join_model." + targetForeignKeyInJoin + " = " + "target_model.id")
+		.where(foreignKeyInJoin + " = ?", this.getId())
+		.execute();
+	}
+
 	//////////////////////////////////////////////////////////////////////////////////////
 	// OVERRIDEN METHODS
 	//////////////////////////////////////////////////////////////////////////////////////
