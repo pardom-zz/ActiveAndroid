@@ -378,6 +378,16 @@ public final class From implements Sqlable {
     }
 
     public <T extends Model> T last() {
+        String mode = " DESC ";
+        return getSingleOrdered(mode);
+    }
+
+    public <T extends Model> T first() {
+        String mode = " ACS ";
+        return getSingleOrdered(mode);
+    }
+
+    private <T extends Model> T getSingleOrdered(String mode) {
         final StringBuilder sql = new StringBuilder();
         sql.append(mQueryBase.toSql());
 
@@ -392,7 +402,7 @@ public final class From implements Sqlable {
             sql.append(1);
         else
             sql.append(mOrderBy);
-        sql.append(" DESC ");
+        sql.append(mode);
 
 //        addLimit(sql);
         sql.append("LIMIT ");
