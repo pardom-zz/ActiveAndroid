@@ -60,7 +60,7 @@ final class ModelInfo {
 	public ModelInfo(Configuration configuration) {
 		if (!loadModelFromMetaData(configuration)) {
 			try {
-				scanForModel(configuration.getContext());
+				scanForModel(configuration.getContext(), configuration.getExcludeLibs());
 			}
 			catch (IOException e) {
 				Log.e("Couldn't open source path.", e);
@@ -121,7 +121,7 @@ final class ModelInfo {
 		return true;
 	}
 
-	private void scanForModel(Context context) throws IOException {
+	private void scanForModel(Context context, Boolean excludeLibs) throws IOException {
 		String packageName = context.getPackageName();
 		String sourcePath = context.getApplicationInfo().sourceDir;
 		List<String> paths = new ArrayList<String>();
@@ -131,7 +131,17 @@ final class ModelInfo {
 			Enumeration<String> entries = dexfile.entries();
 
 			while (entries.hasMoreElements()) {
-				paths.add(entries.nextElement());
+
+                String entry = entries.nextElement();
+
+                if(excludeLibs){
+                    // Check if the package starts with the correct packageName
+                    if(entry.startsWith(packageName)) {
+                        paths.add(entry);
+                    }
+                } else {
+                    paths.add(entry);
+                }
 			}
 		}
 		// Robolectric fallback

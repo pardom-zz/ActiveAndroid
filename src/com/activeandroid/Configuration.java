@@ -38,6 +38,7 @@ public class Configuration {
 	private Context mContext;
 	private String mDatabaseName;
 	private int mDatabaseVersion;
+    private Boolean mExcludeLibs;
 	private String mSqlParser;
 	private List<Class<? extends Model>> mModelClasses;
 	private List<Class<? extends TypeSerializer>> mTypeSerializers;
@@ -66,6 +67,8 @@ public class Configuration {
 	public int getDatabaseVersion() {
 		return mDatabaseVersion;
 	}
+
+    public Boolean getExcludeLibs() { return mExcludeLibs; }
 	
 	public String getSqlParser() {
 	    return mSqlParser;
@@ -101,10 +104,12 @@ public class Configuration {
 		private final static String AA_MODELS = "AA_MODELS";
 		private final static String AA_SERIALIZERS = "AA_SERIALIZERS";
 		private final static String AA_SQL_PARSER = "AA_SQL_PARSER";
+        private final static String AA_EXCLUDE_LIBS = "AA_EXCLUDE_LIBS";
 
 		private static final int DEFAULT_CACHE_SIZE = 1024;
 		private static final String DEFAULT_DB_NAME = "Application.db";
 		private static final String DEFAULT_SQL_PARSER = SQL_PARSER_LEGACY;
+        private static final Boolean DEFAULT_EXCLUDE_LIBS = false;
 
 		//////////////////////////////////////////////////////////////////////////////////////
 		// PRIVATE MEMBERS
@@ -116,6 +121,7 @@ public class Configuration {
 		private String mDatabaseName;
 		private Integer mDatabaseVersion;
 		private String mSqlParser;
+        private Boolean mExcludeLibs;
 		private List<Class<? extends Model>> mModelClasses;
 		private List<Class<? extends TypeSerializer>> mTypeSerializers;
 
@@ -141,6 +147,11 @@ public class Configuration {
 			mDatabaseName = databaseName;
 			return this;
 		}
+
+        public Builder setExcludeLibs(boolean excludeLibs) {
+            mExcludeLibs = excludeLibs;
+            return this;
+        }
 
 		public Builder setDatabaseVersion(int databaseVersion) {
 			mDatabaseVersion = databaseVersion;
@@ -222,7 +233,14 @@ public class Configuration {
 			} else {
 			    configuration.mSqlParser = getMetaDataSqlParserOrDefault();
 			}
-			
+
+            // Get the option of exclude libs to find models from meta-data
+            if (mExcludeLibs != null) {
+                configuration.mExcludeLibs = mExcludeLibs;
+            } else {
+                configuration.mExcludeLibs = getMetaDataExcludeLibsOrDefault();
+            }
+
 			// Get model classes from meta-data
 			if (mModelClasses != null) {
 				configuration.mModelClasses = mModelClasses;
@@ -269,6 +287,15 @@ public class Configuration {
 
 			return aaVersion;
 		}
+
+        private Boolean getMetaDataExcludeLibsOrDefault() {
+            Boolean aaExcludeLibs = ReflectionUtils.getMetaData(mContext, AA_EXCLUDE_LIBS);
+            if (aaExcludeLibs == null) {
+                aaExcludeLibs = DEFAULT_EXCLUDE_LIBS;
+            }
+
+            return aaExcludeLibs;
+        }
 
 		private String getMetaDataSqlParserOrDefault() {
 		    final String mode = ReflectionUtils.getMetaData(mContext, AA_SQL_PARSER);
