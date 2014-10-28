@@ -25,7 +25,11 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Table {
 
-	public static final String DEFAULT_ID_NAME = "Id";
+  public static final String DEFAULT_ID_NAME = "Id";
+  public static final String DEFAULT_FTS = "";
+
 	public String name();
 	public String id() default DEFAULT_ID_NAME;
+  public String fts() default DEFAULT_FTS;
+
 }
