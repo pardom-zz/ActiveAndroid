@@ -248,12 +248,14 @@ public final class SQLiteUtils {
 
 		definitions.addAll(createUniqueDefinition(tableInfo));
 
-		if (tableInfo.getFTS() == null) {
+    String fts = tableInfo.getFTS();
+
+		if (fts.isEmpty()) {
 			return String.format("CREATE TABLE IF NOT EXISTS %s (%s);", tableInfo.getTableName(),
 				TextUtils.join(", ", definitions));
 		} else {
 			return String.format("CREATE VIRTUAL TABLE IF NOT EXISTS %s USING FTS%s(%s);", tableInfo.getTableName(),
-				tableInfo.getFTS(), TextUtils.join(", ", definitions));
+				fts, TextUtils.join(", ", definitions));
 		}
 	}
 
@@ -309,13 +311,17 @@ public final class SQLiteUtils {
 				}
 
 				if (FOREIGN_KEYS_SUPPORTED && ReflectionUtils.isModel(type)) {
-					definition.append(" REFERENCES ");
-					definition.append(Cache.getTableInfo((Class<? extends Model>) type).getTableName());
-					definition.append("("+tableInfo.getIdName()+")");
-					definition.append(" ON DELETE ");
-					definition.append(column.onDelete().toString().replace("_", " "));
-					definition.append(" ON UPDATE ");
-					definition.append(column.onUpdate().toString().replace("_", " "));
+          TableInfo foreignTableInfo = Cache.getTableInfo((Class<? extends Model>) type);
+          // Do not add a reference constraint on FTS tables because the id (rowid) is a hidden column, it would generate "foreign key mismatch" errors
+          if (foreignTableInfo.getFTS().isEmpty()) {
+  					definition.append(" REFERENCES ");
+            definition.append(foreignTableInfo.getTableName());
+            definition.append("("+foreignTableInfo.getIdName()+")");
+            definition.append(" ON DELETE ");
+  					definition.append(column.onDelete().toString().replace("_", " "));
+  					definition.append(" ON UPDATE ");
+  					definition.append(column.onUpdate().toString().replace("_", " "));
+          }
 				}
 			}
 			else {
@@ -341,7 +347,8 @@ public final class SQLiteUtils {
                  */
                 List<String> columnsOrdered = new ArrayList<String>(Arrays.asList(cursor.getColumnNames()));
                 do {
-                	Model entity = Cache.getEntity(type, cursor.getLong(columnsOrdered.indexOf(idName)));
+                  Long id = cursor.getLong(columnsOrdered.indexOf(idName));
+                	Model entity = Cache.getEntity(type, id);
                 	if (entity == null) {
                 		entity = (T) entityConstructor.newInstance();
                 	}

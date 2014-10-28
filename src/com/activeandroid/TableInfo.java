@@ -39,7 +39,7 @@ public final class TableInfo {
 	private Class<? extends Model> mType;
 	private String mTableName;
   private String mIdName = Table.DEFAULT_ID_NAME;
-  private String mFTS;
+  private String mFTS = Table.DEFAULT_FTS;
 
 	private Map<Field, String> mColumnNames = new LinkedHashMap<Field, String>();
 
@@ -48,22 +48,27 @@ public final class TableInfo {
 	//////////////////////////////////////////////////////////////////////////////////////
 
 	public TableInfo(Class<? extends Model> type) {
-		mType = type;
+		 mType = type;
 
-		final Table tableAnnotation = type.getAnnotation(Table.class);
+		 final Table tableAnnotation = type.getAnnotation(Table.class);
 
-    if (tableAnnotation != null) {
-      mTableName = tableAnnotation.name();
-      mIdName = tableAnnotation.id();
-      mFTS = tableAnnotation.fts();
-    }
-    else {
+     if (tableAnnotation != null) {
+       mTableName = tableAnnotation.name();
+       mIdName = tableAnnotation.id();
+       mFTS = tableAnnotation.fts();
+     }
+     else {
        mTableName = type.getSimpleName();
      }
 
-          // Manually add the id column since it is not declared like the other columns.
-     Field idField = getIdField(type);
-     mColumnNames.put(idField, mIdName);
+     if (mFTS.isEmpty()) {
+       // Manually add the id column since it is not declared like the other columns.
+       Field idField = getIdField(type);
+       mColumnNames.put(idField, mIdName);
+     } else {
+       // If the table is a FTS virtual table ignore the key and use the hidden rowid column instead.
+       mIdName = "rowid";
+     }
 
      List<Field> fields = new LinkedList<Field>(ReflectionUtils.getDeclaredColumnFields(type));
      Collections.reverse(fields);

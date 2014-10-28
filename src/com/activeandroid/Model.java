@@ -137,7 +137,11 @@ public abstract class Model {
 					values.put(fieldName, (byte[]) value);
 				}
 				else if (ReflectionUtils.isModel(fieldType)) {
-					values.put(fieldName, ((Model) value).getId());
+					Long fId = ((Model) value).getId();
+					if (fId == null) {
+						fId = ((Model) value).save();
+					}
+					values.put(fieldName, fId);
 				}
 				else if (ReflectionUtils.isSubclassOf(fieldType, Enum.class)) {
 					values.put(fieldName, ((Enum<?>) value).name());
@@ -178,11 +182,11 @@ public abstract class Model {
 	// Model population
 
 	public final void loadFromCursor(Cursor cursor) {
-        /**
-         * Obtain the columns ordered to fix issue #106 (https://github.com/pardom/ActiveAndroid/issues/106)
-         * when the cursor have multiple columns with same name obtained from join tables.
-         */
-        List<String> columnsOrdered = new ArrayList<String>(Arrays.asList(cursor.getColumnNames()));
+    /**
+     * Obtain the columns ordered to fix issue #106 (https://github.com/pardom/ActiveAndroid/issues/106)
+     * when the cursor have multiple columns with same name obtained from join tables.
+     */
+    List<String> columnsOrdered = new ArrayList<String>(Arrays.asList(cursor.getColumnNames()));
 		for (Field field : mTableInfo.getFields()) {
 			final String fieldName = mTableInfo.getColumnName(field);
 			Class<?> fieldType = field.getType();
@@ -244,7 +248,8 @@ public abstract class Model {
 
 					Model entity = Cache.getEntity(entityType, entityId);
 					if (entity == null) {
-						entity = new Select().from(entityType).where(idName+"=?", entityId).executeSingle();
+						TableInfo foreignTableInfo = Cache.getTableInfo(entityType);
+						entity = new Select("rowid, *").from(entityType).where(foreignTableInfo.getIdName()+"=?", entityId).executeSingle();
 					}
 
 					value = entity;
@@ -303,7 +308,7 @@ public abstract class Model {
 		if (obj instanceof Model && this.mId != null) {
 			final Model other = (Model) obj;
 
-			return this.mId.equals(other.mId)							
+			return this.mId.equals(other.mId)
 							&& (this.mTableInfo.getTableName().equals(other.mTableInfo.getTableName()));
 		} else {
 			return this == obj;
