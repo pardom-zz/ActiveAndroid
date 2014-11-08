@@ -403,26 +403,4 @@ public final class SQLiteUtils {
 
 		return sl;
 	}
-	
-	public static <T> String serializeToString(T value){
-	    Class<?> fieldType = value.getClass();
-	    final TypeSerializer typeSerializer = Cache.getParserForType(fieldType);
-	    
-	    if (typeSerializer == null) 
-	        return value.toString();
-    
-        Object out = typeSerializer.serialize(value);
-        if (out == null) 
-            return value.toString();
-        
-        fieldType = out.getClass();
-        
-        // check that the serializer returned what it promised
-        if (!fieldType.equals(typeSerializer.getSerializedType())) {
-            Log.w(String.format("TypeSerializer returned wrong type: expected a %s but got a %s",
-                    typeSerializer.getSerializedType(), fieldType));
-        }
-        
-        return out.toString();
-    }
 }
