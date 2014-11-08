@@ -91,11 +91,13 @@ public final class Set implements Sqlable {
 		final String[] args = new String[setSize + whereSize];
 
 		for (int i = 0; i < setSize; i++) {
-			args[i] = mSetArguments.get(i).toString();
+		    Object arg = mSetArguments.get(i);
+			args[i] = SQLiteUtils.serializeToString(arg);
 		}
 
 		for (int i = 0; i < whereSize; i++) {
-			args[i + setSize] = mWhereArguments.get(i).toString();
+		    Object arg = mWhereArguments.get(i);
+			args[i + setSize] = SQLiteUtils.serializeToString(arg);
 		}
 
 		return args;
