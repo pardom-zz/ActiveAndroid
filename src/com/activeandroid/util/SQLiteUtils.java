@@ -303,7 +303,7 @@ public final class SQLiteUtils {
 				}
 			}
 
-			if (FOREIGN_KEYS_SUPPORTED && ReflectionUtils.isModel(type)) {
+			if (FOREIGN_KEYS_SUPPORTED && ReflectionUtils.isModel(type) && Cache.getTableInfo((Class<? extends Model>) type) != null) {
 				definition.append(" REFERENCES ");
 				definition.append(Cache.getTableInfo((Class<? extends Model>) type).getTableName());
 				definition.append("("+tableInfo.getIdName()+")");
