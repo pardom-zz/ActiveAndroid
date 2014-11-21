@@ -107,7 +107,9 @@ public final class Cache {
 	}
 
 	public static synchronized void closeDatabase() {
-		sDatabaseHelper.close();
+		if (sDatabaseHelper != null) {
+			sDatabaseHelper.close();
+		}
 	}
 
 	// Context access
