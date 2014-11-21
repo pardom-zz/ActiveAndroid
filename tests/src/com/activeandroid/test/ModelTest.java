@@ -16,13 +16,6 @@
 
 package com.activeandroid.test;
 
-import com.activeandroid.Cache;
-import com.activeandroid.Model;
-import com.activeandroid.TableInfo;
-import com.activeandroid.annotation.Column;
-import com.activeandroid.annotation.Table;
-import com.activeandroid.query.Select;
-
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Date;
@@ -30,10 +23,23 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.activeandroid.Cache;
+import com.activeandroid.Model;
+import com.activeandroid.TableInfo;
+import com.activeandroid.annotation.Column;
+import com.activeandroid.annotation.Table;
+import com.activeandroid.query.Select;
+
 /**
  * Simple test now covering equals and hashcode methods.
  */
 public class ModelTest extends ActiveAndroidTestCase {
+	
+	@Override
+	protected void tearDown() throws Exception {
+		super.tearDown();
+		getContext().deleteDatabase("Application.db");
+	}
 
 	/**
 	 * Equals should be type-safe.
@@ -156,9 +162,8 @@ public class ModelTest extends ActiveAndroidTestCase {
         Long id = mockModel.save();
 
         boolean databaseBooleanValue = MockModel.load( MockModel.class, id ).booleanField;
-
         assertEquals( false, databaseBooleanValue );
-
+        
         // Test passing both a integer and a boolean into the where conditional.
         assertEquals(
                 mockModel,
@@ -219,7 +224,7 @@ public class ModelTest extends ActiveAndroidTestCase {
 
         //check result
         assertNotNull(result);
-        assertEquals(result.size(), 2);
+        assertEquals(2, result.size());
         for(ChildMockModel currentModel : result){
             assertFalse(currentModel.booleanField);
             assertEquals(currentModel.intField, intValue);

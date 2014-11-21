@@ -32,6 +32,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.text.TextUtils;
 
+import com.activeandroid.automigration.AutoMigration;
 import com.activeandroid.util.IOUtils;
 import com.activeandroid.util.Log;
 import com.activeandroid.util.NaturalOrderComparator;
@@ -83,6 +84,9 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
 		executePragmas(db);
 		executeCreate(db);
 		executeMigrations(db, oldVersion, newVersion);
+		if (db.needUpgrade(newVersion)) {
+			AutoMigration.migrate(db, newVersion);
+		}
 	}
 
 	//////////////////////////////////////////////////////////////////////////////////////
