@@ -18,6 +18,7 @@ package com.activeandroid.test;
 
 import android.test.ApplicationTestCase;
 
+import com.activeandroid.ActiveAndroid;
 import com.activeandroid.app.Application;
 
 public abstract class ActiveAndroidTestCase extends ApplicationTestCase<Application> {
@@ -28,10 +29,6 @@ public abstract class ActiveAndroidTestCase extends ApplicationTestCase<Applicat
 	protected void setUp() throws Exception {
 		super.setUp();
 		createApplication();
-	}
-
-	protected void tearDown() throws Exception {
-		super.tearDown();
 	}
 
 	public static <T> void assertArrayEquals(T[] actual, T... expected) {

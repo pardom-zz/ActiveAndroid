@@ -31,10 +31,10 @@ import java.util.Map;
 import android.content.Context;
 
 import com.activeandroid.serializer.CalendarSerializer;
+import com.activeandroid.serializer.FileSerializer;
 import com.activeandroid.serializer.SqlDateSerializer;
 import com.activeandroid.serializer.TypeSerializer;
 import com.activeandroid.serializer.UtilDateSerializer;
-import com.activeandroid.serializer.FileSerializer;
 import com.activeandroid.util.Log;
 import com.activeandroid.util.ReflectionUtils;
 
