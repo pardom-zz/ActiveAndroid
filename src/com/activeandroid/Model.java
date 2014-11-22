@@ -71,6 +71,10 @@ public abstract class Model {
 				.notifyChange(ContentProvider.createUri(mTableInfo.getType(), mId), null);
 	}
 
+	/**
+	 * Updates this model if it has an ID; else inserts it.
+	 * @return If inserting, returns the new ID or -1 on failure; else returns the existing ID.
+	 */
 	public final Long save() {
 		final SQLiteDatabase db = Cache.openDatabase();
 		final ContentValues values = new ContentValues();
@@ -152,7 +156,11 @@ public abstract class Model {
 		}
 
 		if (mId == null) {
-			mId = db.insert(mTableInfo.getTableName(), null, values);
+			long newID = db.insert(mTableInfo.getTableName(), null, values);
+			if (newID == -1L)
+			    // returns -1 instead of null for backwards compatibility.
+			    return -1L;
+			mId = newID;
 		}
 		else {
 			db.update(mTableInfo.getTableName(), values, idName+"=" + mId, null);
@@ -244,7 +252,7 @@ public abstract class Model {
 
 					Model entity = Cache.getEntity(entityType, entityId);
 					if (entity == null) {
-						entity = new Select().from(entityType).where(idName+"=?", entityId).executeSingle();
+						entity = new Select().from(entityType).where(Cache.getTableInfo(entityType).getIdName()+"=?", entityId).executeSingle();
 					}
 
 					value = entity;
