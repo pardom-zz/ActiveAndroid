@@ -403,4 +403,21 @@ public final class SQLiteUtils {
 
 		return sl;
 	}
+	
+	public static int indexOfIgnoreCase(String[] strs, String find) {
+	    final int len = strs.length;
+	    if (find != null) {
+	        for (int i = 0; i < len; i++) {
+	            if (find.equalsIgnoreCase(strs[i]))
+	                return i;
+	        }
+	    }
+	    else {
+	        for (int i = 0; i < len; i++) {
+                if (null == strs[i])
+                    return i;
+            }
+	    }
+        return -1;
+	}
 }
