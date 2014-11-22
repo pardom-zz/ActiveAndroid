@@ -176,47 +176,6 @@ public abstract class Model {
 		return (T) new Select().from(type).where(tableInfo.getIdName()+"=?", id).executeSingle();
 	}
 
-    /**
-     * Deep copies a model instance. Only the model ID and the fields annotated
-     * as {@link Column} will be copied over to the new instance.
-     * WARNING: If the specified model is self-referential, this will cause an
-     * infinite recursion.
-     * @param model Model instance to copy. Must not be null.
-     * @return The new model instance or null if an error occurs.
-     */
-    public static <T extends Model> T clone(T model) {
-        final Class<T> cls = (Class<T>) model.getClass();
-        T newInstance = null;
-
-        try {
-            newInstance = cls.newInstance();
-
-            // copy fields from model to newInstance.
-            for (Field field : model.mTableInfo.getFields()) {
-                Object val = field.get(model);
-
-                if (val instanceof Model)
-                    val = clone((Model)val);
-
-                field.setAccessible(true);
-                field.set(newInstance, val);
-            }
-
-            newInstance.mId = model.mId;
-
-            return newInstance;
-        }
-        // These should not happen.
-        catch (IllegalAccessException e) {
-            // nothing
-        }
-        catch (InstantiationException e) {
-            // nothing
-        }
-
-        return null;
-    }
-
 	// Model population
 
 	public final void loadFromCursor(Cursor cursor) {
