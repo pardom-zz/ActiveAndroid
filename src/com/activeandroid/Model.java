@@ -71,6 +71,10 @@ public abstract class Model {
 				.notifyChange(ContentProvider.createUri(mTableInfo.getType(), mId), null);
 	}
 
+	/**
+	 * Updates this model if it has an ID; else inserts it.
+	 * @return If inserting, returns the new ID or -1 on failure; else returns the existing ID.
+	 */
 	public final Long save() {
 		final SQLiteDatabase db = Cache.openDatabase();
 		final ContentValues values = new ContentValues();
@@ -152,7 +156,11 @@ public abstract class Model {
 		}
 
 		if (mId == null) {
-			mId = db.insert(mTableInfo.getTableName(), null, values);
+			long newID = db.insert(mTableInfo.getTableName(), null, values);
+			if (newID == -1L)
+			    // returns -1 instead of null for backwards compatibility.
+			    return -1L;
+			mId = newID;
 		}
 		else {
 			db.update(mTableInfo.getTableName(), values, idName+"=" + mId, null);
@@ -175,6 +183,47 @@ public abstract class Model {
 		return (T) new Select().from(type).where(tableInfo.getIdName()+"=?", id).executeSingle();
 	}
 
+    /**
+     * Deep copies a model instance. Only the model ID and the fields annotated 
+     * as {@link Column} will be copied over to the new instance. 
+     * WARNING: If the specified model is self-referential, this will cause an 
+     * infinite recursion. 
+     * @param model Model instance to copy. Must not be null.
+     * @return The new model instance or null if an error occurs.
+     */
+    public static <T extends Model> T clone(T model) {
+        final Class<T> cls = (Class<T>) model.getClass();
+        T newInstance = null;
+
+        try {
+            newInstance = cls.newInstance();
+
+            // copy fields from model to newInstance.
+            for (Field field : model.mTableInfo.getFields()) {
+                Object val = field.get(model);
+                
+                if (val instanceof Model)
+                    val = clone((Model)val);
+                
+                field.setAccessible(true);
+                field.set(newInstance, val);
+            }
+
+            newInstance.mId = model.mId;
+
+            return newInstance;
+        }
+        // These should not happen.
+        catch (IllegalAccessException e) {
+            // nothing
+        }
+        catch (InstantiationException e) {
+            // nothing
+        }
+
+        return null;
+    }
+	
 	// Model population
 
 	public final void loadFromCursor(Cursor cursor) {
@@ -244,7 +293,7 @@ public abstract class Model {
 
 					Model entity = Cache.getEntity(entityType, entityId);
 					if (entity == null) {
-						entity = new Select().from(entityType).where(idName+"=?", entityId).executeSingle();
+						entity = new Select().from(entityType).where(Cache.getTableInfo(entityType).getIdName()+"=?", entityId).executeSingle();
 					}
 
 					value = entity;
