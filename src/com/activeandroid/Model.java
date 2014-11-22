@@ -26,6 +26,7 @@ import com.activeandroid.query.Select;
 import com.activeandroid.serializer.TypeSerializer;
 import com.activeandroid.util.Log;
 import com.activeandroid.util.ReflectionUtils;
+import com.activeandroid.util.SQLiteUtils;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -175,6 +176,47 @@ public abstract class Model {
 		return (T) new Select().from(type).where(tableInfo.getIdName()+"=?", id).executeSingle();
 	}
 
+    /**
+     * Deep copies a model instance. Only the model ID and the fields annotated
+     * as {@link Column} will be copied over to the new instance.
+     * WARNING: If the specified model is self-referential, this will cause an
+     * infinite recursion.
+     * @param model Model instance to copy. Must not be null.
+     * @return The new model instance or null if an error occurs.
+     */
+    public static <T extends Model> T clone(T model) {
+        final Class<T> cls = (Class<T>) model.getClass();
+        T newInstance = null;
+
+        try {
+            newInstance = cls.newInstance();
+
+            // copy fields from model to newInstance.
+            for (Field field : model.mTableInfo.getFields()) {
+                Object val = field.get(model);
+
+                if (val instanceof Model)
+                    val = clone((Model)val);
+
+                field.setAccessible(true);
+                field.set(newInstance, val);
+            }
+
+            newInstance.mId = model.mId;
+
+            return newInstance;
+        }
+        // These should not happen.
+        catch (IllegalAccessException e) {
+            // nothing
+        }
+        catch (InstantiationException e) {
+            // nothing
+        }
+
+        return null;
+    }
+
 	// Model population
 
 	public final void loadFromCursor(Cursor cursor) {
@@ -182,11 +224,11 @@ public abstract class Model {
          * Obtain the columns ordered to fix issue #106 (https://github.com/pardom/ActiveAndroid/issues/106)
          * when the cursor have multiple columns with same name obtained from join tables.
          */
-        List<String> columnsOrdered = new ArrayList<String>(Arrays.asList(cursor.getColumnNames()));
+        String[] columnsOrdered = cursor.getColumnNames();
 		for (Field field : mTableInfo.getFields()) {
 			final String fieldName = mTableInfo.getColumnName(field);
 			Class<?> fieldType = field.getType();
-			final int columnIndex = columnsOrdered.indexOf(fieldName);
+			final int columnIndex = SQLiteUtils.indexOfIgnoreCase(columnsOrdered, fieldName);
 
 			if (columnIndex < 0) {
 				continue;
@@ -303,7 +345,7 @@ public abstract class Model {
 		if (obj instanceof Model && this.mId != null) {
 			final Model other = (Model) obj;
 
-			return this.mId.equals(other.mId)							
+			return this.mId.equals(other.mId)
 							&& (this.mTableInfo.getTableName().equals(other.mTableInfo.getTableName()));
 		} else {
 			return this == obj;
