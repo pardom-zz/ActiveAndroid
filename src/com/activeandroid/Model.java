@@ -19,7 +19,9 @@ package com.activeandroid;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.text.TextUtils;
 
+import com.activeandroid.annotation.Column;
 import com.activeandroid.content.ContentProvider;
 import com.activeandroid.query.Delete;
 import com.activeandroid.query.Select;
@@ -272,6 +274,7 @@ public abstract class Model {
 
 			try {
 				Object value = field.get(this);
+				Column column = field.getAnnotation(Column.class);
 
 				if (value != null) {
 					final TypeSerializer typeSerializer = Cache.getParserForType(fieldType);
@@ -290,9 +293,14 @@ public abstract class Model {
 					}
 				}
 
+				
 				// TODO: Find a smarter way to do this? This if block is necessary because we
 				// can't know the type until runtime.
 				if (value == null) {
+					if (column != null && !TextUtils.isEmpty(column.defaultValue())) {
+						//Not putting anything in ContentValues since we have default value
+						continue;
+					}
 					values.putNull(fieldName);
 				}
 				else if (fieldType.equals(Byte.class) || fieldType.equals(byte.class)) {
