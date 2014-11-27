@@ -18,6 +18,7 @@ package com.activeandroid;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -30,12 +31,13 @@ import java.util.Map;
 import android.content.Context;
 
 import com.activeandroid.serializer.CalendarSerializer;
+import com.activeandroid.serializer.FileSerializer;
 import com.activeandroid.serializer.SqlDateSerializer;
 import com.activeandroid.serializer.TypeSerializer;
 import com.activeandroid.serializer.UtilDateSerializer;
-import com.activeandroid.serializer.FileSerializer;
 import com.activeandroid.util.Log;
 import com.activeandroid.util.ReflectionUtils;
+
 import dalvik.system.DexFile;
 
 final class ModelInfo {
@@ -185,7 +187,7 @@ final class ModelInfo {
 
 			try {
 				Class<?> discoveredClass = Class.forName(className, false, classLoader);
-				if (ReflectionUtils.isModel(discoveredClass)) {
+				if (ReflectionUtils.isModel(discoveredClass) && !Modifier.isAbstract(discoveredClass.getModifiers())) {
 					@SuppressWarnings("unchecked")
 					Class<? extends Model> modelClass = (Class<? extends Model>) discoveredClass;
 					mTableInfos.put(modelClass, new TableInfo(modelClass));

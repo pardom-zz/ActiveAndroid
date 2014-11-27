@@ -25,10 +25,10 @@ import java.util.List;
 import java.util.Map;
 
 import android.text.TextUtils;
-import android.util.Log;
 
 import com.activeandroid.annotation.Column;
 import com.activeandroid.annotation.Table;
+import com.activeandroid.util.Log;
 import com.activeandroid.util.ReflectionUtils;
 
 public final class TableInfo {
@@ -77,7 +77,6 @@ public final class TableInfo {
                 mColumnNames.put(field, columnName);
             }
         }
-
 	}
 
 	//////////////////////////////////////////////////////////////////////////////////////
@@ -103,8 +102,7 @@ public final class TableInfo {
 	public String getColumnName(Field field) {
 		return mColumnNames.get(field);
 	}
-
-
+	
     private Field getIdField(Class<?> type) {
         if (type.equals(Model.class)) {
             try {

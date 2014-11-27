@@ -47,6 +47,8 @@ public @interface Column {
 	public boolean unique() default false;
 
 	public ConflictAction onUniqueConflict() default ConflictAction.FAIL;
+	
+	public String defaultValue() default "";
 
 	/*
 	 * If set uniqueGroups = {"group_name"}, we will create a table constraint with group.

@@ -228,10 +228,10 @@ public class FromTest extends SqlableTestCase {
 	}
 	
 	@Table(name = "JoinModel")
-	private static class JoinModel extends Model {
+	static class JoinModel extends Model {
 	}
 	
 	@Table(name = "JoinModel2")
-	private static class JoinModel2 extends Model {
+	static class JoinModel2 extends Model {
 	}
 }

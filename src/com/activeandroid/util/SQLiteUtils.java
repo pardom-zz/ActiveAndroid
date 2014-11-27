@@ -16,6 +16,15 @@ package com.activeandroid.util;
  * limitations under the License.
  */
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import android.database.Cursor;
 import android.os.Build;
 import android.text.TextUtils;
@@ -26,17 +35,6 @@ import com.activeandroid.TableInfo;
 import com.activeandroid.annotation.Column;
 import com.activeandroid.annotation.Column.ConflictAction;
 import com.activeandroid.serializer.TypeSerializer;
-
-import java.lang.Long;
-import java.lang.String;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.util.Arrays;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 public final class SQLiteUtils {
 	//////////////////////////////////////////////////////////////////////////////////////
@@ -264,21 +262,22 @@ public final class SQLiteUtils {
 		if (typeSerializer != null) {
 			type = typeSerializer.getSerializedType();
 		}
-
+		
+		SQLiteType sqLiteType = null;
 		if (TYPE_MAP.containsKey(type)) {
-			definition.append(name);
-			definition.append(" ");
-			definition.append(TYPE_MAP.get(type).toString());
+			sqLiteType = TYPE_MAP.get(type);
 		}
 		else if (ReflectionUtils.isModel(type)) {
-			definition.append(name);
-			definition.append(" ");
-			definition.append(SQLiteType.INTEGER.toString());
+			sqLiteType = SQLiteType.INTEGER;
 		}
 		else if (ReflectionUtils.isSubclassOf(type, Enum.class)) {
+			sqLiteType = SQLiteType.TEXT;
+		}
+		
+		if (sqLiteType != null) {
 			definition.append(name);
 			definition.append(" ");
-			definition.append(SQLiteType.TEXT.toString());
+			definition.append(sqLiteType.toString());
 		}
 
 		if (!TextUtils.isEmpty(definition)) {
@@ -301,9 +300,46 @@ public final class SQLiteUtils {
 					definition.append(" UNIQUE ON CONFLICT ");
 					definition.append(column.onUniqueConflict().toString());
 				}
+				
+				if (!TextUtils.isEmpty(column.defaultValue())) {
+					String defaultValue = null;
+					switch (sqLiteType) {
+					case TEXT: case BLOB:
+						defaultValue = "\"" + column.defaultValue() + "\"";
+						break;
+
+					case INTEGER:
+						try {
+							if (type.equals(Boolean.class) || type.equals(boolean.class)) {
+								boolean value = Boolean.parseBoolean(column.defaultValue());
+								defaultValue = value ? "1" : "0";
+							} else {
+								Integer.parseInt(column.defaultValue());
+								defaultValue = column.defaultValue();
+							}
+						} catch (NumberFormatException e) {
+							Log.e("Failed to convert default value '" + column.defaultValue() + "' to " + sqLiteType.toString());
+						}
+						break;
+						
+					case REAL:
+						try {
+							Double.parseDouble(column.defaultValue());
+							defaultValue = column.defaultValue();
+						} catch (NumberFormatException e) {
+							Log.e("Failed to convert default value '" + column.defaultValue() + "' to " + sqLiteType.toString());
+						}
+						break;
+					}
+					
+					if (defaultValue != null) {
+						definition.append(" DEFAULT ");
+						definition.append(defaultValue);
+					}
+				}
 			}
 
-			if (FOREIGN_KEYS_SUPPORTED && ReflectionUtils.isModel(type)) {
+			if (FOREIGN_KEYS_SUPPORTED && ReflectionUtils.isModel(type) && Cache.getTableInfo((Class<? extends Model>) type) != null) {
 				definition.append(" REFERENCES ");
 				definition.append(Cache.getTableInfo((Class<? extends Model>) type).getTableName());
 				definition.append("("+tableInfo.getIdName()+")");
@@ -312,6 +348,7 @@ public final class SQLiteUtils {
 				definition.append(" ON UPDATE ");
 				definition.append(column.onUpdate().toString().replace("_", " "));
 			}
+		
 		}
 		else {
 			Log.e("No type mapping for: " + type.toString());

@@ -16,21 +16,25 @@ package com.activeandroid;
  * limitations under the License.
  */
 
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
 import com.activeandroid.content.ContentProvider;
+import com.activeandroid.internal.ModelFiller;
+import com.activeandroid.internal.ModelHelper;
+import com.activeandroid.model.ManyToManyRelation;
+import com.activeandroid.model.OneToManyRelation;
 import com.activeandroid.query.Delete;
 import com.activeandroid.query.Select;
 import com.activeandroid.serializer.TypeSerializer;
 import com.activeandroid.util.Log;
 import com.activeandroid.util.ReflectionUtils;
-
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 @SuppressWarnings("unchecked")
 public abstract class Model {
@@ -73,8 +77,73 @@ public abstract class Model {
 
 	public final Long save() {
 		final SQLiteDatabase db = Cache.openDatabase();
-		final ContentValues values = new ContentValues();
+		
+		ContentValues values = new ContentValues();
+		fillContentValues(this, values);
 
+		if (mId == null) {
+			mId = db.insert(mTableInfo.getTableName(), null, values);
+		}
+		else {
+			db.update(mTableInfo.getTableName(), values, idName+"=" + mId, null);
+		}
+
+		Cache.getContext().getContentResolver()
+				.notifyChange(ContentProvider.createUri(mTableInfo.getType(), mId), null);
+		return mId;
+	}
+
+	// Convenience methods
+
+	public static void delete(Class<? extends Model> type, long id) {
+		TableInfo tableInfo = Cache.getTableInfo(type);
+		new Delete().from(type).where(tableInfo.getIdName()+"=?", id).execute();
+	}
+
+	public static <T extends Model> T load(Class<T> type, long id) {
+		TableInfo tableInfo = Cache.getTableInfo(type);
+		return (T) new Select().from(type).where(tableInfo.getIdName()+"=?", id).executeSingle();
+	}
+	
+	public static void saveMultiple(List<? extends Model> entities) {
+		final SQLiteDatabase db = Cache.openDatabase();
+		final ContentValues values = new ContentValues();
+		for (Model entity : entities) {
+			values.clear();
+			fillContentValues(entity, values);
+
+			if (entity.mId == null) {
+				entity.mId = db.insertWithOnConflict(entity.mTableInfo.getTableName(), null, values, SQLiteDatabase.CONFLICT_REPLACE);
+			} else {
+				db.update(entity.mTableInfo.getTableName(), values, "Id=" + entity.mId, null);
+			}
+		}
+	}
+	// Model population
+
+	public final void loadFromCursor(Cursor cursor) {
+		ModelFiller filler = Cache.getFiller(mTableInfo.getType());
+		if (filler != null) {			
+			loadFromCursorWithFiller(cursor, filler);
+		} else {
+			loadFromCursorReflective(cursor);
+		}
+	}
+	
+	private static void fillContentValues(Model entity, ContentValues values) {
+		if (entity instanceof ManyToManyRelation<?, ?> || entity instanceof OneToManyRelation<?>) {
+			entity.fillContentValuesReflective(values);
+			return;
+		}
+		
+		ModelFiller filler = Cache.getFiller(entity.mTableInfo.getType());
+		if (filler != null)
+			filler.fillContentValues(entity, values);
+		else
+			entity.fillContentValuesReflective(values);
+	}
+	
+	private void fillContentValuesReflective(final ContentValues values) {
 		for (Field field : mTableInfo.getFields()) {
 			final String fieldName = mTableInfo.getColumnName(field);
 			Class<?> fieldType = field.getType();
@@ -150,35 +219,20 @@ public abstract class Model {
 				Log.e(e.getClass().getName(), e);
 			}
 		}
-
-		if (mId == null) {
-			mId = db.insert(mTableInfo.getTableName(), null, values);
-		}
-		else {
-			db.update(mTableInfo.getTableName(), values, idName+"=" + mId, null);
-		}
-
-		Cache.getContext().getContentResolver()
-				.notifyChange(ContentProvider.createUri(mTableInfo.getType(), mId), null);
-		return mId;
 	}
 
-	// Convenience methods
-
-	public static void delete(Class<? extends Model> type, long id) {
-		TableInfo tableInfo = Cache.getTableInfo(type);
-		new Delete().from(type).where(tableInfo.getIdName()+"=?", id).execute();
-	}
-
-	public static <T extends Model> T load(Class<T> type, long id) {
-		TableInfo tableInfo = Cache.getTableInfo(type);
-		return (T) new Select().from(type).where(tableInfo.getIdName()+"=?", id).executeSingle();
-	}
-
-	// Model population
-
-	public final void loadFromCursor(Cursor cursor) {
-        /**
+	
+	private void loadFromCursorWithFiller(Cursor cursor, ModelFiller filler) {
+		int columnIndex = cursor.getColumnIndex(idName);
+		if (cursor.isNull(columnIndex) == false)
+			mId = cursor.getLong(columnIndex);
+		else
+			mId = null;
+		filler.loadFromCursor(this, cursor);
+	}	
+	
+	private void loadFromCursorReflective(Cursor cursor) {
+		/**
          * Obtain the columns ordered to fix issue #106 (https://github.com/pardom/ActiveAndroid/issues/106)
          * when the cursor have multiple columns with same name obtained from join tables.
          */
@@ -203,58 +257,22 @@ public abstract class Model {
 					fieldType = typeSerializer.getSerializedType();
 				}
 
-				// TODO: Find a smarter way to do this? This if block is necessary because we
-				// can't know the type until runtime.
 				if (columnIsNull) {
 					field = null;
+				} else {
+					value = ModelHelper.getValueFromCursor(cursor, fieldType, columnIndex);
 				}
-				else if (fieldType.equals(Byte.class) || fieldType.equals(byte.class)) {
-					value = cursor.getInt(columnIndex);
-				}
-				else if (fieldType.equals(Short.class) || fieldType.equals(short.class)) {
-					value = cursor.getInt(columnIndex);
-				}
-				else if (fieldType.equals(Integer.class) || fieldType.equals(int.class)) {
-					value = cursor.getInt(columnIndex);
-				}
-				else if (fieldType.equals(Long.class) || fieldType.equals(long.class)) {
-					value = cursor.getLong(columnIndex);
-				}
-				else if (fieldType.equals(Float.class) || fieldType.equals(float.class)) {
-					value = cursor.getFloat(columnIndex);
-				}
-				else if (fieldType.equals(Double.class) || fieldType.equals(double.class)) {
-					value = cursor.getDouble(columnIndex);
-				}
-				else if (fieldType.equals(Boolean.class) || fieldType.equals(boolean.class)) {
-					value = cursor.getInt(columnIndex) != 0;
-				}
-				else if (fieldType.equals(Character.class) || fieldType.equals(char.class)) {
-					value = cursor.getString(columnIndex).charAt(0);
-				}
-				else if (fieldType.equals(String.class)) {
-					value = cursor.getString(columnIndex);
-				}
-				else if (fieldType.equals(Byte[].class) || fieldType.equals(byte[].class)) {
-					value = cursor.getBlob(columnIndex);
-				}
-				else if (ReflectionUtils.isModel(fieldType)) {
-					final long entityId = cursor.getLong(columnIndex);
-					final Class<? extends Model> entityType = (Class<? extends Model>) fieldType;
-
-					Model entity = Cache.getEntity(entityType, entityId);
-					if (entity == null) {
-						entity = new Select().from(entityType).where(idName+"=?", entityId).executeSingle();
+				
+				if (value == null) {
+					if (ReflectionUtils.isModel(fieldType)) {
+						value = ModelHelper.getModel(cursor, fieldType, columnIndex);
+					} 
+					else if (ReflectionUtils.isSubclassOf(fieldType, Enum.class)) {
+						@SuppressWarnings("rawtypes")
+						final Class<? extends Enum> enumType = (Class<? extends Enum>) fieldType;
+						value = Enum.valueOf(enumType, cursor.getString(columnIndex));
 					}
-
-					value = entity;
 				}
-				else if (ReflectionUtils.isSubclassOf(fieldType, Enum.class)) {
-					@SuppressWarnings("rawtypes")
-					final Class<? extends Enum> enumType = (Class<? extends Enum>) fieldType;
-					value = Enum.valueOf(enumType, cursor.getString(columnIndex));
-				}
-
 				// Use a deserializer if one is available
 				if (typeSerializer != null && !columnIsNull) {
 					value = typeSerializer.deserialize(value);
@@ -280,13 +298,18 @@ public abstract class Model {
 			Cache.addEntity(this);
 		}
 	}
-
+	
+	
 	//////////////////////////////////////////////////////////////////////////////////////
 	// PROTECTED METHODS
 	//////////////////////////////////////////////////////////////////////////////////////
 
 	protected final <T extends Model> List<T> getMany(Class<T> type, String foreignKey) {
 		return new Select().from(type).where(Cache.getTableName(type) + "." + foreignKey + "=?", getId()).execute();
+	}
+	
+	protected String getIdName() {
+		return idName;
 	}
 
 	//////////////////////////////////////////////////////////////////////////////////////
