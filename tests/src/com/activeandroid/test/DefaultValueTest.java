@@ -30,7 +30,7 @@ public class DefaultValueTest extends ApplicationTestCase<Application> {
 	public static class IntegerDefaultValueModel extends MockModel {
 		
 		@Column(defaultValue = "20")
-		private Integer defaultField;
+		Integer defaultField;
 		
 		public IntegerDefaultValueModel() {
 			super();
@@ -41,7 +41,7 @@ public class DefaultValueTest extends ApplicationTestCase<Application> {
 	public static class BooleanDefaultValueModel extends MockModel {
 		
 		@Column(defaultValue = "true")
-		private Boolean defaultField;
+		Boolean defaultField;
 		
 		public BooleanDefaultValueModel() {
 			super();
@@ -52,7 +52,7 @@ public class DefaultValueTest extends ApplicationTestCase<Application> {
 	public static class StringDefaultValueModel extends MockModel {
 		
 		@Column(defaultValue = "Some string")
-		private String defaultField;
+		String defaultField;
 		
 		public StringDefaultValueModel() {
 			super();
@@ -78,6 +78,7 @@ public class DefaultValueTest extends ApplicationTestCase<Application> {
 	public void testDefaultValueString() {
 		initializedActiveAndroid(StringDefaultValueModel.class);
 		List<StringDefaultValueModel> models = insertAndSelectModels(StringDefaultValueModel.class);
+		assertNotNull(models);
 		for (StringDefaultValueModel model : models) {
 			assertEquals("Some string", model.defaultField);
 		}

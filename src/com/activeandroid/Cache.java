@@ -17,13 +17,18 @@ package com.activeandroid;
  */
 
 import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.support.v4.util.LruCache;
 
+import com.activeandroid.internal.EmptyModelFiller;
+import com.activeandroid.internal.ModelFiller;
 import com.activeandroid.serializer.TypeSerializer;
 import com.activeandroid.util.Log;
+import com.activeandroid.util.ReflectionUtils;
 
 public final class Cache {
 	//////////////////////////////////////////////////////////////////////////////////////
@@ -44,6 +49,8 @@ public final class Cache {
 	private static LruCache<String, Model> sEntities;
 
 	private static boolean sIsInitialized = false;
+	
+	private static Map<Class<? extends Model>, ModelFiller> sFillers;
 
 	//////////////////////////////////////////////////////////////////////////////////////
 	// CONSTRUCTORS
@@ -71,6 +78,8 @@ public final class Cache {
 		// required would be too costly to be of any benefit. We'll just set a max
 		// object size instead.
 		sEntities = new LruCache<String, Model>(configuration.getCacheSize());
+		
+		initializeModelFillers();
 
 		openDatabase();
 
@@ -79,6 +88,7 @@ public final class Cache {
 		Log.v("ActiveAndroid initialized successfully.");
 	}
 
+	
 	public static synchronized void clear() {
 		sEntities.evictAll();
 		Log.v("Cache cleared.");
@@ -156,5 +166,43 @@ public final class Cache {
 
 	public static synchronized String getTableName(Class<? extends Model> type) {
 		return sModelInfo.getTableInfo(type).getTableName();
+	}
+	
+	static ModelFiller getFiller(Class<? extends Model> type) {
+		return sFillers.get(type);
+	}
+	
+	private static void initializeModelFillers() {
+		sFillers = new HashMap<Class<? extends Model>, ModelFiller>();
+		for (TableInfo tableInfo : sModelInfo.getTableInfos()) {
+			try {
+				Class<? extends Model> type = tableInfo.getType(); 
+				sFillers.put(type, instantiateFiller(type));
+			} catch (IllegalAccessException e) {
+				throw new RuntimeException(e);
+			} catch (InstantiationException e) {
+				throw new RuntimeException(e);
+			}
+		}
+		
+		
+	}
+	
+	@SuppressWarnings("unchecked")
+	private static ModelFiller instantiateFiller(Class<? extends Model> type) throws IllegalAccessException, InstantiationException {
+		ModelFiller modelFiller = sFillers.get(type);
+		if (modelFiller == null) {
+			String fillerClassName = type.getName() + ModelFiller.SUFFIX;
+			try {
+				Class<? extends ModelFiller> fillerType = (Class<? extends ModelFiller>) Class.forName(fillerClassName);
+				modelFiller = fillerType.newInstance();
+			} catch (ClassNotFoundException e) {
+				modelFiller = new EmptyModelFiller();
+			}
+			if (type.getSuperclass() != null && ReflectionUtils.isModel(type.getSuperclass())) {
+				modelFiller.superModelFiller = instantiateFiller((Class<? extends Model>) type.getSuperclass());
+			}
+		}
+		return modelFiller;
 	}
 }

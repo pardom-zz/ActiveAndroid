@@ -41,10 +41,10 @@ public class CacheTest extends AndroidTestCase {
     }
 
     @Table(name = "CacheTestModel")
-    private static class CacheTestModel extends Model {
+    static class CacheTestModel extends Model {
     }
 
     @Table(name = "CacheTestModel2")
-    private static class CacheTestModel2 extends Model {
+    static class CacheTestModel2 extends Model {
     }
 }

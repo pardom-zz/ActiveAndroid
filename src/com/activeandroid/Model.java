@@ -16,23 +16,25 @@ package com.activeandroid;
  * limitations under the License.
  */
 
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.text.TextUtils;
 
-import com.activeandroid.annotation.Column;
 import com.activeandroid.content.ContentProvider;
+import com.activeandroid.internal.ModelFiller;
+import com.activeandroid.internal.ModelHelper;
+import com.activeandroid.model.ManyToManyRelation;
+import com.activeandroid.model.OneToManyRelation;
 import com.activeandroid.query.Delete;
 import com.activeandroid.query.Select;
 import com.activeandroid.serializer.TypeSerializer;
 import com.activeandroid.util.Log;
 import com.activeandroid.util.ReflectionUtils;
-
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 @SuppressWarnings("unchecked")
 public abstract class Model {
@@ -77,8 +79,8 @@ public abstract class Model {
 		final SQLiteDatabase db = Cache.openDatabase();
 		
 		ContentValues values = new ContentValues();
-		fillContentValues(values);
-		
+		fillContentValues(this, values);
+
 		if (mId == null) {
 			mId = db.insert(mTableInfo.getTableName(), null, values);
 		}
@@ -106,9 +108,9 @@ public abstract class Model {
 	public static void saveMultiple(List<? extends Model> entities) {
 		final SQLiteDatabase db = Cache.openDatabase();
 		final ContentValues values = new ContentValues();
-		
 		for (Model entity : entities) {
-			entity.fillContentValues(values);
+			values.clear();
+			fillContentValues(entity, values);
 
 			if (entity.mId == null) {
 				entity.mId = db.insertWithOnConflict(entity.mTableInfo.getTableName(), null, values, SQLiteDatabase.CONFLICT_REPLACE);
@@ -120,152 +122,28 @@ public abstract class Model {
 	// Model population
 
 	public final void loadFromCursor(Cursor cursor) {
-        /**
-         * Obtain the columns ordered to fix issue #106 (https://github.com/pardom/ActiveAndroid/issues/106)
-         * when the cursor have multiple columns with same name obtained from join tables.
-         */
-        List<String> columnsOrdered = new ArrayList<String>(Arrays.asList(cursor.getColumnNames()));
-		for (Field field : mTableInfo.getFields()) {
-			final String fieldName = mTableInfo.getColumnName(field);
-			Class<?> fieldType = field.getType();
-			final int columnIndex = columnsOrdered.indexOf(fieldName);
-
-			if (columnIndex < 0) {
-				continue;
-			}
-
-			field.setAccessible(true);
-
-			try {
-				boolean columnIsNull = cursor.isNull(columnIndex);
-				TypeSerializer typeSerializer = Cache.getParserForType(fieldType);
-				Object value = null;
-
-				if (typeSerializer != null) {
-					fieldType = typeSerializer.getSerializedType();
-				}
-
-				// TODO: Find a smarter way to do this? This if block is necessary because we
-				// can't know the type until runtime.
-				if (columnIsNull) {
-					field = null;
-				}
-				else if (fieldType.equals(Byte.class) || fieldType.equals(byte.class)) {
-					value = cursor.getInt(columnIndex);
-				}
-				else if (fieldType.equals(Short.class) || fieldType.equals(short.class)) {
-					value = cursor.getInt(columnIndex);
-				}
-				else if (fieldType.equals(Integer.class) || fieldType.equals(int.class)) {
-					value = cursor.getInt(columnIndex);
-				}
-				else if (fieldType.equals(Long.class) || fieldType.equals(long.class)) {
-					value = cursor.getLong(columnIndex);
-				}
-				else if (fieldType.equals(Float.class) || fieldType.equals(float.class)) {
-					value = cursor.getFloat(columnIndex);
-				}
-				else if (fieldType.equals(Double.class) || fieldType.equals(double.class)) {
-					value = cursor.getDouble(columnIndex);
-				}
-				else if (fieldType.equals(Boolean.class) || fieldType.equals(boolean.class)) {
-					value = cursor.getInt(columnIndex) != 0;
-				}
-				else if (fieldType.equals(Character.class) || fieldType.equals(char.class)) {
-					value = cursor.getString(columnIndex).charAt(0);
-				}
-				else if (fieldType.equals(String.class)) {
-					value = cursor.getString(columnIndex);
-				}
-				else if (fieldType.equals(Byte[].class) || fieldType.equals(byte[].class)) {
-					value = cursor.getBlob(columnIndex);
-				}
-				else if (ReflectionUtils.isModel(fieldType)) {
-					final long entityId = cursor.getLong(columnIndex);
-					final Class<? extends Model> entityType = (Class<? extends Model>) fieldType;
-
-					Model entity = Cache.getEntity(entityType, entityId);
-					if (entity == null) {
-						entity = new Select().from(entityType).where(idName+"=?", entityId).executeSingle();
-					}
-
-					value = entity;
-				}
-				else if (ReflectionUtils.isSubclassOf(fieldType, Enum.class)) {
-					@SuppressWarnings("rawtypes")
-					final Class<? extends Enum> enumType = (Class<? extends Enum>) fieldType;
-					value = Enum.valueOf(enumType, cursor.getString(columnIndex));
-				}
-
-				// Use a deserializer if one is available
-				if (typeSerializer != null && !columnIsNull) {
-					value = typeSerializer.deserialize(value);
-				}
-
-				// Set the field value
-				if (value != null) {
-					field.set(this, value);
-				}
-			}
-			catch (IllegalArgumentException e) {
-				Log.e(e.getClass().getName(), e);
-			}
-			catch (IllegalAccessException e) {
-				Log.e(e.getClass().getName(), e);
-			}
-			catch (SecurityException e) {
-				Log.e(e.getClass().getName(), e);
-			}
-		}
-
-		if (mId != null) {
-			Cache.addEntity(this);
-		}
-	}
-
-	//////////////////////////////////////////////////////////////////////////////////////
-	// PROTECTED METHODS
-	//////////////////////////////////////////////////////////////////////////////////////
-
-	protected final <T extends Model> List<T> getMany(Class<T> type, String foreignKey) {
-		return new Select().from(type).where(Cache.getTableName(type) + "." + foreignKey + "=?", getId()).execute();
-	}
-	
-	//////////////////////////////////////////////////////////////////////////////////////
-	// OVERRIDEN METHODS
-	//////////////////////////////////////////////////////////////////////////////////////
-
-	@Override
-	public String toString() {
-		return mTableInfo.getTableName() + "@" + getId();
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (obj instanceof Model && this.mId != null) {
-			final Model other = (Model) obj;
-
-			return this.mId.equals(other.mId)							
-							&& (this.mTableInfo.getTableName().equals(other.mTableInfo.getTableName()));
+		ModelFiller filler = Cache.getFiller(mTableInfo.getType());
+		if (filler != null) {			
+			loadFromCursorWithFiller(cursor, filler);
 		} else {
-			return this == obj;
+			loadFromCursorReflective(cursor);
 		}
 	}
-
-	@Override
-	public int hashCode() {
-		int hash = HASH_PRIME;
-		hash += HASH_PRIME * (mId == null ? super.hashCode() : mId.hashCode()); //if id is null, use Object.hashCode()
-		hash += HASH_PRIME * mTableInfo.getTableName().hashCode();
-		return hash; //To change body of generated methods, choose Tools | Templates.
+	
+	private static void fillContentValues(Model entity, ContentValues values) {
+		if (entity instanceof ManyToManyRelation<?, ?> || entity instanceof OneToManyRelation<?>) {
+			entity.fillContentValuesReflective(values);
+			return;
+		}
+		
+		ModelFiller filler = Cache.getFiller(entity.mTableInfo.getType());
+		if (filler != null)
+			filler.fillContentValues(entity, values);
+		else
+			entity.fillContentValuesReflective(values);
 	}
 	
-	//////////////////////////////////////////////////////////////////////////////////////
-	// PRIVATE METHODS
-	//////////////////////////////////////////////////////////////////////////////////////
-
-	private void fillContentValues(ContentValues values) {
-		values.clear();
+	private void fillContentValuesReflective(final ContentValues values) {
 		for (Field field : mTableInfo.getFields()) {
 			final String fieldName = mTableInfo.getColumnName(field);
 			Class<?> fieldType = field.getType();
@@ -274,7 +152,6 @@ public abstract class Model {
 
 			try {
 				Object value = field.get(this);
-				Column column = field.getAnnotation(Column.class);
 
 				if (value != null) {
 					final TypeSerializer typeSerializer = Cache.getParserForType(fieldType);
@@ -293,14 +170,9 @@ public abstract class Model {
 					}
 				}
 
-				
 				// TODO: Find a smarter way to do this? This if block is necessary because we
 				// can't know the type until runtime.
 				if (value == null) {
-					if (column != null && !TextUtils.isEmpty(column.defaultValue())) {
-						//Not putting anything in ContentValues since we have default value
-						continue;
-					}
 					values.putNull(fieldName);
 				}
 				else if (fieldType.equals(Byte.class) || fieldType.equals(byte.class)) {
@@ -347,5 +219,125 @@ public abstract class Model {
 				Log.e(e.getClass().getName(), e);
 			}
 		}
+	}
+
+	
+	private void loadFromCursorWithFiller(Cursor cursor, ModelFiller filler) {
+		int columnIndex = cursor.getColumnIndex(idName);
+		if (cursor.isNull(columnIndex) == false)
+			mId = cursor.getLong(columnIndex);
+		else
+			mId = null;
+		filler.loadFromCursor(this, cursor);
+	}	
+	
+	private void loadFromCursorReflective(Cursor cursor) {
+		/**
+         * Obtain the columns ordered to fix issue #106 (https://github.com/pardom/ActiveAndroid/issues/106)
+         * when the cursor have multiple columns with same name obtained from join tables.
+         */
+        List<String> columnsOrdered = new ArrayList<String>(Arrays.asList(cursor.getColumnNames()));
+		for (Field field : mTableInfo.getFields()) {
+			final String fieldName = mTableInfo.getColumnName(field);
+			Class<?> fieldType = field.getType();
+			final int columnIndex = columnsOrdered.indexOf(fieldName);
+
+			if (columnIndex < 0) {
+				continue;
+			}
+
+			field.setAccessible(true);
+
+			try {
+				boolean columnIsNull = cursor.isNull(columnIndex);
+				TypeSerializer typeSerializer = Cache.getParserForType(fieldType);
+				Object value = null;
+
+				if (typeSerializer != null) {
+					fieldType = typeSerializer.getSerializedType();
+				}
+
+				if (columnIsNull) {
+					field = null;
+				} else {
+					value = ModelHelper.getValueFromCursor(cursor, fieldType, columnIndex);
+				}
+				
+				if (value == null) {
+					if (ReflectionUtils.isModel(fieldType)) {
+						value = ModelHelper.getModel(cursor, fieldType, columnIndex);
+					} 
+					else if (ReflectionUtils.isSubclassOf(fieldType, Enum.class)) {
+						@SuppressWarnings("rawtypes")
+						final Class<? extends Enum> enumType = (Class<? extends Enum>) fieldType;
+						value = Enum.valueOf(enumType, cursor.getString(columnIndex));
+					}
+				}
+				// Use a deserializer if one is available
+				if (typeSerializer != null && !columnIsNull) {
+					value = typeSerializer.deserialize(value);
+				}
+
+				// Set the field value
+				if (value != null) {
+					field.set(this, value);
+				}
+			}
+			catch (IllegalArgumentException e) {
+				Log.e(e.getClass().getName(), e);
+			}
+			catch (IllegalAccessException e) {
+				Log.e(e.getClass().getName(), e);
+			}
+			catch (SecurityException e) {
+				Log.e(e.getClass().getName(), e);
+			}
+		}
+
+		if (mId != null) {
+			Cache.addEntity(this);
+		}
+	}
+	
+	
+	//////////////////////////////////////////////////////////////////////////////////////
+	// PROTECTED METHODS
+	//////////////////////////////////////////////////////////////////////////////////////
+
+	protected final <T extends Model> List<T> getMany(Class<T> type, String foreignKey) {
+		return new Select().from(type).where(Cache.getTableName(type) + "." + foreignKey + "=?", getId()).execute();
+	}
+	
+	protected String getIdName() {
+		return idName;
+	}
+
+	//////////////////////////////////////////////////////////////////////////////////////
+	// OVERRIDEN METHODS
+	//////////////////////////////////////////////////////////////////////////////////////
+
+	@Override
+	public String toString() {
+		return mTableInfo.getTableName() + "@" + getId();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof Model && this.mId != null) {
+			final Model other = (Model) obj;
+
+			return this.mId.equals(other.mId)							
+							&& (this.mTableInfo.getTableName().equals(other.mTableInfo.getTableName()));
+		} else {
+			return this == obj;
+		}
+	}
+
+	@Override
+	public int hashCode() {
+		int hash = HASH_PRIME;
+		hash += HASH_PRIME * (mId == null ? super.hashCode() : mId.hashCode()); //if id is null, use Object.hashCode()
+		hash += HASH_PRIME * mTableInfo.getTableName().hashCode();
+		return hash; //To change body of generated methods, choose Tools | Templates.
 	}
 }
