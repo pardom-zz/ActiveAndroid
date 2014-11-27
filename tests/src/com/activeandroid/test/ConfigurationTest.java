@@ -33,6 +33,6 @@ public class ConfigurationTest extends AndroidTestCase {
     }
 
     @Table(name = "ConfigurationTestModel")
-    private static class ConfigurationTestModel extends Model {
+    static class ConfigurationTestModel extends Model {
     }
 }
