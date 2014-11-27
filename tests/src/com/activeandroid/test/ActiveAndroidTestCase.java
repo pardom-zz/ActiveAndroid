@@ -30,10 +30,6 @@ public abstract class ActiveAndroidTestCase extends ApplicationTestCase<Applicat
 		createApplication();
 	}
 
-	protected void tearDown() throws Exception {
-		super.tearDown();
-	}
-
 	public static <T> void assertArrayEquals(T[] actual, T... expected) {
 		assertEquals(expected.length, actual.length);
 		
