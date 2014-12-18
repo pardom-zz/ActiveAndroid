@@ -18,8 +18,10 @@ package com.activeandroid.util;
  */
 
 import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,11 +36,13 @@ public class SqlParser {
     public static List<String> parse(final InputStream stream) throws IOException {
 
         final BufferedInputStream buffer = new BufferedInputStream(stream);
+        final BufferedReader reader = new BufferedReader(new InputStreamReader(stream, "UTF-8"));
         final List<String> commands = new ArrayList<String>();
+
         final StringBuffer sb = new StringBuffer();
 
         try {
-            final Tokenizer tokenizer = new Tokenizer(buffer);
+            final Tokenizer tokenizer = new Tokenizer(reader);
             int state = STATE_NONE;
 
             while (tokenizer.hasNext()) {
@@ -100,11 +104,11 @@ public class SqlParser {
         return commands;
     }
 
-    private static boolean isNewLine(final char c) {
+    private static boolean isNewLine(final int c) {
         return c == '\r' || c == '\n';
     }
 
-    private static boolean isWhitespace(final char c) {
+    private static boolean isWhitespace(final int c) {
         return c == '\r' || c == '\n' || c == '\t' || c == ' ';
     }
 }

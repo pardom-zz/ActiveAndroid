@@ -19,16 +19,17 @@ package com.activeandroid.util;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Reader;
 
 
 public class Tokenizer {
 
-    private final InputStream mStream;
+    private final Reader mStream;
 
     private boolean           mIsNext;
     private int               mCurrent;
 
-    public Tokenizer(final InputStream in) {
+    public Tokenizer(final Reader in) {
         this.mStream = in;
     }
 
