@@ -62,6 +62,8 @@ public final class Cache {
 			return;
 		}
 
+		checkDbReset(configuration);
+
 		sContext = configuration.getContext();
 		sModelInfo = new ModelInfo(configuration);
 		sDatabaseHelper = new DatabaseHelper(configuration);
@@ -155,4 +157,61 @@ public final class Cache {
 	public static synchronized String getTableName(Class<? extends Model> type) {
 		return sModelInfo.getTableInfo(type).getTableName();
 	}
+
+    /**
+     * Checks if the db should be reset on startup. It can be enabled
+     * by putting the following lines in your application's manifest:
+     *
+     * ```
+     * <meta-data
+     *    android:name="AA_DB_RESET"
+     *    android:value="true" />
+     * ```
+     *
+     * It will reset the database only once, if and only the `AA_DB_VERSION`
+     * parameter is increased between app releases.
+     *
+     * @param configuration The ActiveAndroid configuration.
+     */
+    public static synchronized void checkDbReset(Configuration configuration) {
+        // Check if the reset flag is set
+        if (configuration != null && configuration.getResetDatabase()) {
+            Log.w("Checking db reset");
+
+            // Get the current db
+            SQLiteDatabase db = sContext.openOrCreateDatabase(
+                    configuration.getDatabaseName(),
+                    Context.MODE_PRIVATE,
+                    null);
+
+            if (db == null) {
+                return;
+            }
+
+            // New dbs always have version == 0
+            if (db.getVersion() == 0) {
+                Log.w("New db, not resetting");
+                return;
+            }
+
+            // Only update if the config version is higher. This
+            // prevents repeated resets
+            if (db.getVersion() >= configuration.getDatabaseVersion()) {
+                Log.w(String.format("Current db version >= config, not resetting (%d >= %d)",
+                        db.getVersion(),
+                        configuration.getDatabaseVersion()));
+                return;
+            }
+
+            // Finally, reset the db. We first delete it
+            // and then we create a new one with the same
+            // name.
+            Log.w("Resetting database");
+            sContext.deleteDatabase(configuration.getDatabaseName());
+            sContext.openOrCreateDatabase(
+                    configuration.getDatabaseName(),
+                    Context.MODE_PRIVATE,
+                    null).close();
+        }
+    }
 }
