@@ -62,11 +62,11 @@ public final class Cache {
 			return;
 		}
 
-		checkDbReset(configuration);
-
 		sContext = configuration.getContext();
 		sModelInfo = new ModelInfo(configuration);
 		sDatabaseHelper = new DatabaseHelper(configuration);
+
+		checkDbReset(configuration);
 
 		// TODO: It would be nice to override sizeOf here and calculate the memory
 		// actually used, however at this point it seems like the reflection
