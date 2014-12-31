@@ -39,6 +39,7 @@ public class Configuration {
 	private String mDatabaseName;
 	private int mDatabaseVersion;
 	private String mSqlParser;
+	private Boolean mResetDatabase;
 	private List<Class<? extends Model>> mModelClasses;
 	private List<Class<? extends TypeSerializer>> mTypeSerializers;
 	private int mCacheSize;
@@ -71,6 +72,10 @@ public class Configuration {
 	    return mSqlParser;
 	}
 
+	public boolean getResetDatabase() {
+		return mResetDatabase;
+	}
+
 	public List<Class<? extends Model>> getModelClasses() {
 		return mModelClasses;
 	}
@@ -101,6 +106,7 @@ public class Configuration {
 		private final static String AA_MODELS = "AA_MODELS";
 		private final static String AA_SERIALIZERS = "AA_SERIALIZERS";
 		private final static String AA_SQL_PARSER = "AA_SQL_PARSER";
+		private final static String AA_DB_RESET = "AA_DB_RESET";
 
 		private static final int DEFAULT_CACHE_SIZE = 1024;
 		private static final String DEFAULT_DB_NAME = "Application.db";
@@ -116,6 +122,7 @@ public class Configuration {
 		private String mDatabaseName;
 		private Integer mDatabaseVersion;
 		private String mSqlParser;
+		private Boolean mResetDatabase;
 		private List<Class<? extends Model>> mModelClasses;
 		private List<Class<? extends TypeSerializer>> mTypeSerializers;
 
@@ -150,6 +157,11 @@ public class Configuration {
 		public Builder setSqlParser(String sqlParser) {
 		    mSqlParser = sqlParser;
 		    return this;
+		}
+
+		public Builder setResetDatabase(Boolean resetDatabase) {
+			mResetDatabase = resetDatabase;
+			return this;
 		}
 
 		public Builder addModelClass(Class<? extends Model> modelClass) {
@@ -243,6 +255,13 @@ public class Configuration {
 				}
 			}
 
+			// Get reset flag from meta-data
+			if (mResetDatabase != null) {
+				configuration.mResetDatabase = mResetDatabase;
+			} else {
+				configuration.mResetDatabase = getResetDatabaseOrDefault();
+			}
+
 			return configuration;
 		}
 
@@ -314,5 +333,12 @@ public class Configuration {
 			return typeSerializers;
 		}
 
+		private Boolean getResetDatabaseOrDefault() {
+			final Boolean reset = ReflectionUtils.getMetaData(mContext, AA_DB_RESET);
+			if (reset == null) {
+				return false;
+			}
+			return reset;
+		}
 	}
 }
