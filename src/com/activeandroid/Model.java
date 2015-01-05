@@ -72,6 +72,17 @@ public abstract class Model {
 	}
 
 	public final Long save() {
+		if(!validate())
+			return null;
+
+		if(mId==null) {
+			if(!beforeCreate())
+				return null;
+		}
+
+		if(!beforeSave())
+			return null;
+
 		final SQLiteDatabase db = Cache.openDatabase();
 		final ContentValues values = new ContentValues();
 
@@ -153,6 +164,7 @@ public abstract class Model {
 
 		if (mId == null) {
 			mId = db.insert(mTableInfo.getTableName(), null, values);
+			afterCreate();
 		}
 		else {
 			db.update(mTableInfo.getTableName(), values, idName+"=" + mId, null);
@@ -160,8 +172,17 @@ public abstract class Model {
 
 		Cache.getContext().getContentResolver()
 				.notifyChange(ContentProvider.createUri(mTableInfo.getType(), mId), null);
+
+		afterSave();
+
 		return mId;
 	}
+
+	public boolean validate() { return true; }
+	public boolean beforeCreate() { return true; }
+	public void afterCreate() {}
+	public boolean beforeSave() { return true; }
+	public void afterSave() {}
 
 	// Convenience methods
 
