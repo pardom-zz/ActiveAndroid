@@ -28,8 +28,9 @@ import com.activeandroid.util.Log;
 public class IOUtils {
 
     /**
+     * <p>
      * Unconditionally close a {@link Closeable}.
-     * <p/>
+     * </p>
      * Equivalent to {@link Closeable#close()}, except any exceptions will be ignored. This is
      * typically used in finally blocks.
      * @param closeable A {@link Closeable} to close.
@@ -48,8 +49,9 @@ public class IOUtils {
     }
 
     /**
+     * <p>
      * Unconditionally close a {@link Cursor}.
-     * <p/>
+     * </p>
      * Equivalent to {@link Cursor#close()}, except any exceptions will be ignored. This is
      * typically used in finally blocks.
      * @param cursor A {@link Cursor} to close.
