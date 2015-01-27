@@ -20,6 +20,7 @@ import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 
 import com.activeandroid.util.Log;
+import android.os.Build;
 
 public final class ActiveAndroid {
 	//////////////////////////////////////////////////////////////////////////////////////
@@ -60,8 +61,16 @@ public final class ActiveAndroid {
 		return Cache.openDatabase();
 	}
 
+    /**
+     * Non-exclusive transactions allows BEGIN IMMEDIATE
+     * blocks, allowing better read concurrency.
+     */
 	public static void beginTransaction() {
-		Cache.openDatabase().beginTransaction();
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB) {
+            Cache.openDatabase().beginTransaction();
+        } else {
+            Cache.openDatabase().beginTransactionNonExclusive();
+        }
 	}
 
 	public static void endTransaction() {
