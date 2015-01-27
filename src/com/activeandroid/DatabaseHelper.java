@@ -37,6 +37,7 @@ import com.activeandroid.util.Log;
 import com.activeandroid.util.NaturalOrderComparator;
 import com.activeandroid.util.SQLiteUtils;
 import com.activeandroid.util.SqlParser;
+import android.os.Build;
 
 public final class DatabaseHelper extends SQLiteOpenHelper {
 	//////////////////////////////////////////////////////////////////////////////////////
@@ -64,6 +65,25 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
 	//////////////////////////////////////////////////////////////////////////////////////
 	// OVERRIDEN METHODS
 	//////////////////////////////////////////////////////////////////////////////////////
+
+    /**
+     * onConfigure is called when the db connection
+     * is being configured. It's the right place
+     * to enable write-ahead logging or foreign
+     * key support.
+     *
+     * Available for API level 16 (JellyBean) and above.
+     */
+    @Override
+    public void onConfigure(SQLiteDatabase db) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+            db.enableWriteAheadLogging();
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+            db.setForeignKeyConstraintsEnabled(true);
+        }
+        executePragmas(db);
+    }
 
 	@Override
 	public void onOpen(SQLiteDatabase db) {
