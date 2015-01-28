@@ -70,8 +70,37 @@ public abstract class Model {
 		Cache.getContext().getContentResolver()
 				.notifyChange(ContentProvider.createUri(mTableInfo.getType(), mId), null);
 	}
-
+	
 	public final Long save() {
+        boolean isNew = (mId == null);
+
+        if (isNew) {
+            preInsert();
+        } else {
+            preUpdate();
+        }
+
+        preSave();
+        Long result = doSave();
+        postSave();
+
+        if (isNew) {
+            postInsert();
+        } else {
+            postUpdate();
+        }
+
+        return result;
+	}
+	
+	protected void preInsert() {}
+	protected void preUpdate() {}
+	protected void preSave() {}
+	protected void postSave() {}
+    protected void postInsert() {}
+    protected void postUpdate() {}
+
+	private final Long doSave() {
 		final SQLiteDatabase db = Cache.openDatabase();
 		final ContentValues values = new ContentValues();
 
