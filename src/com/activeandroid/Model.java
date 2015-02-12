@@ -134,9 +134,21 @@ public abstract class Model {
                 } else if (ReflectionUtils.isModel(fieldType)) {
                     Model model = (Model) value;
                     Long foreignkeyID = model.getId();
+                    Column.ModelAutoCreateAction autoCreateAction = field.getAnnotation(Column.class).onAutoCreate();
+
                     if (foreignkeyID == null && field.getAnnotation(Column.class).autoCreate()) {
-                        model.save();
-                        foreignkeyID = model.getId();
+                        autoCreateAction = Column.ModelAutoCreateAction.SAVE;
+                    }
+                    switch (autoCreateAction) {
+                        case NO_ACTION:
+                            break;
+                        case SAVE:
+                            model.save();
+                            foreignkeyID = model.getId();
+                            break;
+                        case CREATE_OR_UPDATE:
+                            foreignkeyID = createOrUpdate(model).getId();
+                            break;
                     }
                     values.put(fieldName, foreignkeyID);
                 } else if (ReflectionUtils.isSubclassOf(fieldType, Enum.class)) {
@@ -145,6 +157,10 @@ public abstract class Model {
             } catch (IllegalArgumentException e) {
                 Log.e(e.getClass().getName(), e);
             } catch (IllegalAccessException e) {
+                Log.e(e.getClass().getName(), e);
+            } catch (IllegalUniqueIdentifierException e) {
+                Log.e(e.getClass().getName(), e);
+            } catch (ModelUpdateException e) {
                 Log.e(e.getClass().getName(), e);
             }
         }
@@ -316,7 +332,7 @@ public abstract class Model {
         String uniqueIdentifier = info.getUniqueIdentifier();
         T entity;
         try {
-            Field f = objectClass.getDeclaredField(uniqueIdentifier);
+            Field f = getUniqueField(objectClass, uniqueIdentifier);
             String columnName = info.getColumnName(f);
             f.setAccessible(true);
             Object value = f.get(object);
@@ -382,5 +398,22 @@ public abstract class Model {
             }
         }
         return entitiesToBeDeleted;
+    }
+
+    private static Field getUniqueField(Class<?> objectClass, String uniqueIdentifier) throws NoSuchFieldException {
+
+        Field field = null;
+        try {
+            field = objectClass.getDeclaredField(uniqueIdentifier);
+        } catch (NoSuchFieldException e) {
+            Class<?> superclass = objectClass.getSuperclass();
+            if (superclass != null) {
+                field = getUniqueField(superclass, uniqueIdentifier);
+            }
+        }
+        if (field == null) {
+            throw new NoSuchFieldException(uniqueIdentifier);
+        }
+        return field;
     }
 }
