@@ -49,7 +49,7 @@ public final class TableInfo {
 	public TableInfo(Class<? extends Model> type) {
 		mType = type;
 
-		final Table tableAnnotation = type.getAnnotation(Table.class);
+		final Table tableAnnotation = getTableAnnotation(type);
 
         if (tableAnnotation != null) {
 			mTableName = tableAnnotation.name();
@@ -104,6 +104,17 @@ public final class TableInfo {
 		return mColumnNames.get(field);
 	}
 
+
+    private Table getTableAnnotation(Class<?> type) {
+        final Table tableAnnotation = type.getAnnotation(Table.class);
+        if (tableAnnotation != null) {
+            return tableAnnotation;
+        }
+        else if (type.getSuperclass() != null) {
+           return getTableAnnotation(type.getSuperclass());
+        }
+        return null;
+    }
 
     private Field getIdField(Class<?> type) {
         if (type.equals(Model.class)) {
