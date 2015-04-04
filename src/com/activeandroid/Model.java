@@ -152,7 +152,7 @@ public abstract class Model {
 		}
 
 		if (mId == null) {
-			mId = db.insert(mTableInfo.getTableName(), null, values);
+			mId = db.insertOrThrow(mTableInfo.getTableName(), null, values);
 		}
 		else {
 			db.update(mTableInfo.getTableName(), values, idName+"=" + mId, null);

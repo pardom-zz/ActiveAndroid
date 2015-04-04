@@ -1,8 +1,5 @@
 package com.activeandroid.content;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import android.content.ContentValues;
 import android.content.UriMatcher;
 import android.database.Cursor;
@@ -14,6 +11,9 @@ import com.activeandroid.Cache;
 import com.activeandroid.Configuration;
 import com.activeandroid.Model;
 import com.activeandroid.TableInfo;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class ContentProvider extends android.content.ContentProvider {
 	//////////////////////////////////////////////////////////////////////////////////////
@@ -93,7 +93,7 @@ public class ContentProvider extends android.content.ContentProvider {
 	@Override
 	public Uri insert(Uri uri, ContentValues values) {
 		final Class<? extends Model> type = getModelType(uri);
-		final Long id = Cache.openDatabase().insert(Cache.getTableName(type), null, values);
+		final Long id = Cache.openDatabase().insertOrThrow(Cache.getTableName(type), null, values);
 
 		if (id != null && id > 0) {
 			Uri retUri = createUri(type, id);
