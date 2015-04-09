@@ -277,10 +277,11 @@ public final class From implements Sqlable {
         return sqlString(sql);
     }
 
-    public String toCountSql() {
-
+    public String toCountSql(String fieldname) {
         final StringBuilder sql = new StringBuilder();
-        sql.append("SELECT COUNT(*) ");
+        sql.append("SELECT COUNT(");
+        sql.append(fieldname);
+        sql.append(") ");
 
         addFrom(sql);
         addJoins(sql);
@@ -291,6 +292,10 @@ public final class From implements Sqlable {
         addOffset(sql);
 
         return sqlString(sql);
+    }
+
+    public String toCountSql() {
+        return toCountSql("*");
     }
 
 	public <T extends Model> List<T> execute() {
@@ -331,6 +336,10 @@ public final class From implements Sqlable {
      */
     public int count() {
         return SQLiteUtils.intQuery(toCountSql(), getArguments());
+    }
+
+    public int count(String fieldName) {
+        return SQLiteUtils.intQuery(toCountSql(fieldName), getArguments());
     }
 
 	public String[] getArguments() {
