@@ -1,9 +1,8 @@
 apply plugin: 'java'
+apply from: 'gradle-mvn-push.gradle'
 
-sourceCompatibility = 1.6
-
-jar.baseName = 'activeandroid'
-archivesBaseName = 'activeandroid'
+targetCompatibility = '1.6'
+sourceCompatibility = '1.6'
 
 sourceSets {
 	main {
@@ -15,13 +14,4 @@ sourceSets {
 
 dependencies {
 	compile fileTree(dir: 'libs', include: '*.jar')
-}
-
-task sourcesJar(type: Jar) {
-    classifier = 'sources'
-    from sourceSets.main.allSource
-}
-
-artifacts {
-    archives sourcesJar
 }

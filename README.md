@@ -5,6 +5,26 @@ ActiveAndroid is an active record style ORM ([object relational mapper](http://e
 
 ActiveAndroid does so much more than this though. Accessing the database is a hassle, to say the least, in Android. ActiveAndroid takes care of all the setup and messy stuff, and all with just a few simple steps of configuration.
 
+## Download
+
+Grab via Maven:
+```xml
+<dependency>
+  <groupId>com.michaelpardo</groupId>
+  <artifactId>activeandroid</artifactId>
+  <version>3.1.0-SNAPSHOT</version>
+</dependency>
+```
+or Gradle:
+```groovy
+repositories {
+    mavenCentral()
+    maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
+}
+
+compile 'com.michaelpardo:activeandroid:3.1.0-SNAPSHOT'
+```
+
 ## Documentation
 
 * [Getting started](http://github.com/pardom/ActiveAndroid/wiki/Getting-started)
