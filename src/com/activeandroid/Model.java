@@ -137,7 +137,12 @@ public abstract class Model {
 					values.put(fieldName, (byte[]) value);
 				}
 				else if (ReflectionUtils.isModel(fieldType)) {
-					values.put(fieldName, ((Model) value).getId());
+					Model model = (Model) value;
+					if (model.getId() == null) {
+						values.put(fieldName, model.save());
+					} else {
+						values.put(fieldName, ((Model) value).getId());
+					}
 				}
 				else if (ReflectionUtils.isSubclassOf(fieldType, Enum.class)) {
 					values.put(fieldName, ((Enum<?>) value).name());
