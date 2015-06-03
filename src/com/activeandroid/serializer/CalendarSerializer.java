@@ -24,7 +24,7 @@ public final class CalendarSerializer extends TypeSerializer {
 	}
 
 	public Class<?> getSerializedType() {
-		return long.class;
+		return Long.class;
 	}
 
 	public Long serialize(Object data) {
