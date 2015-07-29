@@ -81,7 +81,7 @@ public abstract class Model {
         final SQLiteDatabase db = Cache.openDatabase();
         final ContentValues values = new ContentValues();
 
-        for (Field field : mTableInfo.getFields()) {
+        for (Field field : mTableInfo.getColumnFields()) {
             final String fieldName = mTableInfo.getColumnName(field);
             Class<?> fieldType = field.getType();
 
@@ -196,8 +196,8 @@ public abstract class Model {
          * when the cursor have multiple columns with same name obtained from join tables.
          */
         List<String> columnsOrdered = new ArrayList<String>(Arrays.asList(cursor.getColumnNames()));
-        for (Field field : mTableInfo.getFields()) {
-            final String fieldName = mTableInfo.getColumnName(field);
+        for (Field field : mTableInfo.getAllFields()) {
+            final String fieldName = mTableInfo.getDatabaseName(field);
             Class<?> fieldType = field.getType();
             final int columnIndex = columnsOrdered.indexOf(fieldName);
 
@@ -326,7 +326,7 @@ public abstract class Model {
      * @throws IllegalUniqueIdentifierException
      * @throws ModelUpdateException
      */
-    public static <T extends Model> T createOrUpdate(T object) throws IllegalUniqueIdentifierException, ModelUpdateException {
+    public static <T extends Model> ModelSaveResult<T> createOrUpdate(T object) throws IllegalUniqueIdentifierException, ModelUpdateException {
         Class<? extends Model> objectClass = object.getClass();
         TableInfo info = Cache.getTableInfo(objectClass);
         String uniqueIdentifier = info.getUniqueIdentifier();
@@ -343,16 +343,18 @@ public abstract class Model {
             throw new IllegalUniqueIdentifierException("Couldn't get the specified unique identifier", e);
         }
         List<Model> modelsToBeDeleted = new ArrayList<Model>();
-        if (entity != null) {
+        boolean isNew = entity == null;
+        if (!isNew) {
             modelsToBeDeleted = entity.updateWith(object);
         } else {
             entity = object;
         }
+        ModelSaveResult<T> result = new ModelSaveResult<T>(entity, isNew);
         entity.save();
         for (Model m : modelsToBeDeleted) {
             m.delete();
         }
-        return entity;
+        return result;
     }
 
     /**
@@ -369,7 +371,7 @@ public abstract class Model {
         ArrayList<Model> entitiesToBeDeleted = new ArrayList<Model>();
         if (myClass.isAssignableFrom(otherClass)) {
             fieldloop:
-            for (Field field : Cache.getTableInfo(myClass).getFields()) {
+            for (Field field : Cache.getTableInfo(myClass).getColumnFields()) {
                 field.setAccessible(true);
                 try {
                     Object newValue = field.get(other);
@@ -386,13 +388,15 @@ public abstract class Model {
                             break;
                         case UPDATE:
                             if (ModelUtils.isForeignKey(field)) {
-                                newValue = Model.createOrUpdate((Model) newValue);
+                                newValue = Model.createOrUpdate((Model) newValue).getEntity();
                             }
                             break;
 
                     }
                     field.set(this, newValue);
                 } catch (IllegalAccessException e) {
+                    throw new ModelUpdateException("The update of field: " + field.getName() + "was not possible.", e);
+                } catch (IllegalArgumentException e) {
                     throw new ModelUpdateException("The update of field: " + field.getName() + "was not possible.", e);
                 }
             }

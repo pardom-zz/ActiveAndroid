@@ -19,6 +19,7 @@ package com.activeandroid;
 import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -46,6 +47,7 @@ public final class TableInfo {
 
     private String mUniqueIdentifier = Table.DEFAULT_ID_NAME;
     private Map<Field, String> mColumnNames = new LinkedHashMap<Field, String>();
+    private Map<Field, String> mComputedNames = new LinkedHashMap<Field, String>();
 
     //////////////////////////////////////////////////////////////////////////////////////
     // CONSTRUCTORS
@@ -91,6 +93,13 @@ public final class TableInfo {
                 }
 
                 mColumnNames.put(field, columnName);
+            } else if (field.isAnnotationPresent(Computed.class)) {
+                final Computed columnAnnotation = field.getAnnotation(Computed.class);
+                String name = columnAnnotation.name();
+                if (TextUtils.isEmpty(name)) {
+                    name = namingStrategy.translateName(field);
+                }
+                mComputedNames.put(field, name);
             }
         }
 
@@ -112,14 +121,35 @@ public final class TableInfo {
         return mIdName;
     }
 
+    @Deprecated
     public Collection<Field> getFields() {
+        return getColumnFields();
+    }
+
+    public Collection<Field> getColumnFields() {
         return mColumnNames.keySet();
+    }
+
+    /**
+     * @return Fields used as columns (@Column) and fields which can be computed (@Computed)
+     */
+    public Collection<Field> getAllFields() {
+        HashSet<Field> fields = new HashSet<Field>(mColumnNames.keySet());
+        fields.addAll(mComputedNames.keySet());
+        return fields;
     }
 
     public String getColumnName(Field field) {
         return mColumnNames.get(field);
     }
 
+    public String getDatabaseName(Field field) {
+        String name = mColumnNames.get(field);
+        if (name == null) {
+            name = mComputedNames.get(field);
+        }
+        return name;
+    }
 
     private Field getIdField(Class<?> type) {
         if (type.equals(Model.class)) {

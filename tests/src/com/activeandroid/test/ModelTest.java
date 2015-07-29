@@ -139,7 +139,7 @@ public class ModelTest extends ActiveAndroidTestCase {
     public void testColumnNamesDefaulToFieldNames() {
         TableInfo tableInfo = Cache.getTableInfo(MockModel.class);
 
-        for ( Field field : tableInfo.getFields() ) {
+        for ( Field field : tableInfo.getColumnFields() ) {
             // Id column is a special case, we'll ignore that one.
             if ( field.getName().equals("mId") ) continue;
 
