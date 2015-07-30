@@ -147,7 +147,7 @@ public abstract class Model {
                             foreignkeyID = model.getId();
                             break;
                         case CREATE_OR_UPDATE:
-                            foreignkeyID = createOrUpdate(model).getId();
+                            foreignkeyID = createOrUpdate(model).getEntity().getId();
                             break;
                     }
                     values.put(fieldName, foreignkeyID);
