@@ -16,6 +16,14 @@ package com.activeandroid;
  * limitations under the License.
  */
 
+import android.text.TextUtils;
+import android.util.Log;
+
+import com.activeandroid.annotation.Column;
+import com.activeandroid.annotation.Table;
+import com.activeandroid.util.ReflectionUtils;
+import com.activeandroid.util.SQLiteUtils;
+
 import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.Collections;
@@ -23,13 +31,6 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-
-import android.text.TextUtils;
-import android.util.Log;
-
-import com.activeandroid.annotation.Column;
-import com.activeandroid.annotation.Table;
-import com.activeandroid.util.ReflectionUtils;
 
 public final class TableInfo {
 	//////////////////////////////////////////////////////////////////////////////////////
@@ -39,8 +40,10 @@ public final class TableInfo {
 	private Class<? extends Model> mType;
 	private String mTableName;
 	private String mIdName = Table.DEFAULT_ID_NAME;
+    private String mCustomIdName = Table.DEFAULT_CUSTOM_ID_NAME;
 
-	private Map<Field, String> mColumnNames = new LinkedHashMap<Field, String>();
+
+    private Map<Field, String> mColumnNames = new LinkedHashMap<Field, String>();
 
 	//////////////////////////////////////////////////////////////////////////////////////
 	// CONSTRUCTORS
@@ -54,6 +57,7 @@ public final class TableInfo {
         if (tableAnnotation != null) {
 			mTableName = tableAnnotation.name();
 			mIdName = tableAnnotation.id();
+            mCustomIdName = tableAnnotation.customIdName();
 		}
 		else {
 			mTableName = type.getSimpleName();
@@ -66,6 +70,9 @@ public final class TableInfo {
         List<Field> fields = new LinkedList<Field>(ReflectionUtils.getDeclaredColumnFields(type));
         Collections.reverse(fields);
 
+        boolean isCustomIdSupplied = !mCustomIdName.equals(Table.DEFAULT_CUSTOM_ID_NAME);
+        Field customIdField = null;
+
         for (Field field : fields) {
             if (field.isAnnotationPresent(Column.class)) {
                 final Column columnAnnotation = field.getAnnotation(Column.class);
@@ -74,11 +81,29 @@ public final class TableInfo {
                     columnName = field.getName();
                 }
 
+                if (isCustomIdSupplied && columnName.equals(mCustomIdName)) {
+                    customIdField = field;
+                }
+
                 mColumnNames.put(field, columnName);
             }
         }
 
+        if (isCustomIdSupplied) {
+            if (customIdField == null) {
+                Log.e(com.activeandroid.util.Log.sTag,
+                        "Given custom Id doesn't exists in table columns",
+                        new Throwable("Custom Id defined as " + mCustomIdName + ", but doesn't exists in table columns."));
+            }
+            else if (!SQLiteUtils.TYPE_MAP.containsKey(customIdField.getType())) {
+                Log.e(com.activeandroid.util.Log.sTag,
+                        "Given custom Id is of an illegal type",
+                        new Throwable("Custom Id type " + customIdField.getType() + " isn't a legal id type"));
+            }
+        }
 	}
+
+
 
 	//////////////////////////////////////////////////////////////////////////////////////
 	// PUBLIC METHODS
@@ -96,14 +121,17 @@ public final class TableInfo {
 		return mIdName;
 	}
 
-	public Collection<Field> getFields() {
+    public String getCustomIdName() {
+        return mCustomIdName;
+    }
+
+    public Collection<Field> getFields() {
 		return mColumnNames.keySet();
 	}
 
 	public String getColumnName(Field field) {
 		return mColumnNames.get(field);
 	}
-
 
     private Field getIdField(Class<?> type) {
         if (type.equals(Model.class)) {

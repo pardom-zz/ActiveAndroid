@@ -58,7 +58,7 @@ public final class SQLiteUtils {
 	//////////////////////////////////////////////////////////////////////////////////////
 
 	@SuppressWarnings("serial")
-	private static final HashMap<Class<?>, SQLiteType> TYPE_MAP = new HashMap<Class<?>, SQLiteType>() {
+	public static final HashMap<Class<?>, SQLiteType> TYPE_MAP = new HashMap<Class<?>, SQLiteType>() {
 		{
 			put(byte.class, SQLiteType.INTEGER);
 			put(short.class, SQLiteType.INTEGER);

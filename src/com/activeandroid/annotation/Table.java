@@ -28,4 +28,7 @@ public @interface Table {
 	public static final String DEFAULT_ID_NAME = "Id";
 	public String name();
 	public String id() default DEFAULT_ID_NAME;
+
+	public static final String DEFAULT_CUSTOM_ID_NAME = "";
+	public String customIdName() default DEFAULT_CUSTOM_ID_NAME;
 }
