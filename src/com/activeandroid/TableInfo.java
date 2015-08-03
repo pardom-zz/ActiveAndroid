@@ -29,6 +29,7 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import com.activeandroid.annotation.Column;
+import com.activeandroid.annotation.Computed;
 import com.activeandroid.annotation.Table;
 import com.activeandroid.naming.ColumnNamingStrategy;
 import com.activeandroid.naming.FieldNamingStrategy;

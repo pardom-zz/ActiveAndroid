@@ -28,7 +28,7 @@ import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 
-import com.activeandroid.Computed;
+import com.activeandroid.annotation.Computed;
 import com.activeandroid.Model;
 import com.activeandroid.annotation.Column;
 import com.activeandroid.serializer.TypeSerializer;
