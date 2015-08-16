@@ -79,7 +79,9 @@ public abstract class Model {
 			final String fieldName = mTableInfo.getColumnName(field);
 			Class<?> fieldType = field.getType();
 
-			field.setAccessible(true);
+			if (!field.isAccessible()) {
+				field.setAccessible(true);
+			}
 
 			try {
 				Object value = field.get(this);
@@ -192,7 +194,9 @@ public abstract class Model {
 				continue;
 			}
 
-			field.setAccessible(true);
+			if (!field.isAccessible()) {
+				field.setAccessible(true);
+			}
 
 			try {
 				boolean columnIsNull = cursor.isNull(columnIndex);
