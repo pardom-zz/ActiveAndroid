@@ -30,7 +30,9 @@ import com.activeandroid.util.ReflectionUtils;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @SuppressWarnings("unchecked")
 public abstract class Model {
@@ -46,6 +48,8 @@ public abstract class Model {
 
 	private final TableInfo mTableInfo;
 	private final String idName;
+	private static Map<String, List<Integer>> columnIndexesCache = new HashMap<String, List<Integer>>();
+
 	//////////////////////////////////////////////////////////////////////////////////////
 	// CONSTRUCTORS
 	//////////////////////////////////////////////////////////////////////////////////////
@@ -185,10 +189,23 @@ public abstract class Model {
          * when the cursor have multiple columns with same name obtained from join tables.
          */
         List<String> columnsOrdered = new ArrayList<String>(Arrays.asList(cursor.getColumnNames()));
+		List<Integer> columnIndexes = columnIndexesCache.get(mTableInfo.getTableName());
+		if (columnIndexes == null) {
+			columnIndexes = new ArrayList<Integer>();
+			columnIndexesCache.put(mTableInfo.getTableName(), columnIndexes);
+		}
+		int counter = 0;
 		for (Field field : mTableInfo.getFields()) {
-			final String fieldName = mTableInfo.getColumnName(field);
 			Class<?> fieldType = field.getType();
-			final int columnIndex = columnsOrdered.indexOf(fieldName);
+
+			final int columnIndex;
+			if (columnIndexes.size() <= counter) {
+				String fieldName = mTableInfo.getColumnName(field);
+				columnIndex = columnsOrdered.indexOf(fieldName);
+				columnIndexes.add(columnIndex);
+			} else {
+				columnIndex = columnIndexes.get(counter);
+			}
 
 			if (columnIndex < 0) {
 				continue;
@@ -268,6 +285,8 @@ public abstract class Model {
 				if (value != null) {
 					field.set(this, value);
 				}
+
+				counter++;
 			}
 			catch (IllegalArgumentException e) {
 				Log.e(e.getClass().getName(), e);
