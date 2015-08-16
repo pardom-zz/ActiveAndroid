@@ -49,6 +49,7 @@ public abstract class Model {
 	private final TableInfo mTableInfo;
 	private final String idName;
 	private static Map<String, List<Integer>> columnIndexesCache = new HashMap<String, List<Integer>>();
+	private static Map<String, List<Class>> fieldTypesCache = new HashMap<String, List<Class>>();
 
 	//////////////////////////////////////////////////////////////////////////////////////
 	// CONSTRUCTORS
@@ -194,17 +195,25 @@ public abstract class Model {
 			columnIndexes = new ArrayList<Integer>();
 			columnIndexesCache.put(mTableInfo.getTableName(), columnIndexes);
 		}
+		List<Class> fieldTypes = fieldTypesCache.get(mTableInfo.getTableName());
+		if (fieldTypes == null) {
+			fieldTypes = new ArrayList<Class>();
+			fieldTypesCache.put(mTableInfo.getTableName(), fieldTypes);
+		}
 		int counter = 0;
 		for (Field field : mTableInfo.getFields()) {
-			Class<?> fieldType = field.getType();
-
 			final int columnIndex;
+			Class<?> fieldType;
 			if (columnIndexes.size() <= counter) {
 				String fieldName = mTableInfo.getColumnName(field);
 				columnIndex = columnsOrdered.indexOf(fieldName);
 				columnIndexes.add(columnIndex);
+
+				fieldType = field.getType();
+				fieldTypes.add(fieldType);
 			} else {
 				columnIndex = columnIndexes.get(counter);
+				fieldType = fieldTypes.get(counter);
 			}
 
 			if (columnIndex < 0) {
