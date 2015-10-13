@@ -16,6 +16,8 @@ package com.activeandroid.serializer;
  * limitations under the License.
  */
 
+import java.util.ArrayList;
+
 public abstract class TypeSerializer {
 	public abstract Class<?> getDeserializedType();
 
@@ -23,5 +25,5 @@ public abstract class TypeSerializer {
 
 	public abstract Object serialize(Object data);
 
-	public abstract Object deserialize(Object data);
+	public abstract ArrayList deserialize(Object data);
 }

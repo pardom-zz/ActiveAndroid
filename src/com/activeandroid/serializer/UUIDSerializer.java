@@ -1,5 +1,6 @@
 package com.activeandroid.serializer;
 
+import java.util.ArrayList;
 import java.util.UUID;
 
 public final class UUIDSerializer extends TypeSerializer {
@@ -19,7 +20,7 @@ public final class UUIDSerializer extends TypeSerializer {
 		return ((UUID) data).toString();
 	}
 
-	public UUID deserialize(Object data) {
+	public ArrayList deserialize(Object data) {
 		if (data == null) {
 			return null;
 		}

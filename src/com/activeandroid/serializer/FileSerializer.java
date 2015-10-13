@@ -1,6 +1,7 @@
 package com.activeandroid.serializer;
 
 import java.io.File;
+import java.util.ArrayList;
 
 /*
  * Copyright (C) 2010 Michael Pardo
@@ -36,7 +37,7 @@ public final class FileSerializer extends TypeSerializer {
 		return ((File) data).toString();
 	}
 
-	public File deserialize(Object data) {
+	public ArrayList deserialize(Object data) {
 		if (data == null) {
 			return null;
 		}

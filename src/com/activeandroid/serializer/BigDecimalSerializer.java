@@ -1,6 +1,7 @@
 package com.activeandroid.serializer;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 
 public final class BigDecimalSerializer extends TypeSerializer {
 	public Class<?> getDeserializedType() {
@@ -19,7 +20,7 @@ public final class BigDecimalSerializer extends TypeSerializer {
 		return ((BigDecimal) data).toString();
 	}
 
-	public BigDecimal deserialize(Object data) {
+	public ArrayList deserialize(Object data) {
 		if (data == null) {
 			return null;
 		}
