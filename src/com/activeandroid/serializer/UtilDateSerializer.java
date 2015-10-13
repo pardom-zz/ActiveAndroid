@@ -16,7 +16,6 @@ package com.activeandroid.serializer;
  * limitations under the License.
  */
 
-import java.util.ArrayList;
 import java.util.Date;
 
 public final class UtilDateSerializer extends TypeSerializer {
@@ -36,7 +35,7 @@ public final class UtilDateSerializer extends TypeSerializer {
 		return ((Date) data).getTime();
 	}
 
-	public ArrayList deserialize(Object data) {
+	public Date deserialize(Object data) {
 		if (data == null) {
 			return null;
 		}
