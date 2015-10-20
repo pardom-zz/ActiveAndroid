@@ -71,7 +71,7 @@ public abstract class Model {
 				.notifyChange(ContentProvider.createUri(mTableInfo.getType(), mId), null);
 	}
 
-	public final Long save() {
+	public Long save() {
 		final SQLiteDatabase db = Cache.openDatabase();
 		final ContentValues values = new ContentValues();
 
@@ -173,6 +173,14 @@ public abstract class Model {
 	public static <T extends Model> T load(Class<T> type, long id) {
 		TableInfo tableInfo = Cache.getTableInfo(type);
 		return (T) new Select().from(type).where(tableInfo.getIdName()+"=?", id).executeSingle();
+	}
+
+	public static <T extends Model> List<T> all(Class<T> type) {
+		return (List<T>) new Select().from(type).execute();
+	}
+
+	public static <T extends Model> T first(Class<T> type) {
+		return (T) new Select().from(type).executeSingle();
 	}
 
 	// Model population
