@@ -1,8 +1,5 @@
 package com.activeandroid.content;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import android.content.ContentValues;
 import android.content.UriMatcher;
 import android.database.Cursor;
@@ -14,6 +11,9 @@ import com.activeandroid.Cache;
 import com.activeandroid.Configuration;
 import com.activeandroid.Model;
 import com.activeandroid.TableInfo;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class ContentProvider extends android.content.ContentProvider {
 	//////////////////////////////////////////////////////////////////////////////////////
@@ -93,6 +93,9 @@ public class ContentProvider extends android.content.ContentProvider {
 	@Override
 	public Uri insert(Uri uri, ContentValues values) {
 		final Class<? extends Model> type = getModelType(uri);
+		if (type == null) {
+			throw new NullPointerException("Uri " + uri + " did not resolve to a model; have you added the model to your manifest?");
+		}
 		final Long id = Cache.openDatabase().insert(Cache.getTableName(type), null, values);
 
 		if (id != null && id > 0) {
@@ -108,6 +111,9 @@ public class ContentProvider extends android.content.ContentProvider {
 	@Override
 	public int update(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
 		final Class<? extends Model> type = getModelType(uri);
+		if (type == null) {
+			throw new NullPointerException("Uri " + uri + " did not resolve to a model; have you added the model to your manifest?");
+		}
 		final int count = Cache.openDatabase().update(Cache.getTableName(type), values, selection, selectionArgs);
 
 		notifyChange(uri);
@@ -118,6 +124,9 @@ public class ContentProvider extends android.content.ContentProvider {
 	@Override
 	public int delete(Uri uri, String selection, String[] selectionArgs) {
 		final Class<? extends Model> type = getModelType(uri);
+		if (type == null) {
+			throw new NullPointerException("Uri " + uri + " did not resolve to a model; have you added the model to your manifest?");
+		}
 		final int count = Cache.openDatabase().delete(Cache.getTableName(type), selection, selectionArgs);
 
 		notifyChange(uri);
@@ -128,6 +137,9 @@ public class ContentProvider extends android.content.ContentProvider {
 	@Override
 	public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
 		final Class<? extends Model> type = getModelType(uri);
+		if (type == null) {
+			throw new NullPointerException("Uri " + uri + " did not resolve to a model; have you added the model to your manifest?");
+		}
 		final Cursor cursor = Cache.openDatabase().query(
 				Cache.getTableName(type),
 				projection,
