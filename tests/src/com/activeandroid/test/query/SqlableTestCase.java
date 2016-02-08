@@ -21,10 +21,10 @@ import com.activeandroid.test.ActiveAndroidTestCase;
 
 public abstract class SqlableTestCase extends ActiveAndroidTestCase {
 	public static void assertSqlEquals(String expected, Sqlable actual) {
-		assertEquals(expected, actual.toSql());
+		assertEquals(expected.trim(), actual.toSql().trim());
 	}
 	
 	public static void assertSqlEquals(Sqlable expected, Sqlable actual) {
-	    assertEquals(expected.toSql(), actual.toSql());
+	    assertSqlEquals(expected.toSql(), actual);
 	}
 }
