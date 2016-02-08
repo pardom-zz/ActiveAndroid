@@ -55,6 +55,18 @@ public class UpdateTest extends SqlableTestCase {
 		assertSqlEquals(UPDATE_PREFIX + "SET Id = 5 WHERE Id IN (?, ?, ?) ",
 				set);
 	}
+
+  public void performTestUpdateBoolean(boolean condition) {
+    Set set = update().set("booleanField = ?", condition);
+    assertArrayEquals(set.getArguments(), condition ? "1" : "0");
+    assertSqlEquals(UPDATE_PREFIX + "SET booleanField = ?",
+        set);
+  }
+
+  public void testUpdateBoolean() {
+    performTestUpdateBoolean(true);
+    performTestUpdateBoolean(false);
+  }
 	
 	private Update update() {
 		return new Update(MockModel.class);

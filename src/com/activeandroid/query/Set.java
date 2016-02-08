@@ -19,7 +19,6 @@ package com.activeandroid.query;
 import com.activeandroid.util.SQLiteUtils;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public final class Set implements Sqlable {
@@ -46,7 +45,7 @@ public final class Set implements Sqlable {
 		mSetArguments = new ArrayList<Object>();
 		mWhereArguments = new ArrayList<Object>();
 
-		mSetArguments.addAll(Arrays.asList(args));
+    SQLiteUtils.addArguments(mSetArguments, args);
 	}
 
 	public Set where(String where) {
@@ -59,7 +58,7 @@ public final class Set implements Sqlable {
 	public Set where(String where, Object... args) {
 		mWhere = where;
 		mWhereArguments.clear();
-		mWhereArguments.addAll(Arrays.asList(args));
+    SQLiteUtils.addArguments(mWhereArguments, args);
 
 		return this;
 	}
