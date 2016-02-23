@@ -23,7 +23,7 @@ public final class Delete implements Sqlable {
 	}
 
 	public From from(Class<? extends Model> table) {
-		return new From(table, this);
+		return new From(table, this, SqlMethod.DELETE);
 	}
 
 	@Override

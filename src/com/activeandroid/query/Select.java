@@ -20,74 +20,89 @@ import android.text.TextUtils;
 
 import com.activeandroid.Model;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+
 public final class Select implements Sqlable {
-	private String[] mColumns;
-	private boolean mDistinct = false;
-	private boolean mAll = false;
+    private ArrayList<String> mColumns;
+    private boolean mDistinct = false;
+    private boolean mAll = false;
 
-	public Select() {
-	}
+    public Select() {
+        mColumns = new ArrayList<String>();
+    }
 
-	public Select(String... columns) {
-		mColumns = columns;
-	}
+    public Select(String... columns) {
+        this();
+        addColumns(columns);
+    }
 
-	public Select(Column... columns) {
-		final int size = columns.length;
-		mColumns = new String[size];
-		for (int i = 0; i < size; i++) {
-			mColumns[i] = columns[i].name + " AS " + columns[i].alias;
-		}
-	}
+    public Select(Column... columns) {
+        this();
+        addColumns(columns);
+    }
 
-	public Select distinct() {
-		mDistinct = true;
-		mAll = false;
+    public void addColumns(Column... columns) {
+        for (Column column : columns) {
+            mColumns.add(column.name + " AS " + column.alias);
+        }
+    }
 
-		return this;
-	}
+    public void addColumns(String... columns) {
+        mColumns.addAll(ColumnSplitter.split(columns).getColumns());
+    }
 
-	public Select all() {
-		mDistinct = false;
-		mAll = true;
+    public Select all() {
+        mDistinct = false;
+        mAll = true;
 
-		return this;
-	}
+        return this;
+    }
 
-	public From from(Class<? extends Model> table) {
-		return new From(table, this);
-	}
+    public Select distinct() {
+        mDistinct = true;
+        mAll = false;
 
-	public static class Column {
-		String name;
-		String alias;
+        return this;
+    }
 
-		public Column(String name, String alias) {
-			this.name = name;
-			this.alias = alias;
-		}
-	}
+    public From from(Class<? extends Model> table) {
+        return new From(table, this, SqlMethod.SELECT);
+    }
 
-	@Override
-	public String toSql() {
-		StringBuilder sql = new StringBuilder();
+    public boolean hasColumns() {
+        return mColumns != null && mColumns.size() > 0;
+    }
 
-		sql.append("SELECT ");
+    @Override
+    public String toSql() {
+        StringBuilder sql = new StringBuilder();
 
-		if (mDistinct) {
-			sql.append("DISTINCT ");
-		}
-		else if (mAll) {
-			sql.append("ALL ");
-		}
+        sql.append("SELECT ");
 
-		if (mColumns != null && mColumns.length > 0) {
-			sql.append(TextUtils.join(", ", mColumns) + " ");
-		}
-		else {
-			sql.append("* ");
-		}
+        if (mDistinct) {
+            sql.append("DISTINCT ");
+        } else if (mAll) {
+            sql.append("ALL ");
+        }
 
-		return sql.toString();
-	}
+        if (hasColumns()) {
+            sql.append(TextUtils.join(", ", mColumns) + " ");
+        } else {
+            sql.append("* ");
+        }
+
+        return sql.toString();
+    }
+
+    public static class Column {
+        String name;
+        String alias;
+
+        public Column(String name, String alias) {
+            this.name = name;
+            this.alias = alias;
+        }
+    }
+
 }
