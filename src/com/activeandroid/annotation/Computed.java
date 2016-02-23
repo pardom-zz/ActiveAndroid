@@ -11,5 +11,9 @@ import java.lang.annotation.Target;
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Computed {
-    public String name() default "";
+    String[] joins() default {};
+
+    String name() default "";
+
+    String select() default "";
 }
