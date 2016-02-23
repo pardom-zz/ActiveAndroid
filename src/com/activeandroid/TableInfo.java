@@ -16,15 +16,6 @@ package com.activeandroid;
  * limitations under the License.
  */
 
-import java.lang.reflect.Field;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -35,6 +26,16 @@ import com.activeandroid.naming.ColumnNamingStrategy;
 import com.activeandroid.naming.FieldNamingStrategy;
 import com.activeandroid.util.ReflectionUtils;
 
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+
 public final class TableInfo {
     //////////////////////////////////////////////////////////////////////////////////////
     // PRIVATE MEMBERS
@@ -43,7 +44,6 @@ public final class TableInfo {
     private Class<? extends Model> mType;
     private String mTableName;
     private String mIdName = Table.DEFAULT_ID_NAME;
-
 
 
     private String mUniqueIdentifier = Table.DEFAULT_ID_NAME;
@@ -152,6 +152,10 @@ public final class TableInfo {
         return name;
     }
 
+    public boolean hasComputedFields() {
+        return mComputedNames.size() > 0;
+    }
+
     private Field getIdField(Class<?> type) {
         if (type.equals(Model.class)) {
             try {
@@ -169,4 +173,17 @@ public final class TableInfo {
     public String getUniqueIdentifier() {
         return mUniqueIdentifier;
     }
+
+    public ArrayList<Computed> getComputedColumns() {
+        ArrayList<Computed> computedList = new ArrayList<Computed>();
+        for (Field field : mComputedNames.keySet()) {
+            Computed annotation = field.getAnnotation(Computed.class);
+            if (!TextUtils.isEmpty(annotation.select())) {
+                computedList.add(annotation);
+            }
+        }
+        return computedList;
+    }
+
+
 }
