@@ -246,7 +246,8 @@ public abstract class Model {
 
                     Model entity = Cache.getEntity(entityType, entityId);
                     if (entity == null) {
-                        entity = new Select().from(entityType).where(idName + "=?", entityId).executeSingle();
+                        TableInfo tableInfo = Cache.getTableInfo(entityType);
+                        entity = new Select().from(entityType).where(tableInfo.getTableName() + "." + tableInfo.getIdName() + "=?", entityId).executeSingle();
                     }
 
                     value = entity;
