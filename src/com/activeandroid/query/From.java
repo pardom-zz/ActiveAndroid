@@ -22,6 +22,7 @@ import com.activeandroid.Cache;
 import com.activeandroid.Model;
 import com.activeandroid.content.ContentProvider;
 import com.activeandroid.query.Join.JoinType;
+import com.activeandroid.serializer.TypeSerializer;
 import com.activeandroid.util.Log;
 import com.activeandroid.util.SQLiteUtils;
 
@@ -338,7 +339,13 @@ public final class From implements Sqlable {
 		final String[] args = new String[size];
 
 		for (int i = 0; i < size; i++) {
-			args[i] = mArguments.get(i).toString();
+            TypeSerializer serializer = Cache.getParserForType(mArguments.get(i).getClass());
+
+            if(serializer==null) args[i] = mArguments.get(i).toString();
+            else  args[i] = serializer.serialize(mArguments.get(i)).toString();
+
+            // original action
+            // args[i] = mArguments.get(i).toString();
 		}
 
 		return args;
