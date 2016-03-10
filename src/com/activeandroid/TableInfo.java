@@ -152,6 +152,14 @@ public final class TableInfo {
         return name;
     }
 
+    /**
+     * @param field The model class field
+     * @return the full column name (table.column)
+     */
+    public String getColumn(Field field){
+        return mTableName + "." + getDatabaseName(field);
+    }
+
     public boolean hasComputedFields() {
         return mComputedNames.size() > 0;
     }

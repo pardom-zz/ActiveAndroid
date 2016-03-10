@@ -334,7 +334,7 @@ public abstract class Model {
         T entity;
         try {
             Field f = getUniqueField(objectClass, uniqueIdentifier);
-            String columnName = info.getColumnName(f);
+            String columnName = info.getColumn(f);
             f.setAccessible(true);
             Object value = f.get(object);
             entity = new Select().from(objectClass).where(columnName + "=?", value).executeSingle();
