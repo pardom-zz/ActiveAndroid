@@ -257,18 +257,17 @@ public final class From implements Sqlable {
         String computedJoins = "";
         String computedSelect = "";
         if (mMethod == SqlMethod.SELECT) {
-            Select selectBase = (Select) mQueryBase;
             TableInfo tableInfo = Cache.getTableInfo(mType);
-            boolean hasComputedFields = tableInfo.hasComputedFields();
-            if (!selectBase.hasColumns() && hasComputedFields) {
-                ArrayList<Computed> computedColumns = tableInfo.getComputedColumns();
-                for (Computed computed : computedColumns) {
-                    computedJoins += TextUtils.join(" ", computed.joins()) + " ";
-                    computedSelect += computed.select() + ",";
-                }
-                if(computedSelect.length() > 0) {
-                    computedSelect = computedSelect.replaceFirst(",$", " ");
-                }
+            for (Computed computed : getComputedColumns(tableInfo)) {
+                computedJoins += TextUtils.join(" ", computed.joins()) + " ";
+                computedSelect += computed.select() + ",";
+            }
+            boolean hasSelect = computedSelect.length() > 0;
+            boolean hasJoin = computedJoins.length() > 0;
+            if (hasSelect) {
+                computedSelect = computedSelect.replaceFirst(",$", " ");
+            }
+            if (hasSelect || hasJoin) {
                 String s = sql.toString();
                 sql.setLength(0);
                 sql.append(s.replaceFirst("\\*\\s*$", ""));
@@ -286,6 +285,26 @@ public final class From implements Sqlable {
         addOffset(sql);
 
         return sqlString(sql);
+    }
+
+    protected List<Computed> getComputedColumns(TableInfo tableInfo) {
+        ArrayList<Computed> computedColumns = tableInfo.getComputedColumns();
+        Select queryBase = (Select) mQueryBase;
+        if (queryBase.hasColumns()) {
+            ArrayList<Computed> list = new ArrayList<Computed>(computedColumns.size());
+            for (String column : queryBase.getColumns()) {
+                if(tableInfo.isWildcard(column)) {
+                    return computedColumns;
+                }
+                Computed computedAnnotation = tableInfo.getComputedAnnotation(column);
+                if (computedAnnotation != null && !TextUtils.isEmpty(computedAnnotation.select())) {
+                    list.add(computedAnnotation);
+                }
+            }
+            return list;
+        } else {
+            return computedColumns;
+        }
     }
 
     public String toExistsSql() {
@@ -372,14 +391,14 @@ public final class From implements Sqlable {
         return SQLiteUtils.intQuery(toCountSql(fieldName), getArguments());
     }
 
-	public String[] getArguments() {
-		final int size = mArguments.size();
-		final String[] args = new String[size];
+    public String[] getArguments() {
+        final int size = mArguments.size();
+        final String[] args = new String[size];
 
-		for (int i = 0; i < size; i++) {
-			args[i] = mArguments.get(i).toString();
-		}
+        for (int i = 0; i < size; i++) {
+            args[i] = mArguments.get(i).toString();
+        }
 
-		return args;
-	}
+        return args;
+    }
 }

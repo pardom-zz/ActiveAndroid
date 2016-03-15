@@ -70,6 +70,10 @@ public final class Select implements Sqlable {
         return new From(table, this, SqlMethod.SELECT);
     }
 
+    public ArrayList<String> getColumns() {
+        return mColumns;
+    }
+
     public boolean hasColumns() {
         return mColumns != null && mColumns.size() > 0;
     }

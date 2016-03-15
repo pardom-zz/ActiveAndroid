@@ -35,6 +35,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public final class TableInfo {
     //////////////////////////////////////////////////////////////////////////////////////
@@ -152,6 +153,7 @@ public final class TableInfo {
         return name;
     }
 
+
     /**
      * @param field The model class field
      * @return the full column name (table.column)
@@ -162,6 +164,10 @@ public final class TableInfo {
 
     public boolean hasComputedFields() {
         return mComputedNames.size() > 0;
+    }
+
+    public boolean isWildcard(String selectField) {
+        return selectField.matches(mTableName+"/./*");
     }
 
     private Field getIdField(Class<?> type) {
@@ -191,6 +197,15 @@ public final class TableInfo {
             }
         }
         return computedList;
+    }
+
+    public Computed getComputedAnnotation(String databaseColumn) {
+        for (Map.Entry<Field, String> entry : mComputedNames.entrySet()) {
+            if (Objects.equals(databaseColumn, entry.getValue())) {
+                return entry.getKey().getAnnotation(Computed.class);
+            }
+        }
+        return null;
     }
 
 
