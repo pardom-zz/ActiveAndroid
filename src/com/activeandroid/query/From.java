@@ -253,28 +253,11 @@ public final class From implements Sqlable {
     @Override
     public String toSql() {
         final StringBuilder sql = new StringBuilder();
-        sql.append(mQueryBase.toSql());
         String computedJoins = "";
-        String computedSelect = "";
         if (mMethod == SqlMethod.SELECT) {
-            Select selectBase = (Select) mQueryBase;
-            TableInfo tableInfo = Cache.getTableInfo(mType);
-            boolean hasComputedFields = tableInfo.hasComputedFields();
-            if (!selectBase.hasColumns() && hasComputedFields) {
-                ArrayList<Computed> computedColumns = tableInfo.getComputedColumns();
-                for (Computed computed : computedColumns) {
-                    computedJoins += TextUtils.join(" ", computed.joins()) + " ";
-                    computedSelect += computed.select() + ",";
-                }
-                if(computedSelect.length() > 0) {
-                    computedSelect = computedSelect.replaceFirst(",$", " ");
-                }
-                String s = sql.toString();
-                sql.setLength(0);
-                sql.append(s.replaceFirst("\\*\\s*$", ""));
-                sql.append(tableInfo.getTableName()).append(".*, ").append(computedSelect);
-            }
+            computedJoins = getComputedColumns();
         }
+        sql.append(mQueryBase.toSql());
         addFrom(sql);
         addJoins(sql);
         sql.append(computedJoins);
@@ -286,6 +269,51 @@ public final class From implements Sqlable {
         addOffset(sql);
 
         return sqlString(sql);
+    }
+
+    protected String getComputedColumns() {
+        TableInfo tableInfo = Cache.getTableInfo(mType);
+        ArrayList<Computed> allComputedColumns = tableInfo.getComputedColumns();
+        Select queryBase = (Select) mQueryBase;
+
+        ArrayList<String> queryColumns = queryBase.getColumns();
+        if (queryColumns.size() == 0) {
+            queryColumns.add(tableInfo.getTableWildcard());
+        }
+
+        Select newQueryBase = new Select();
+        if (queryBase.isDistinct()) {
+            newQueryBase.distinct();
+        } else if (queryBase.isAll()) {
+            newQueryBase.all();
+        }
+
+        ArrayList<Computed> computedColumns = new ArrayList<Computed>(allComputedColumns.size());
+        for (String column : queryColumns) {
+            if (tableInfo.isWildcard(column)) {
+                computedColumns = allComputedColumns;
+                newQueryBase.addColumns(column);
+            } else {
+                Computed computedAnnotation = tableInfo.getComputedAnnotation(column);
+                if (computedAnnotation != null) {
+                    computedColumns.add(computedAnnotation);
+                } else {
+                    newQueryBase.addColumns(column);
+                }
+            }
+        }
+        ArrayList<String> selects = new ArrayList<String>(allComputedColumns.size());
+        String computedJoins = "";
+        for (Computed cc : computedColumns) {
+            String select = cc.select();
+            if (!TextUtils.isEmpty(select)) {
+                selects.add(select);
+            }
+            computedJoins += TextUtils.join(" ", cc.joins()) + " ";
+        }
+        newQueryBase.addColumns(selects.toArray(new String[selects.size()]));
+        mQueryBase = newQueryBase;
+        return computedJoins;
     }
 
     public String toExistsSql() {
@@ -372,14 +400,14 @@ public final class From implements Sqlable {
         return SQLiteUtils.intQuery(toCountSql(fieldName), getArguments());
     }
 
-	public String[] getArguments() {
-		final int size = mArguments.size();
-		final String[] args = new String[size];
+    public String[] getArguments() {
+        final int size = mArguments.size();
+        final String[] args = new String[size];
 
-		for (int i = 0; i < size; i++) {
-			args[i] = mArguments.get(i).toString();
-		}
+        for (int i = 0; i < size; i++) {
+            args[i] = mArguments.get(i).toString();
+        }
 
-		return args;
-	}
+        return args;
+    }
 }

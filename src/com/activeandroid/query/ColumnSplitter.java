@@ -51,12 +51,16 @@ public class ColumnSplitter {
         for (String col : mColumns) {
             String[] strings = TextUtils.split(col, Pattern.compile(",\\s*"));
             List<String> columnsList = Arrays.asList(strings);
-            if (mTable != null) {
-                for (String input : columnsList) {
-                    mProcessedColumns.add(mTable + "." + input);
+            boolean hasTable = mTable != null;
+            for (String input : columnsList) {
+                if (input.length() == 0) {
+                    continue;
                 }
-            } else {
-                mProcessedColumns.addAll(columnsList);
+                if (hasTable) {
+                    mProcessedColumns.add(mTable + "." + input);
+                } else {
+                    mProcessedColumns.add(input);
+                }
             }
         }
 
