@@ -253,27 +253,11 @@ public final class From implements Sqlable {
     @Override
     public String toSql() {
         final StringBuilder sql = new StringBuilder();
-        sql.append(mQueryBase.toSql());
         String computedJoins = "";
-        String computedSelect = "";
         if (mMethod == SqlMethod.SELECT) {
-            TableInfo tableInfo = Cache.getTableInfo(mType);
-            for (Computed computed : getComputedColumns(tableInfo)) {
-                computedJoins += TextUtils.join(" ", computed.joins()) + " ";
-                computedSelect += computed.select() + ",";
-            }
-            boolean hasSelect = computedSelect.length() > 0;
-            boolean hasJoin = computedJoins.length() > 0;
-            if (hasSelect) {
-                computedSelect = computedSelect.replaceFirst(",$", " ");
-            }
-            if (hasSelect || hasJoin) {
-                String s = sql.toString();
-                sql.setLength(0);
-                sql.append(s.replaceFirst("\\*\\s*$", ""));
-                sql.append(tableInfo.getTableName()).append(".*, ").append(computedSelect);
-            }
+            computedJoins = getComputedColumns();
         }
+        sql.append(mQueryBase.toSql());
         addFrom(sql);
         addJoins(sql);
         sql.append(computedJoins);
@@ -287,24 +271,49 @@ public final class From implements Sqlable {
         return sqlString(sql);
     }
 
-    protected List<Computed> getComputedColumns(TableInfo tableInfo) {
-        ArrayList<Computed> computedColumns = tableInfo.getComputedColumns();
+    protected String getComputedColumns() {
+        TableInfo tableInfo = Cache.getTableInfo(mType);
+        ArrayList<Computed> allComputedColumns = tableInfo.getComputedColumns();
         Select queryBase = (Select) mQueryBase;
-        if (queryBase.hasColumns()) {
-            ArrayList<Computed> list = new ArrayList<Computed>(computedColumns.size());
-            for (String column : queryBase.getColumns()) {
-                if(tableInfo.isWildcard(column)) {
-                    return computedColumns;
-                }
+
+        ArrayList<String> queryColumns = queryBase.getColumns();
+        if (queryColumns.size() == 0) {
+            queryColumns.add(tableInfo.getTableWildcard());
+        }
+
+        Select newQueryBase = new Select();
+        if (queryBase.isDistinct()) {
+            newQueryBase.distinct();
+        } else if (queryBase.isAll()) {
+            newQueryBase.all();
+        }
+
+        ArrayList<Computed> computedColumns = new ArrayList<Computed>(allComputedColumns.size());
+        for (String column : queryColumns) {
+            if (tableInfo.isWildcard(column)) {
+                computedColumns = allComputedColumns;
+                newQueryBase.addColumns(column);
+            } else {
                 Computed computedAnnotation = tableInfo.getComputedAnnotation(column);
-                if (computedAnnotation != null && !TextUtils.isEmpty(computedAnnotation.select())) {
-                    list.add(computedAnnotation);
+                if (computedAnnotation != null) {
+                    computedColumns.add(computedAnnotation);
+                } else {
+                    newQueryBase.addColumns(column);
                 }
             }
-            return list;
-        } else {
-            return computedColumns;
         }
+        ArrayList<String> selects = new ArrayList<String>(allComputedColumns.size());
+        String computedJoins = "";
+        for (Computed cc : computedColumns) {
+            String select = cc.select();
+            if (!TextUtils.isEmpty(select)) {
+                selects.add(select);
+            }
+            computedJoins += TextUtils.join(" ", cc.joins()) + " ";
+        }
+        newQueryBase.addColumns(selects.toArray(new String[selects.size()]));
+        mQueryBase = newQueryBase;
+        return computedJoins;
     }
 
     public String toExistsSql() {
