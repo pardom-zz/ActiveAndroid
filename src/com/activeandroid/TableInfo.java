@@ -167,7 +167,7 @@ public final class TableInfo {
     }
 
     public boolean isWildcard(String selectField) {
-        return selectField.matches(mTableName+"/./*");
+        return selectField.matches("(" + mTableName + "\\.){0,1}\\*");
     }
 
     private Field getIdField(Class<?> type) {
@@ -200,13 +200,16 @@ public final class TableInfo {
     }
 
     public Computed getComputedAnnotation(String databaseColumn) {
+
         for (Map.Entry<Field, String> entry : mComputedNames.entrySet()) {
-            if (Objects.equals(databaseColumn, entry.getValue())) {
+            if (databaseColumn.matches("(" + mTableName + "\\.){0,1}" + entry.getValue())) {
                 return entry.getKey().getAnnotation(Computed.class);
             }
         }
         return null;
     }
 
-
+    public String getTableWildcard() {
+        return mTableName + ".*";
+    }
 }
