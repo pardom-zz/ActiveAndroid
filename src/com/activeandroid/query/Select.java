@@ -108,5 +108,11 @@ public final class Select implements Sqlable {
             this.alias = alias;
         }
     }
+    public boolean isDistinct() {
+        return mDistinct;
+    }
 
+    public boolean isAll() {
+        return mAll;
+    }
 }
