@@ -258,7 +258,7 @@ public final class From implements Sqlable {
         final StringBuilder sql = new StringBuilder();
         String computedJoins = "";
         if (mMethod == SqlMethod.SELECT) {
-            computedJoins = getComputedColumns();
+            computedJoins = addComputedColumns();
         }
         sql.append(mQueryBase.toSql());
         addFrom(sql);
@@ -274,7 +274,7 @@ public final class From implements Sqlable {
         return sqlString(sql);
     }
 
-    protected String getComputedColumns() {
+    protected String addComputedColumns() {
         TableInfo tableInfo = Cache.getTableInfo(mType);
         ArrayList<Computed> allComputedColumns = tableInfo.getComputedColumns();
         Select queryBase = (Select) mQueryBase;
