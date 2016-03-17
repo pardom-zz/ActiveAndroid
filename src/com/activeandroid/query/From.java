@@ -165,8 +165,11 @@ public final class From implements Sqlable {
 
     void addArguments(Object[] args) {
         for (Object arg : args) {
-            if (arg.getClass() == boolean.class || arg.getClass() == Boolean.class) {
+            Class<?> argClass = arg.getClass();
+            if (argClass == boolean.class || argClass == Boolean.class) {
                 arg = (arg.equals(true) ? 1 : 0);
+            }  else if(arg instanceof Model) {
+                arg = ((Model) arg).getId();
             }
             mArguments.add(arg);
         }
@@ -255,7 +258,7 @@ public final class From implements Sqlable {
         final StringBuilder sql = new StringBuilder();
         String computedJoins = "";
         if (mMethod == SqlMethod.SELECT) {
-            computedJoins = getComputedColumns();
+            computedJoins = addComputedColumns();
         }
         sql.append(mQueryBase.toSql());
         addFrom(sql);
@@ -271,7 +274,7 @@ public final class From implements Sqlable {
         return sqlString(sql);
     }
 
-    protected String getComputedColumns() {
+    protected String addComputedColumns() {
         TableInfo tableInfo = Cache.getTableInfo(mType);
         ArrayList<Computed> allComputedColumns = tableInfo.getComputedColumns();
         Select queryBase = (Select) mQueryBase;
