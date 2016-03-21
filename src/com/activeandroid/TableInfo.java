@@ -123,6 +123,10 @@ public final class TableInfo {
         return mIdName;
     }
 
+    public String getIdColumn() {
+        return getTableName() + "." + getIdName();
+    }
+
     @Deprecated
     public Collection<Field> getFields() {
         return getColumnFields();
@@ -158,7 +162,7 @@ public final class TableInfo {
      * @param field The model class field
      * @return the full column name (table.column)
      */
-    public String getColumn(Field field){
+    public String getColumn(Field field) {
         return mTableName + "." + getDatabaseName(field);
     }
 
