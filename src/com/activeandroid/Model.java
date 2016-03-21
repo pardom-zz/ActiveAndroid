@@ -180,12 +180,12 @@ public abstract class Model {
 
     public static void delete(Class<? extends Model> type, long id) {
         TableInfo tableInfo = Cache.getTableInfo(type);
-        new Delete().from(type).where(tableInfo.getIdName() + "=?", id).execute();
+        new Delete().from(type).where(tableInfo.getIdColumn() + "=?", id).execute();
     }
 
     public static <T extends Model> T load(Class<T> type, long id) {
         TableInfo tableInfo = Cache.getTableInfo(type);
-        return (T) new Select().from(type).where(tableInfo.getIdName() + "=?", id).executeSingle();
+        return (T) new Select().from(type).where(tableInfo.getIdColumn() + "=?", id).executeSingle();
     }
 
     // Model population
@@ -247,7 +247,7 @@ public abstract class Model {
                     Model entity = Cache.getEntity(entityType, entityId);
                     if (entity == null) {
                         TableInfo tableInfo = Cache.getTableInfo(entityType);
-                        entity = new Select().from(entityType).where(tableInfo.getTableName() + "." + tableInfo.getIdName() + "=?", entityId).executeSingle();
+                        entity = new Select().from(entityType).where(tableInfo.getIdColumn() + "=?", entityId).executeSingle();
                     }
 
                     value = entity;
