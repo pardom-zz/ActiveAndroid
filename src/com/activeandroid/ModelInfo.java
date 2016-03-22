@@ -79,6 +79,11 @@ final class ModelInfo {
 	}
 
 	public TableInfo getTableInfo(Class<? extends Model> type) {
+
+		if(!mTableInfos.containsKey(type)){
+			mTableInfos.put(type, new TableInfo(type));
+		}
+
 		return mTableInfos.get(type);
 	}
 
