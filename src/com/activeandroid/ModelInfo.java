@@ -198,6 +198,10 @@ final class ModelInfo {
 			catch (ClassNotFoundException e) {
 				Log.e("Couldn't create class.", e);
 			}
+			// If a super class or interface cannot be found NoClassDefFoundError is thrown on ART
+			catch (NoClassDefFoundError e) {
+				Log.e("Couldn't create class.", e);
+			}
 			catch (InstantiationException e) {
 				Log.e("Couldn't instantiate TypeSerializer.", e);
 			}
