@@ -286,7 +286,11 @@ public abstract class Model {
 	//////////////////////////////////////////////////////////////////////////////////////
 
 	protected final <T extends Model> List<T> getMany(Class<T> type, String foreignKey) {
+            if (getId() != null) {
 		return new Select().from(type).where(Cache.getTableName(type) + "." + foreignKey + "=?", getId()).execute();
+            } else {
+                return new ArrayList<T>();
+            }
 	}
 
 	//////////////////////////////////////////////////////////////////////////////////////
