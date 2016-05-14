@@ -30,13 +30,25 @@ import com.activeandroid.util.ReflectionUtils;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @SuppressWarnings("unchecked")
 public abstract class Model {
 
 	/** Prime number used for hashcode() implementation. */
 	private static final int HASH_PRIME = 739;
+
+  //Validate things
+  public Map<String, String> errors;
+  protected abstract void constraints();
+
+  public Boolean isValid(){
+    errors = new HashMap();
+    constraints();
+    return errors.isEmpty();
+  }
 
 	//////////////////////////////////////////////////////////////////////////////////////
 	// PRIVATE MEMBERS
@@ -71,14 +83,24 @@ public abstract class Model {
 				.notifyChange(ContentProvider.createUri(mTableInfo.getType(), mId), null);
 	}
 
+  public final Boolean validateAndSave(){
+    if(isValid()) {
+      save();
+      return true;
+    }
+    return false;
+  }
+
 	public final Long save() {
 		final SQLiteDatabase db = Cache.openDatabase();
 		final ContentValues values = new ContentValues();
 
 		for (Field field : mTableInfo.getFields()) {
 			final String fieldName = mTableInfo.getColumnName(field);
-			Class<?> fieldType = field.getType();
+      if(fieldName.isEmpty())
+        continue;
 
+      Class<?> fieldType = field.getType();
 			field.setAccessible(true);
 
 			try {

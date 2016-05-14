@@ -78,15 +78,15 @@ public final class ReflectionUtils {
 				}
 			});
 			for (Field field : fields) {
-				if (field.isAnnotationPresent(Column.class)) {
+				if (field.isAnnotationPresent(Column.class) && field.getAnnotation(Column.class) != null) {
 					declaredColumnFields.add(field);
 				}
 			}
 	
-			Class<?> parentType = type.getSuperclass();
-			if (parentType != null) {
-				declaredColumnFields.addAll(getDeclaredColumnFields(parentType));
-			}
+//			Class<?> parentType = type.getSuperclass();
+//			if (parentType != null) {
+//				declaredColumnFields.addAll(getDeclaredColumnFields(parentType));
+//			}
 		}
 		
 		return declaredColumnFields;		
