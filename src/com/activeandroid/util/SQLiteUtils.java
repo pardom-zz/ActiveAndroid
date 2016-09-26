@@ -106,7 +106,6 @@ public final class SQLiteUtils {
 		Cursor cursor = Cache.openDatabase().rawQuery(sql, selectionArgs);
 		List<T> entities = processCursor(type, cursor);
 		cursor.close();
-
 		return entities;
 	}
 	  
@@ -306,7 +305,9 @@ public final class SQLiteUtils {
 			if (FOREIGN_KEYS_SUPPORTED && ReflectionUtils.isModel(type)) {
 				definition.append(" REFERENCES ");
 				definition.append(Cache.getTableInfo((Class<? extends Model>) type).getTableName());
-				definition.append("("+tableInfo.getIdName()+")");
+				definition.append("(");
+				definition.append(Cache.getTableInfo((Class<? extends Model>) type).getIdName());
+				definition.append(")");
 				definition.append(" ON DELETE ");
 				definition.append(column.onDelete().toString().replace("_", " "));
 				definition.append(" ON UPDATE ");
@@ -324,7 +325,7 @@ public final class SQLiteUtils {
 	public static <T extends Model> List<T> processCursor(Class<? extends Model> type, Cursor cursor) {
 		TableInfo tableInfo = Cache.getTableInfo(type);
 		String idName = tableInfo.getIdName();
-		final List<T> entities = new ArrayList<T>();
+		final List<T> entities = new ArrayList<T>(cursor.getCount());
 
 		try {
 			Constructor<?> entityConstructor = type.getConstructor();

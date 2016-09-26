@@ -4,27 +4,36 @@ env: ANDROID_SDK=android-16 ANDROID_ABI=armeabi-v7a
 
 before_install:
   # Install ia32-libs (necessary for Android SDK to run on 64-bit linux)
-  # - sudo apt-get clean && sudo apt-get update
+  - mvn -version
   - sudo apt-get update -qq
   - sudo apt-get install -qq --force-yes libgd2-xpm ia32-libs ia32-libs-multiarch
 
   # Install Android SDK
-  - wget http://dl.google.com/android/android-sdk_r22.6.2-linux.tgz
-  - tar -zxf android-sdk_r22.6.2-linux.tgz
+  - wget http://dl.google.com/android/android-sdk_r23.0.2-linux.tgz
+  - tar -zxf android-sdk_r23.0.2-linux.tgz
   - ls
   - export ANDROID_HOME=`pwd`/android-sdk-linux
   - export PATH=${PATH}:${ANDROID_HOME}/tools:${ANDROID_HOME}/platform-tools
 
-  # Install build-tools
-  - wget https://dl-ssl.google.com/android/repository/build-tools_r19.0.3-linux.zip
-  - unzip build-tools_r19.0.3-linux.zip -d $ANDROID_HOME
-  - mkdir -p $ANDROID_HOME/build-tools/
-  - mv $ANDROID_HOME/android-4.4.2 $ANDROID_HOME/build-tools/19.0.1
+  # Install Maven 3.2.2
+  #- wget http://apache-mirror.rbc.ru/pub/apache/maven/maven-3/3.2.2/binaries/apache-maven-3.2.2-bin.tar.gz
+  #- tar -zxf apache-maven-3.2.2-bin.tar.gz
+  #- export PATH=${PATH}:`pwd`/apache-maven-3.2.2/bin
 
   # Install required Android components
-  - android list sdk --extended
-  # Do you accept the license 'android-sdk-license-bcbbd656' [y/n]:
-  - echo -ne "y\n" | android update sdk --filter system-image,platform-tools,extra-android-support,$ANDROID_SDK --no-ui --force
+  - android list sdk --extended --all
+  
+  # Install build environment
+
+  - echo -ne "y\n" | android update sdk --filter platform-tools --no-ui --force
+
+  - echo -ne "y\n" | android update sdk --no-ui --all --force --filter build-tools-19.1.0
+  
+  - echo -ne "y\n" | android update sdk --filter $ANDROID_SDK --no-ui --force
+
+  - echo -ne "y\n" | android update sdk --filter extra-android-support --no-ui --force
+
+  - echo -ne "y\n" | android update sdk --no-ui --all --force --filter sys-img-armeabi-v7a-android-16
 
   # Create and start emulator
   - echo no | android create avd --force -n test -t $ANDROID_SDK --abi $ANDROID_ABI
@@ -37,4 +46,4 @@ before_script:
   - ./wait_for_emulator
 
 script:
-  - mvn clean install -e
+  - mvn -Dandroid.sdk.path=${ANDROID_HOME} clean install -e
