@@ -312,7 +312,10 @@ public final class From implements Sqlable {
 			
 		} else {
 			limit(1);
-			SQLiteUtils.rawQuerySingle(mType, toSql(), getArguments()).delete();
+			Model model = SQLiteUtils.rawQuerySingle(mType, toSql(), getArguments());
+            if (model != null) {
+                model.delete();
+            }
 			return null;
 			
 		}
