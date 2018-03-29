@@ -32,6 +32,8 @@ allprojects {
  ```groovy
  	dependencies { compile 'com.github.aikongmeng:ActiveAndroid:3.1'}
 ```
+fix 'duplicate column name' [#542](https://github.com/pardom/ActiveAndroid/issues/542)
+
 ## Documentation
 
 * [Getting started](http://github.com/pardom/ActiveAndroid/wiki/Getting-started)
