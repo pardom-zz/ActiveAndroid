@@ -29,9 +29,7 @@ allprojects {
 ```
  Add the dependency
  ```groovy
- 	dependencies {
-	        compile 'com.github.aikongmeng:ActiveAndroid:3.1'
-	}
+ 	dependencies { compile 'com.github.aikongmeng:ActiveAndroid:3.1'}
 ```
 ## Documentation
 
