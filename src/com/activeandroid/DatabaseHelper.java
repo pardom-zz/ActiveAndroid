@@ -213,7 +213,7 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
 
 		    }
 
-		} catch (IOException e) {
+		} catch (Exception e) {
 			Log.e("Failed to execute " + file, e);
 
 		} finally {
