@@ -16,15 +16,23 @@ Grab via Maven:
 </dependency>
 ```
 or Gradle:
+Add it in your root build.gradle at the end of repositories:
+
+
 ```groovy
-repositories {
-    mavenCentral()
-    maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
-}
-
-compile 'com.michaelpardo:activeandroid:3.1.0-SNAPSHOT'
+allprojects {
+		repositories {
+			...
+			maven { url 'https://jitpack.io' }
+		}
+	}
 ```
-
+ Add the dependency
+ ```groovy
+ 	dependencies {
+	        compile 'com.github.aikongmeng:ActiveAndroid:3.1'
+	}
+```
 ## Documentation
 
 * [Getting started](http://github.com/pardom/ActiveAndroid/wiki/Getting-started)
