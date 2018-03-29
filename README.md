@@ -32,7 +32,12 @@ allprojects {
  ```groovy
  	dependencies { compile 'com.github.aikongmeng:ActiveAndroid:3.1'}
 ```
-fix 'duplicate column name' [#542](https://github.com/pardom/ActiveAndroid/issues/542)
+fix  跨版本更新sql修改表字段时，提示重复添加字段。 
+```java
+android.database.sqlite.SQLiteException
+duplicate column name: last_at (Sqlite code 1): , while compiling: ALTER TABLE user ADD last_at integer, (OS error - 2:No such file or directory)
+```
+'duplicate column name' [#542](https://github.com/pardom/ActiveAndroid/issues/542)
 
 ## Documentation
 
