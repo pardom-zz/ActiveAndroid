@@ -22,7 +22,7 @@ repositories {
     maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
 }
 
-compile 'com.michaelpardo:activeandroid:3.1.0-SNAPSHOT'
+implementation 'com.michaelpardo:activeandroid:3.1.0-SNAPSHOT'
 ```
 
 ## Documentation
