@@ -49,6 +49,7 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
     // PRIVATE FIELDS
     //////////////////////////////////////////////////////////////////////////////////////
 
+    private Configuration mConfiguration;
     private final String mSqlParser;
 
 	//////////////////////////////////////////////////////////////////////////////////////
@@ -59,6 +60,7 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
 		super(configuration.getContext(), configuration.getDatabaseName(), null, configuration.getDatabaseVersion());
 		copyAttachedDatabase(configuration.getContext(), configuration.getDatabaseName());
 		mSqlParser = configuration.getSqlParser();
+		mConfiguration = configuration;
 	}
 
 	//////////////////////////////////////////////////////////////////////////////////////
@@ -73,15 +75,13 @@ public final class DatabaseHelper extends SQLiteOpenHelper {
 	@Override
 	public void onCreate(SQLiteDatabase db) {
 		executePragmas(db);
-		executeCreate(db);
-		executeMigrations(db, -1, db.getVersion());
+		executeMigrations(db, -1, mConfiguration.getDatabaseVersion());
 		executeCreateIndex(db);
 	}
 
 	@Override
 	public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
 		executePragmas(db);
-		executeCreate(db);
 		executeMigrations(db, oldVersion, newVersion);
 	}
 
