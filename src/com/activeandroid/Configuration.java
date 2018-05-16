@@ -104,7 +104,7 @@ public class Configuration {
 
 		private static final int DEFAULT_CACHE_SIZE = 1024;
 		private static final String DEFAULT_DB_NAME = "Application.db";
-		private static final String DEFAULT_SQL_PARSER = SQL_PARSER_LEGACY;
+		private static final String DEFAULT_SQL_PARSER = SQL_PARSER_DELIMITED;
 
 		//////////////////////////////////////////////////////////////////////////////////////
 		// PRIVATE MEMBERS
