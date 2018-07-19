@@ -64,11 +64,15 @@ public abstract class Model {
 	}
 
 	public final void delete() {
-		Cache.openDatabase().delete(mTableInfo.getTableName(), idName+"=?", new String[] { getId().toString() });
-		Cache.removeEntity(this);
+		try {
+			Cache.openDatabase().delete(mTableInfo.getTableName(), idName + "=?", new String[]{getId().toString()});
+			Cache.removeEntity(this);
 
-		Cache.getContext().getContentResolver()
-				.notifyChange(ContentProvider.createUri(mTableInfo.getType(), mId), null);
+			Cache.getContext().getContentResolver()
+					.notifyChange(ContentProvider.createUri(mTableInfo.getType(), mId), null);
+		} catch (Throwable t){
+			t.printStackTrace()
+		}
 	}
 
 	public final Long save() {
@@ -151,15 +155,17 @@ public abstract class Model {
 			}
 		}
 
-		if (mId == null) {
-			mId = db.insert(mTableInfo.getTableName(), null, values);
+		try {
+			if (mId == null) {
+				mId = db.insert(mTableInfo.getTableName(), null, values);
+			} else {
+				db.update(mTableInfo.getTableName(), values, idName + "=" + mId, null);
+			}
+			Cache.getContext().getContentResolver()
+					.notifyChange(ContentProvider.createUri(mTableInfo.getType(), mId), null);
+		} catch (Throwable t){
+			t.printStackTrace()
 		}
-		else {
-			db.update(mTableInfo.getTableName(), values, idName+"=" + mId, null);
-		}
-
-		Cache.getContext().getContentResolver()
-				.notifyChange(ContentProvider.createUri(mTableInfo.getType(), mId), null);
 		return mId;
 	}
 
