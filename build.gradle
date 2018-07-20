@@ -1,5 +1,5 @@
 apply plugin: 'java'
-apply plugin: 'android-maven'
+apply plugin: 'com.github.dcendents.android-maven'
 
 group = 'com.github.matheusbristot'
 
@@ -11,7 +11,7 @@ repositories {
 }
 
 dependencies {
-	classpath 'com.github.dcendents:android-maven-plugin:1.0'
+	classpath 'com.github.dcendents.android-maven:1.2'
 }
 
 task sourcesJar(type: Jar, dependsOn: classes) {
