@@ -9,17 +9,17 @@
   <parent>
     <groupId>com.activeandroid</groupId>
     <artifactId>activeandroid-parent</artifactId>
-    <version>3.1-SNAPSHOT</version>
+    <version>3.1.2-SNAPSHOT</version>
   </parent>
 
   <groupId>com.activeandroid</groupId>
   <artifactId>activeandroid-tests</artifactId>
-  <version>3.1-SNAPSHOT</version>
+  <version>3.1.2-SNAPSHOT</version>
   <packaging>apk</packaging>
   <name>ActiveAndroid - Tests</name>
 
     <properties>
-        <java.version>1.6</java.version>
+        <java.version>1.8</java.version>
         <platform.sdk>16</platform.sdk>
         <platform.version>4.1.1.4</platform.version>
         <platform.support-version>r7</platform.support-version>
@@ -36,7 +36,7 @@
       <groupId>com.activeandroid</groupId>
       <artifactId>activeandroid</artifactId>
       <type>jar</type>
-      <version>3.1-SNAPSHOT</version>
+      <version>3.1.2-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>junit</groupId>

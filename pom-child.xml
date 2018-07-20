@@ -7,7 +7,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.activeandroid</groupId>
     <artifactId>activeandroid</artifactId>
-    <version>3.1-SNAPSHOT</version>
+    <version>3.1.2-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>ActiveAndroid</name>
 
@@ -22,14 +22,14 @@
   <parent>
     <groupId>com.activeandroid</groupId>
     <artifactId>activeandroid-parent</artifactId>
-    <version>3.1-SNAPSHOT</version>
+    <version>3.1.2-SNAPSHOT</version>
     <relativePath>./pom.xml</relativePath>
   </parent>
 
     <scm>
-        <connection>scm:git:git@github.com:pardom/ActiveAndroid.git</connection>
-        <developerConnection>scm:git:git@github.com:pardom/ActiveAndroid.git</developerConnection>
-        <url>git@github.com:pardom/ActiveAndroid.git</url>
+        <connection>scm:git@github.com:matheusbristot/ActiveAndroid.git</connection>
+        <developerConnection>scm:git@github.com:matheusbristot/ActiveAndroid.git</developerConnection>
+        <url>git@github.com:matheusbristot/ActiveAndroid.git</url>
     </scm>
 
     <properties>
