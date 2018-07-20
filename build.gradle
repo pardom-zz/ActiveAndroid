@@ -1,5 +1,5 @@
 apply plugin: 'java'
-apply plugin: 'com.github.dcendents.android-maven'
+apply plugin: 'maven'
 
 group = 'com.github.matheusbristot'
 
@@ -11,7 +11,8 @@ repositories {
 }
 
 dependencies {
-	classpath 'com.github.dcendents.android-maven:1.2'
+	compile 'com.google.guava:guava:18.0'
+	classpath 'com.github.dcendents:android-maven-gradle-plugin:2.1' // Add this line
 }
 
 task sourcesJar(type: Jar, dependsOn: classes) {
