@@ -2,6 +2,7 @@ apply plugin: 'java'
 apply plugin: 'maven'
 
 group = 'com.github.matheusbristot'
+archivesBaseName = "activeandroid"
 
 sourceCompatibility = 1.8 // java 8
 targetCompatibility = 1.8
