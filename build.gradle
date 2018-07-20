@@ -46,5 +46,6 @@ install {
                 url = 'https://github.com/matheusbristot/ActiveAndroid'
             }
         }
+        pom.artifactId = 'activeandroid'
     }
 }
