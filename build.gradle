@@ -2,6 +2,7 @@ apply plugin: 'java'
 apply plugin: 'maven'
 
 group = 'com.github.matheusbristot'
+jar.archiveName = "activeandroid-3.2.7-SNAPSHOT.jar"
 
 sourceCompatibility = 1.8 // java 8
 targetCompatibility = 1.8
@@ -46,6 +47,5 @@ install {
                 url = 'https://github.com/matheusbristot/ActiveAndroid'
             }
         }
-        pom.artifactId = 'activeandroid'
     }
 }
