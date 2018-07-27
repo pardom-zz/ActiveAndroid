@@ -147,18 +147,14 @@ public class ContentProvider extends android.content.ContentProvider {
 	//////////////////////////////////////////////////////////////////////////////////////
 
 	public static Uri createUri(Class<? extends Model> type, Long id) {
-		final StringBuilder uri = new StringBuilder();
-		uri.append("content://");
-		uri.append(sAuthority);
-		uri.append("/");
-		uri.append(Cache.getTableName(type).toLowerCase());
-
+		Uri.Builder uriBuilder = new Uri.Builder();
+		uriBuilder.authority(sAuthority);
+		uriBuilder.scheme("content");
+		uriBuilder.appendPath(Cache.getTableName(type).toLowerCase());
 		if (id != null) {
-			uri.append("/");
-			uri.append(id.toString());
+			uriBuilder.appendPath(id.toString());
 		}
-
-		return Uri.parse(uri.toString());
+		return uriBuilder.build();
 	}
 
 	//////////////////////////////////////////////////////////////////////////////////////
