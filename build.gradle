@@ -2,16 +2,10 @@ apply plugin: 'java'
 apply plugin: 'maven'
 
 group = 'com.github.matheusbristot'
-version = '3.2.8'
 
 sourceCompatibility = 1.8 // java 8
 targetCompatibility = 1.8
 
-uploadArchives {
-    repositories {
-        mavenLocal()
-    }
-}
 
 repositories {
     mavenCentral()
@@ -40,6 +34,9 @@ artifacts {
 install {
     repositories.mavenInstaller {
         pom.project {
+            groupId "com.github.matheusbristot"
+            artifactId "com.activeandroid"
+            version "3.2.9"
             licenses {
                 license {
                     name 'The Apache Software License, Version 2.0'
