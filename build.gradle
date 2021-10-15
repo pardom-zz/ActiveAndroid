@@ -7,7 +7,6 @@ sourceCompatibility = 1.7
 
 jar.archiveBaseName.set("activeandroid")
 archivesBaseName = 'activeandroid'
-group = 'com.github.dreipol'
 
 sourceSets {
 	main {
@@ -28,4 +27,15 @@ task sourcesJar(type: Jar) {
 
 artifacts {
     archives sourcesJar
+}
+
+publishing {
+	publications {
+		maven(MavenPublication) {
+			groupId = 'com.github.dreipol'
+			artifactId = 'activeandroid'
+			version = '3.1-SNAPSHOT'
+			from components.java
+		}
+	}
 }
