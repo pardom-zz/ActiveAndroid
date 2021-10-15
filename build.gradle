@@ -1,7 +1,7 @@
 plugins {
 	id 'maven-publish'
 }
-apply plugin: 'java'
+apply plugin: 'java-library'
 
 sourceCompatibility = 1.7
 
