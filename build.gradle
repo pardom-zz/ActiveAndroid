@@ -1,9 +1,13 @@
+plugins {
+	id 'maven-publish'
+}
 apply plugin: 'java'
 
 sourceCompatibility = 1.7
 
 jar.archiveBaseName.set("activeandroid")
 archivesBaseName = 'activeandroid'
+group = 'com.github.dreipol'
 
 sourceSets {
 	main {
