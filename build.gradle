@@ -2,7 +2,7 @@ apply plugin: 'java'
 
 sourceCompatibility = 1.6
 
-jar.baseName = 'activeandroid'
+jar.archiveBaseName.set("activeandroid")
 archivesBaseName = 'activeandroid'
 
 sourceSets {
@@ -14,11 +14,11 @@ sourceSets {
 }
 
 dependencies {
-	compile fileTree(dir: 'libs', include: '*.jar')
+	implementation fileTree(dir: 'libs', include: '*.jar')
 }
 
 task sourcesJar(type: Jar) {
-    classifier = 'sources'
+    archiveClassifier.set("sources")
     from sourceSets.main.allSource
 }
 
