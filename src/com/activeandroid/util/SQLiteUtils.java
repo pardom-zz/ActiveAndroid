@@ -118,6 +118,14 @@ public final class SQLiteUtils {
         return number;
 	}
 
+    public static long longQuery(final String sql, final String[] selectionArgs) {
+        final Cursor cursor = Cache.openDatabase().rawQuery(sql, selectionArgs);
+        final long number = processLongCursor(cursor);
+        cursor.close();
+
+        return number;
+    }
+
 	public static <T extends Model> T rawQuerySingle(Class<? extends Model> type, String sql, String[] selectionArgs) {
 		List<T> entities = rawQuery(type, sql, selectionArgs);
 
@@ -135,7 +143,7 @@ public final class SQLiteUtils {
 		sUniqueGroupMap = new HashMap<String, List<String>>();
 		sOnUniqueConflictsMap = new HashMap<String, ConflictAction>();
 
-		for (Field field : tableInfo.getFields()) {
+		for (Field field : tableInfo.getColumnFields()) {
 			createUniqueColumnDefinition(tableInfo, field);
 		}
 
@@ -190,7 +198,7 @@ public final class SQLiteUtils {
 		final ArrayList<String> definitions = new ArrayList<String>();
 		sIndexGroupMap = new HashMap<String, List<String>>();
 
-		for (Field field : tableInfo.getFields()) {
+		for (Field field : tableInfo.getColumnFields()) {
 			createIndexColumnDefinition(tableInfo, field);
 		}
 
@@ -239,7 +247,7 @@ public final class SQLiteUtils {
 	public static String createTableDefinition(TableInfo tableInfo) {
 		final ArrayList<String> definitions = new ArrayList<String>();
 
-		for (Field field : tableInfo.getFields()) {
+		for (Field field : tableInfo.getColumnFields()) {
 			String definition = createColumnDefinition(tableInfo, field);
 			if (!TextUtils.isEmpty(definition)) {
 				definitions.add(definition);
@@ -305,8 +313,9 @@ public final class SQLiteUtils {
 
 			if (FOREIGN_KEYS_SUPPORTED && ReflectionUtils.isModel(type)) {
 				definition.append(" REFERENCES ");
-				definition.append(Cache.getTableInfo((Class<? extends Model>) type).getTableName());
-				definition.append("("+tableInfo.getIdName()+")");
+                TableInfo otherTableInfo = Cache.getTableInfo((Class<? extends Model>) type);
+                definition.append(otherTableInfo.getTableName());
+				definition.append("("+otherTableInfo.getIdName()+")");
 				definition.append(" ON DELETE ");
 				definition.append(column.onDelete().toString().replace("_", " "));
 				definition.append(" ON UPDATE ");
@@ -369,6 +378,13 @@ public final class SQLiteUtils {
         if (cursor.moveToFirst()) {
             return cursor.getInt(0);
 	    }
+        return 0;
+    }
+
+    private static long processLongCursor(final Cursor cursor) {
+        if (cursor.moveToFirst()) {
+            return cursor.getLong(0);
+        }
         return 0;
     }
 

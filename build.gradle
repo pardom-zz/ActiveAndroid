@@ -1,8 +1,12 @@
-apply plugin: 'java'
-apply from: 'gradle-mvn-push.gradle'
+plugins {
+	id 'maven-publish'
+}
+apply plugin: 'java-library'
 
-targetCompatibility = '1.6'
-sourceCompatibility = '1.6'
+sourceCompatibility = 1.7
+
+jar.archiveBaseName.set("activeandroid")
+archivesBaseName = 'activeandroid'
 
 sourceSets {
 	main {
@@ -13,5 +17,25 @@ sourceSets {
 }
 
 dependencies {
-	compile fileTree(dir: 'libs', include: '*.jar')
+	implementation fileTree(dir: 'libs', include: '*.jar')
+}
+
+task sourcesJar(type: Jar) {
+    archiveClassifier.set("sources")
+    from sourceSets.main.allSource
+}
+
+artifacts {
+    archives sourcesJar
+}
+
+publishing {
+	publications {
+		maven(MavenPublication) {
+			groupId = 'com.github.dreipol'
+			artifactId = 'activeandroid'
+			version = '3.1-SNAPSHOT'
+			from components.java
+		}
+	}
 }

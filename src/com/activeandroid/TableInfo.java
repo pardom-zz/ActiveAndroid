@@ -16,47 +16,68 @@ package com.activeandroid;
  * limitations under the License.
  */
 
-import java.lang.reflect.Field;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-
 import android.text.TextUtils;
 import android.util.Log;
 
 import com.activeandroid.annotation.Column;
+import com.activeandroid.annotation.Computed;
 import com.activeandroid.annotation.Table;
+import com.activeandroid.naming.ColumnNamingStrategy;
+import com.activeandroid.naming.FieldNamingStrategy;
 import com.activeandroid.util.ReflectionUtils;
 
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+
 public final class TableInfo {
-	//////////////////////////////////////////////////////////////////////////////////////
-	// PRIVATE MEMBERS
-	//////////////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////
+    // PRIVATE MEMBERS
+    //////////////////////////////////////////////////////////////////////////////////////
 
-	private Class<? extends Model> mType;
-	private String mTableName;
-	private String mIdName = Table.DEFAULT_ID_NAME;
+    private Class<? extends Model> mType;
+    private String mTableName;
+    private String mIdName = Table.DEFAULT_ID_NAME;
 
-	private Map<Field, String> mColumnNames = new LinkedHashMap<Field, String>();
 
-	//////////////////////////////////////////////////////////////////////////////////////
-	// CONSTRUCTORS
-	//////////////////////////////////////////////////////////////////////////////////////
+    private String mUniqueIdentifier = Table.DEFAULT_ID_NAME;
+    private Map<Field, String> mColumnNames = new LinkedHashMap<Field, String>();
+    private Map<Field, String> mComputedNames = new LinkedHashMap<Field, String>();
 
-	public TableInfo(Class<? extends Model> type) {
-		mType = type;
+    //////////////////////////////////////////////////////////////////////////////////////
+    // CONSTRUCTORS
+    //////////////////////////////////////////////////////////////////////////////////////
 
-		final Table tableAnnotation = type.getAnnotation(Table.class);
+    public TableInfo(Class<? extends Model> type) {
+        mType = type;
 
+        final Table tableAnnotation = type.getAnnotation(Table.class);
+
+        ColumnNamingStrategy namingStrategy = new FieldNamingStrategy();
         if (tableAnnotation != null) {
-			mTableName = tableAnnotation.name();
-			mIdName = tableAnnotation.id();
-		}
-		else {
-			mTableName = type.getSimpleName();
+            mTableName = tableAnnotation.name();
+            mIdName = tableAnnotation.id();
+            mUniqueIdentifier = tableAnnotation.uniqueIdentifier();
+            if (mUniqueIdentifier.equals("")) {
+                mUniqueIdentifier = getIdField(type).getName();
+            }
+            try {
+                Class<? extends ColumnNamingStrategy> namingClass = tableAnnotation.columnNaming();
+                namingStrategy = namingClass.newInstance();
+            } catch (InstantiationException e) {
+                Log.e("Column naming strategy couldn't be instantiated", e.toString());
+            } catch (IllegalAccessException e) {
+                Log.e("Column naming strategy couldn't be instantiated", e.toString());
+            }
+        } else {
+            mTableName = type.getSimpleName();
         }
 
         // Manually add the id column since it is not declared like the other columns.
@@ -65,60 +86,134 @@ public final class TableInfo {
 
         List<Field> fields = new LinkedList<Field>(ReflectionUtils.getDeclaredColumnFields(type));
         Collections.reverse(fields);
-
         for (Field field : fields) {
             if (field.isAnnotationPresent(Column.class)) {
                 final Column columnAnnotation = field.getAnnotation(Column.class);
                 String columnName = columnAnnotation.name();
                 if (TextUtils.isEmpty(columnName)) {
-                    columnName = field.getName();
+                    columnName = namingStrategy.translateName(field);
                 }
 
                 mColumnNames.put(field, columnName);
+            } else if (field.isAnnotationPresent(Computed.class)) {
+                final Computed columnAnnotation = field.getAnnotation(Computed.class);
+                String name = columnAnnotation.name();
+                if (TextUtils.isEmpty(name)) {
+                    name = namingStrategy.translateName(field);
+                }
+                mComputedNames.put(field, name);
             }
         }
 
-	}
+    }
 
-	//////////////////////////////////////////////////////////////////////////////////////
-	// PUBLIC METHODS
-	//////////////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////
+    // PUBLIC METHODS
+    //////////////////////////////////////////////////////////////////////////////////////
 
-	public Class<? extends Model> getType() {
-		return mType;
-	}
+    public Class<? extends Model> getType() {
+        return mType;
+    }
 
-	public String getTableName() {
-		return mTableName;
-	}
+    public String getTableName() {
+        return mTableName;
+    }
 
-	public String getIdName() {
-		return mIdName;
-	}
+    public String getIdName() {
+        return mIdName;
+    }
 
-	public Collection<Field> getFields() {
-		return mColumnNames.keySet();
-	}
+    public String getIdColumn() {
+        return getTableName() + "." + getIdName();
+    }
 
-	public String getColumnName(Field field) {
-		return mColumnNames.get(field);
-	}
+    @Deprecated
+    public Collection<Field> getFields() {
+        return getColumnFields();
+    }
 
+    public Collection<Field> getColumnFields() {
+        return mColumnNames.keySet();
+    }
+
+    /**
+     * @return Fields used as columns (@Column) and fields which can be computed (@Computed)
+     */
+    public Collection<Field> getAllFields() {
+        HashSet<Field> fields = new HashSet<Field>(mColumnNames.keySet());
+        fields.addAll(mComputedNames.keySet());
+        return fields;
+    }
+
+    public String getColumnName(Field field) {
+        return mColumnNames.get(field);
+    }
+
+    public String getDatabaseName(Field field) {
+        String name = mColumnNames.get(field);
+        if (name == null) {
+            name = mComputedNames.get(field);
+        }
+        return name;
+    }
+
+
+    /**
+     * @param field The model class field
+     * @return the full column name (table.column)
+     */
+    public String getColumn(Field field) {
+        return mTableName + "." + getDatabaseName(field);
+    }
+
+    public boolean hasComputedFields() {
+        return mComputedNames.size() > 0;
+    }
+
+    public boolean isWildcard(String selectField) {
+        return selectField.matches("(" + mTableName + "\\.){0,1}\\*");
+    }
 
     private Field getIdField(Class<?> type) {
         if (type.equals(Model.class)) {
             try {
                 return type.getDeclaredField("mId");
-            }
-            catch (NoSuchFieldException e) {
+            } catch (NoSuchFieldException e) {
                 Log.e("Impossible!", e.toString());
             }
-        }
-        else if (type.getSuperclass() != null) {
+        } else if (type.getSuperclass() != null) {
             return getIdField(type.getSuperclass());
         }
 
         return null;
     }
 
+    public String getUniqueIdentifier() {
+        return mUniqueIdentifier;
+    }
+
+    public ArrayList<Computed> getComputedColumns() {
+        ArrayList<Computed> computedList = new ArrayList<Computed>();
+        for (Field field : mComputedNames.keySet()) {
+            Computed annotation = field.getAnnotation(Computed.class);
+            if (!TextUtils.isEmpty(annotation.select())) {
+                computedList.add(annotation);
+            }
+        }
+        return computedList;
+    }
+
+    public Computed getComputedAnnotation(String databaseColumn) {
+
+        for (Map.Entry<Field, String> entry : mComputedNames.entrySet()) {
+            if (databaseColumn.matches("(" + mTableName + "\\.){0,1}" + entry.getValue())) {
+                return entry.getKey().getAnnotation(Computed.class);
+            }
+        }
+        return null;
+    }
+
+    public String getTableWildcard() {
+        return mTableName + ".*";
+    }
 }

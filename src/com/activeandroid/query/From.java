@@ -20,6 +20,8 @@ import android.text.TextUtils;
 
 import com.activeandroid.Cache;
 import com.activeandroid.Model;
+import com.activeandroid.TableInfo;
+import com.activeandroid.annotation.Computed;
 import com.activeandroid.content.ContentProvider;
 import com.activeandroid.query.Join.JoinType;
 import com.activeandroid.util.Log;
@@ -29,63 +31,69 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class From implements Sqlable {
-	private Sqlable mQueryBase;
+    private Sqlable mQueryBase;
 
-	private Class<? extends Model> mType;
-	private String mAlias;
-	private List<Join> mJoins;
-	private final StringBuilder mWhere = new StringBuilder();
-	private String mGroupBy;
-	private String mHaving;
-	private String mOrderBy;
-	private String mLimit;
-	private String mOffset;
+    private Class<? extends Model> mType;
+    private String mAlias;
+    private List<Join> mJoins;
+    private final StringBuilder mWhere = new StringBuilder();
+    private String mGroupBy;
+    private String mHaving;
+    private String mOrderBy;
+    private String mLimit;
+    private String mOffset;
+    private SqlMethod mMethod;
 
-	private List<Object> mArguments;
+    private List<Object> mArguments;
 
-	public From(Class<? extends Model> table, Sqlable queryBase) {
-		mType = table;
-		mJoins = new ArrayList<Join>();
-		mQueryBase = queryBase;
+    public From(Class<? extends Model> table, Sqlable queryBase) {
+        this(table, queryBase, SqlMethod.UNKNOWN);
+    }
 
-		mJoins = new ArrayList<Join>();
-		mArguments = new ArrayList<Object>();
-	}
+    public From(Class<? extends Model> table, Sqlable queryBase, SqlMethod method) {
+        mType = table;
+        mMethod = method;
+        mJoins = new ArrayList<Join>();
+        mQueryBase = queryBase;
 
-	public From as(String alias) {
-		mAlias = alias;
-		return this;
-	}
+        mJoins = new ArrayList<Join>();
+        mArguments = new ArrayList<Object>();
+    }
 
-	public Join join(Class<? extends Model> table) {
-		Join join = new Join(this, table, null);
-		mJoins.add(join);
-		return join;
-	}
+    public From as(String alias) {
+        mAlias = alias;
+        return this;
+    }
 
-	public Join leftJoin(Class<? extends Model> table) {
-		Join join = new Join(this, table, JoinType.LEFT);
-		mJoins.add(join);
-		return join;
-	}
+    public Join join(Class<? extends Model> table) {
+        Join join = new Join(this, table, null);
+        mJoins.add(join);
+        return join;
+    }
 
-	public Join outerJoin(Class<? extends Model> table) {
-		Join join = new Join(this, table, JoinType.OUTER);
-		mJoins.add(join);
-		return join;
-	}
+    public Join leftJoin(Class<? extends Model> table) {
+        Join join = new Join(this, table, JoinType.LEFT);
+        mJoins.add(join);
+        return join;
+    }
 
-	public Join innerJoin(Class<? extends Model> table) {
-		Join join = new Join(this, table, JoinType.INNER);
-		mJoins.add(join);
-		return join;
-	}
+    public Join outerJoin(Class<? extends Model> table) {
+        Join join = new Join(this, table, JoinType.OUTER);
+        mJoins.add(join);
+        return join;
+    }
 
-	public Join crossJoin(Class<? extends Model> table) {
-		Join join = new Join(this, table, JoinType.CROSS);
-		mJoins.add(join);
-		return join;
-	}
+    public Join innerJoin(Class<? extends Model> table) {
+        Join join = new Join(this, table, JoinType.INNER);
+        mJoins.add(join);
+        return join;
+    }
+
+    public Join crossJoin(Class<? extends Model> table) {
+        Join join = new Join(this, table, JoinType.CROSS);
+        mJoins.add(join);
+        return join;
+    }
 
     public From where(String clause) {
         // Chain conditions if a previous condition exists.
@@ -121,48 +129,51 @@ public final class From implements Sqlable {
         or(clause).addArguments(args);
         return this;
     }
-    
-	public From groupBy(String groupBy) {
-		mGroupBy = groupBy;
-		return this;
-	}
 
-	public From having(String having) {
-		mHaving = having;
-		return this;
-	}
+    public From groupBy(String groupBy) {
+        mGroupBy = groupBy;
+        return this;
+    }
 
-	public From orderBy(String orderBy) {
-		mOrderBy = orderBy;
-		return this;
-	}
+    public From having(String having) {
+        mHaving = having;
+        return this;
+    }
 
-	public From limit(int limit) {
-		return limit(String.valueOf(limit));
-	}
+    public From orderBy(String orderBy) {
+        mOrderBy = orderBy;
+        return this;
+    }
 
-	public From limit(String limit) {
-		mLimit = limit;
-		return this;
-	}
+    public From limit(int limit) {
+        return limit(String.valueOf(limit));
+    }
 
-	public From offset(int offset) {
-		return offset(String.valueOf(offset));
-	}
+    public From limit(String limit) {
+        mLimit = limit;
+        return this;
+    }
 
-	public From offset(String offset) {
-		mOffset = offset;
-		return this;
-	}
+    public From offset(int offset) {
+        return offset(String.valueOf(offset));
+    }
 
-	void addArguments(Object[] args) {
-        for(Object arg : args) {
-            if (arg.getClass() == boolean.class || arg.getClass() == Boolean.class) {
+    public From offset(String offset) {
+        mOffset = offset;
+        return this;
+    }
+
+    void addArguments(Object[] args) {
+        for (Object arg : args) {
+            Class<?> argClass = arg.getClass();
+            if (argClass == boolean.class || argClass == Boolean.class) {
                 arg = (arg.equals(true) ? 1 : 0);
+            }  else if(arg instanceof Model) {
+                arg = ((Model) arg).getId();
             }
             mArguments.add(arg);
         }
-	}
+    }
 
     private void addFrom(final StringBuilder sql) {
         sql.append("FROM ");
@@ -245,10 +256,14 @@ public final class From implements Sqlable {
     @Override
     public String toSql() {
         final StringBuilder sql = new StringBuilder();
+        String computedJoins = "";
+        if (mMethod == SqlMethod.SELECT) {
+            computedJoins = addComputedColumns();
+        }
         sql.append(mQueryBase.toSql());
-
         addFrom(sql);
         addJoins(sql);
+        sql.append(computedJoins);
         addWhere(sql);
         addGroupBy(sql);
         addHaving(sql);
@@ -257,6 +272,51 @@ public final class From implements Sqlable {
         addOffset(sql);
 
         return sqlString(sql);
+    }
+
+    protected String addComputedColumns() {
+        TableInfo tableInfo = Cache.getTableInfo(mType);
+        ArrayList<Computed> allComputedColumns = tableInfo.getComputedColumns();
+        Select queryBase = (Select) mQueryBase;
+
+        ArrayList<String> queryColumns = queryBase.getColumns();
+        if (queryColumns.size() == 0) {
+            queryColumns.add(tableInfo.getTableWildcard());
+        }
+
+        Select newQueryBase = new Select();
+        if (queryBase.isDistinct()) {
+            newQueryBase.distinct();
+        } else if (queryBase.isAll()) {
+            newQueryBase.all();
+        }
+
+        ArrayList<Computed> computedColumns = new ArrayList<Computed>(allComputedColumns.size());
+        for (String column : queryColumns) {
+            if (tableInfo.isWildcard(column)) {
+                computedColumns = allComputedColumns;
+                newQueryBase.addColumns(column);
+            } else {
+                Computed computedAnnotation = tableInfo.getComputedAnnotation(column);
+                if (computedAnnotation != null) {
+                    computedColumns.add(computedAnnotation);
+                } else {
+                    newQueryBase.addColumns(column);
+                }
+            }
+        }
+        ArrayList<String> selects = new ArrayList<String>(allComputedColumns.size());
+        String computedJoins = "";
+        for (Computed cc : computedColumns) {
+            String select = cc.select();
+            if (!TextUtils.isEmpty(select)) {
+                selects.add(select);
+            }
+            computedJoins += TextUtils.join(" ", cc.joins()) + " ";
+        }
+        newQueryBase.addColumns(selects.toArray(new String[selects.size()]));
+        mQueryBase = newQueryBase;
+        return computedJoins;
     }
 
     public String toExistsSql() {
@@ -277,10 +337,11 @@ public final class From implements Sqlable {
         return sqlString(sql);
     }
 
-    public String toCountSql() {
-
+    public String toCountSql(String fieldname) {
         final StringBuilder sql = new StringBuilder();
-        sql.append("SELECT COUNT(*) ");
+        sql.append("SELECT COUNT(");
+        sql.append(fieldname);
+        sql.append(") ");
 
         addFrom(sql);
         addJoins(sql);
@@ -293,33 +354,38 @@ public final class From implements Sqlable {
         return sqlString(sql);
     }
 
-	public <T extends Model> List<T> execute() {
-		if (mQueryBase instanceof Select) {
-			return SQLiteUtils.rawQuery(mType, toSql(), getArguments());
-			
-		} else {
-			SQLiteUtils.execSql(toSql(), getArguments());
-			Cache.getContext().getContentResolver().notifyChange(ContentProvider.createUri(mType, null), null);
-			return null;
-			
-		}
-	}
+    public String toCountSql() {
+        return toCountSql("*");
+    }
 
-	public <T extends Model> T executeSingle() {
-		if (mQueryBase instanceof Select) {
-			limit(1);
-			return (T) SQLiteUtils.rawQuerySingle(mType, toSql(), getArguments());
-			
-		} else {
-			limit(1);
-			SQLiteUtils.rawQuerySingle(mType, toSql(), getArguments()).delete();
-			return null;
-			
-		}
-	}
-	
+    public <T extends Model> List<T> execute() {
+        if (mQueryBase instanceof Select) {
+            return SQLiteUtils.rawQuery(mType, toSql(), getArguments());
+
+        } else {
+            SQLiteUtils.execSql(toSql(), getArguments());
+            Cache.getContext().getContentResolver().notifyChange(ContentProvider.createUri(mType, null), null);
+            return null;
+
+        }
+    }
+
+    public <T extends Model> T executeSingle() {
+        if (mQueryBase instanceof Select) {
+            limit(1);
+            return (T) SQLiteUtils.rawQuerySingle(mType, toSql(), getArguments());
+
+        } else {
+            limit(1);
+            SQLiteUtils.rawQuerySingle(mType, toSql(), getArguments()).delete();
+            return null;
+
+        }
+    }
+
     /**
      * Gets a value indicating whether the query returns any rows.
+     *
      * @return <code>true</code> if the query returns at least one row; otherwise, <code>false</code>.
      */
     public boolean exists() {
@@ -333,14 +399,18 @@ public final class From implements Sqlable {
         return SQLiteUtils.intQuery(toCountSql(), getArguments());
     }
 
-	public String[] getArguments() {
-		final int size = mArguments.size();
-		final String[] args = new String[size];
+    public int count(String fieldName) {
+        return SQLiteUtils.intQuery(toCountSql(fieldName), getArguments());
+    }
 
-		for (int i = 0; i < size; i++) {
-			args[i] = mArguments.get(i).toString();
-		}
+    public String[] getArguments() {
+        final int size = mArguments.size();
+        final String[] args = new String[size];
 
-		return args;
-	}
+        for (int i = 0; i < size; i++) {
+            args[i] = mArguments.get(i).toString();
+        }
+
+        return args;
+    }
 }

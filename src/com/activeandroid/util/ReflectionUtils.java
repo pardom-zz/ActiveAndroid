@@ -28,6 +28,7 @@ import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 
+import com.activeandroid.annotation.Computed;
 import com.activeandroid.Model;
 import com.activeandroid.annotation.Column;
 import com.activeandroid.serializer.TypeSerializer;
@@ -78,7 +79,7 @@ public final class ReflectionUtils {
 				}
 			});
 			for (Field field : fields) {
-				if (field.isAnnotationPresent(Column.class)) {
+				if (field.isAnnotationPresent(Column.class) || field.isAnnotationPresent(Computed.class)){
 					declaredColumnFields.add(field);
 				}
 			}

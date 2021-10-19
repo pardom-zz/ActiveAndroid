@@ -16,6 +16,9 @@ package com.activeandroid.annotation;
  * limitations under the License.
  */
 
+import com.activeandroid.naming.ColumnNamingStrategy;
+import com.activeandroid.naming.FieldNamingStrategy;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -28,4 +31,6 @@ public @interface Table {
 	public static final String DEFAULT_ID_NAME = "Id";
 	public String name();
 	public String id() default DEFAULT_ID_NAME;
+    public Class <? extends ColumnNamingStrategy> columnNaming() default FieldNamingStrategy.class;
+    public String uniqueIdentifier() default "";
 }
